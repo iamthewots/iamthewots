@@ -1,0 +1,35 @@
+@use "../_config/settings";
+@use "../modules/tools.scss";
+@use "../wtk.scss";
+@use "sass:map";
+
+:root {
+  @each $settings-id, $settings in settings.$settings {
+    $settings-value: map.get($settings, "value");
+    $var-name: wtk.find-in-settings($settings-id, "name");
+    $key-separator: wtk.find-in-settings($settings-id, "key-separator");
+    $no-css-vars-compiled: wtk.find-in-settings(
+      $settings-id,
+      "no-css-vars-compiled"
+    );
+
+    @if ($no-css-vars-compiled == false) {
+      @include tools.set-variables-from-settings(
+        $var-name,
+        $settings-value,
+        $key-separator
+      );
+    }
+  }
+
+  @each $settings-id, $settings in settings.$settings {
+    $multiplier: wtk.find-in-settings($settings-id, "multiplier");
+    
+    @if ($multiplier != null) {
+      $var-name: tools.extract-var-name($multiplier);
+      $var-fallback: tools.extract-var-fallback($multiplier);
+
+      --#{$var-name}: 1;
+    }
+  }
+}

@@ -1,0 +1,95 @@
+@use "./chroma.scss";
+@use "./tools.scss";
+@use "../wtk.scss";
+@use "sass:list";
+@use "sass:map";
+@use "sass:meta";
+@use "sass:string";
+
+$color-scheme-properties: ("outline", "border", "background", "text", "shadow");
+$reserved-color-names: list.join(
+  $color-scheme-properties,
+  ("darkener", "lightener", "text-dark", "text-light")
+);
+
+@function validate-color-name($color-name, $allow-reserved-names: false) {
+  $color-name: string.to-lower-case(tools.remove-whitespaces($color-name));
+
+  @if (
+    list.index($reserved-color-names, $color-name) !=
+      null and
+      $allow-reserved-names ==
+      false
+  ) {
+    @error "Reserved color name.";
+  }
+
+  @return $color-name;
+}
+
+@function validate-color-value($color-value) {
+  @if (meta.type-of($color-value) == color) {
+    @return $color-value;
+  } @else if (meta.type-of($color-value) == string) {
+    $string: tools.remove-whitespaces($color-value);
+
+    @if (tools.is-css-var($string)) {
+      $var-name: tools.extract-var-name($string);
+
+      @if (string.index($var-name, "--clr") == 1) {
+        @return $string;
+      } @else {
+        @error "Invalid color string.";
+      }
+    } @else {
+      @return var(--clr-#{$string});
+    }
+  }
+
+  @error "Invalid color value.";
+}
+
+@mixin add-color(
+  $color-name,
+  $color-value,
+  $options: (),
+  $allow-reserved-color-names: false
+) {
+  $color-name: validate-color-name($color-name, $allow-reserved-color-names);
+  $color-value: validate-color-value($color-value);
+
+  @if (meta.type-of($options) != map) {
+    $options: ();
+  }
+
+  @each $key in "text", "darkener", "lightener" {
+    $value: map.get($options, $key);
+
+    @if (meta.type-of($color-value) == string and $value == null) {
+      $var-name: tools.extract-var-name($color-value);
+      $value: var(--#{$var-name}--#{$key});
+    } @else if ($value == null) {
+      @if ($key == "text") {
+        @if (chroma.is-color-dark($color-value)) {
+          $value: var(--clr-text-light);
+        } @else {
+          $value: var(--clr-text-dark);
+        }
+      } @else if ($key == "darkener" or $key == "lightener") {
+        $value: var(--clr-#{$key});
+      }
+    } @else {
+      $value: validate-color-value($value);
+    }
+
+    $options: map.set($options, $key, $value);
+  }
+
+  --clr-#{$color-name}: #{$color-value};
+  --clr-#{$color-name}--text: #{map.get($options, "text")};
+  --clr-#{$color-name}--darkener: #{map.get($options, "darkener")};
+  --clr-#{$color-name}--lightener: #{map.get($options, "lightener")};
+}
+
+@mixin use-color-classes($color-names...) {
+}

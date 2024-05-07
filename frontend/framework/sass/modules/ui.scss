@@ -1,0 +1,56 @@
+@use "./tools.scss";
+@use "sass:map";
+@use "sass:math";
+@use "sass:meta";
+
+$screen-queries: (
+  ("equal", "="): width,
+  ("after", ">"): min-width,
+  ("before", "<"): max-width,
+);
+
+@function parse-screen-query($value) {
+  $data: tools.find-in-settings($screen-queries, $value);
+
+  @if ($data != null) {
+    @return map.get($data, "value");
+  } @else if (meta.type-of($value) == string) {
+    @return $value;
+  } @else {
+    @error "Invalid input.";
+  }
+}
+
+@mixin respond-to-hover() {
+  @media (hover: hover) {
+    &:hover {
+      @content;
+    }
+  }
+}
+
+@mixin respond-to-pointer() {
+  @media (pointer: fine) {
+    @content;
+  }
+}
+
+@mixin respond-to-visibility($visibility) {
+  @if ($visibility == "invisible") {
+    visibility: hidden !important;
+  } @else if ($visibility == "hidden") {
+    position: fixed !important;
+    right: -100% !important;
+  } @else if ($visibility == "removed") {
+    display: none !important;
+  }
+}
+
+@mixin respond-to-screen-width($screen-width, $screen-query: "after") {
+  $screen-width: parse-screen-width($screen-width);
+  $screen-query: parse-screen-query($screen-query);
+
+  @media screen and (#{$screen-query}: #{$screen-width}) {
+    @content;
+  }
+}

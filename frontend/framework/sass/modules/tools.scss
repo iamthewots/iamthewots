@@ -1,0 +1,145 @@
+@use "sass:list";
+@use "sass:map";
+@use "sass:meta";
+@use "sass:string";
+
+@function extract-var-fallback($css-var) {
+  @if (is-css-var($css-var) == false) {
+    @error "Not a CSS var.";
+  }
+
+  $css-var: remove-whitespaces($css-var);
+  $from: string.index($css-var, ",");
+  $to: string.index($css-var, ")");
+
+  @if ($from == null) {
+    @error "No fallback found.";
+  }
+
+  @return string.slice($css-var, $from + 1, $to - 1);
+}
+
+@function extract-var-name($css-var) {
+  @if (is-css-var($css-var) == false) {
+    @error "Not a CSS var.";
+  }
+
+  $css-var: remove-whitespaces($css-var);
+  $from: string.index($css-var, "var(--");
+  $to: string.index($css-var, ",");
+
+  @if ($to == null) {
+    $to: string.index($css-var, ")");
+  }
+
+  @return string.slice($css-var, $from + 6, $to - 1);
+}
+
+@function find-in-map($map, $query, $query-type: "key") {
+  @each $keyset, $value in $map {
+    $query-found: false;
+
+    @if ($query-type == "key" or $query-type == "keyset") {
+      @if ($keyset == $query or list.index($keyset, $query) != null) {
+        $query-found: true;
+      }
+    } @else if ($query-type == "value" and $value == $query) {
+      $query-found: true;
+    }
+
+    @if ($query-found) {
+      @return (
+        "query": $query,
+        "query-type": $query-type,
+        "keyset": $keyset,
+        "main-key": get-main-key-from-keyset($keyset),
+        "value": $value
+      );
+    }
+  }
+
+  @return null;
+}
+
+@function get-list-from-arglist($arglist) {
+  $list: ();
+
+  @each $item in $arglist {
+    @if (meta.type-of($item) == list) {
+      $list: list.join($list, $item);
+    } @else {
+      $list: list.append($list, $item);
+    }
+  }
+
+  @return $list;
+}
+
+@function get-main-key-from-keyset($keyset) {
+  @return list.nth($keyset, 1);
+}
+
+@function is-css-var($value) {
+  @if (meta.type-of($value) != string) {
+    @return false;
+  }
+
+  @if (
+    string.length($value) >
+      7 and
+      string.index($value, "var(--") ==
+      1 and
+      string.index($value, ")") ==
+      string.length($value)
+  ) {
+    @return true;
+  }
+
+  @return false;
+}
+
+@function remove-whitespaces($string) {
+  @if (meta.type-of($string) != string) {
+    @error "Not a string.";
+  }
+
+  $partials: string.split($string, " ");
+  $string: "";
+
+  @each $partial in $partials {
+    $string: "#{$string}#{$partial}";
+  }
+
+  @return $string;
+}
+
+@mixin extend-selector-with-keyset(
+  $base-selector,
+  $keyset,
+  $key-separator: "-"
+) {
+  $extended-selector: ();
+  @each $key in $keyset {
+    $extended-selector: list.append(
+      $extended-selector,
+      "#{$base-selector}#{$key-separator}#{$key}",
+      $separator: comma
+    );
+  }
+
+  #{$extended-selector} {
+    @content;
+  }
+}
+
+@mixin set-variables-from-settings($var-name, $settings, $key-separator: "-") {
+  @if (meta.type-of($settings) == map) {
+    @each $keyset, $value in $settings {
+      $key: get-main-key-from-keyset($keyset);
+
+      --#{$var-name}#{$key-separator}#{$key}: #{$value};
+    }
+  } @else {
+    --#{$var-name}: #{$settings};
+  }
+}

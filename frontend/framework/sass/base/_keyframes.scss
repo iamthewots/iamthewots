@@ -1,0 +1,72 @@
+@use "../wtk.scss";
+
+@each $keyframes-id in "fade", "fade-in", "fade-out" {
+  $from-opacity: 0;
+  $to-opacity: 1;
+
+  @if ($keyframes-id == "fade-out") {
+    $from-opacity: 1;
+    $to-opacity: 0;
+  }
+
+  @keyframes #{$keyframes-id} {
+    from {
+      opacity: $from-opacity;
+    }
+    to {
+      opacity: $to-opacity;
+    }
+  }
+}
+
+@each $keyframes-id in "draw-from", "slide-from" {
+  $from-distance: 0;
+  $from-translate: 0 0;
+
+  @if ($keyframes-id == "draw-from") {
+    $from-distance: 100%;
+  } @else {
+    $from-distance: var(--distance, #{wtk.get("distance")});
+  }
+
+  @each $coordinate in "left", "right", "top", "bottom" {
+    @if ($coordinate == "left") {
+      $from-translate: 0 calc($from-distance * -1);
+    } @else if ($coordinate == "right") {
+      $from-translate: 0 $from-distance;
+    } @else if ($coordinate == "top") {
+      $from-translate: calc($from-distance * -1) 0;
+    } @else if ($coordinate == "bottom") {
+      $from-translate: $from-distance 0;
+    }
+
+    @keyframes #{$keyframes-id}-#{$coordinate} {
+      from {
+        translate: $from-translate;
+      }
+      to {
+        translate: 0 0;
+      }
+    }
+  }
+}
+
+@each $keyframes-id in "zoom-in", "zoom-out" {
+  $from-scale: 1;
+  $scale-delta: var(--scale-delta, wtk.get("scale-delta"));
+
+  @if ($keyframes-id == "zoom-in") {
+    $from-scale: 1 - $scale-delta;
+  } @else {
+    $from-scale: 1 + $scale-delta;
+  }
+
+  @keyframes #{$keyframes-id} {
+    from {
+      scale: $from-scale;
+    }
+    to {
+      scale: 1;
+    }
+  }
+}

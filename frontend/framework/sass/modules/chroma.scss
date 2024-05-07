@@ -1,0 +1,123 @@
+@use "./tools.scss";
+@use "sass:color";
+@use "sass:list";
+@use "sass:map";
+@use "sass:math";
+@use "sass:meta";
+
+$luminance-channel-multipliers: (
+  "red": 0.2126,
+  "green": 0.7152,
+  "blue": 0.0722,
+);
+$average-luminance-range: (0.45, 0.55);
+$optimal-contrast-range: (4.5, 7);
+
+@function choose-color-with-best-contrast($color-1, $color-2-list...) {
+  $color-2-list: tools.get-list-from-arglist($color-2-list);
+  $best-contrast-found: 0;
+  $chosen-color: $color-1;
+
+  @each $color-2 in $color-2-list {
+    @if (meta.type-of($color-2) == color) {
+      $contrast: get-contrast($color-1, $color-2);
+
+      @if ($contrast > $best-contrast-found) {
+        $best-contrast-found: $contrast;
+        $chosen-color: $color-2;
+      }
+    }
+  }
+
+  @return $chosen-color;
+}
+
+@function get-contrast($color-1, $color-2) {
+  $luminance-1: get-luminance($color-1);
+  $luminance-2: get-luminance($color-2);
+  $higher-luminance: $luminance-1;
+  $lower-luminance: $luminance-2;
+
+  @if ($luminance-2 > $luminance-1) {
+    $higher-luminance: $luminance-2;
+    $lower-luminance: $luminance-1;
+  }
+
+  @return math.div($higher-luminance + 0.05, $lower-luminance + 0.05);
+}
+
+@function get-luminance($color) {
+  $color-channels: (
+    "red": color.red($color),
+    "green": color.green($color),
+    "blue": color.blue($color),
+  );
+  $luminance: 0;
+
+  @each $channel-name, $channel-value in $color-channels {
+    $channel-value: math.div($channel-value, 255);
+
+    @if ($channel-value < 0.03928) {
+      $channel-value: math.div($channel-value, 12.92);
+    } @else {
+      $channel-value: math.pow(math.div($channel-value + 0.055, 1.055), 2.4);
+    }
+
+    $channel-multiplier: map.get($luminance-channel-multipliers, $channel-name);
+    $luminance: $luminance + $channel-value * $channel-multiplier;
+  }
+
+  @return $luminance;
+}
+
+@function is-color-dark($color) {
+  $tests-passed: 0;
+
+  @if (color.lightness($color) < 50%) {
+    $tests-passed: $tests-passed + 1;
+  }
+
+  @if (get-luminance($color) < 0.5) {
+    $tests-passed: $tests-passed + 1;
+  }
+
+  @if (get-contrast($color, #fff) > get-contrast($color, #000)) {
+    $tests-passed: $tests-passed + 1;
+  }
+
+  @return $tests-passed >= 2;
+}
+
+@function is-color-light($color) {
+  @return is-color-dark($color) == false;
+}
+
+@function is-contrast-high($color-1, $color-2) {
+  @return get-contrast($color-1, $color-2) >
+    list.nth($optimal-contrast-range, 2);
+}
+
+@function is-contrast-low($color-1, $color-2) {
+  @return get-contrast($color-1, $color-2) <
+    list.nth($optimal-contrast-range, 1);
+}
+
+@function is-contrast-optimal($color-1, $color-2) {
+  @return is-contrast-low($color-1, $color-2) == false and
+    is-contrast-high($color-1, $color-2) == false;
+}
+
+@function is-luminance-average($value) {
+  $luminance: 0;
+
+  @if (meta.type-of($value) == color) {
+    $luminance: get-luminance($value);
+  } @else if (meta.type-of($value) == number) {
+    $luminance: math.clamp(0, $value, 1);
+  } @else {
+    @error "Invalid input.";
+  }
+
+  @return $luminance > list.nth($average-luminance-range, 1) and $luminance <
+    list.nth($average-luminance-range, 2);
+}

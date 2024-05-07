@@ -1,0 +1,115 @@
+@use "./_config";
+@use "./modules/tools.scss";
+@use "sass:map";
+@use "sass:meta";
+
+@function find-in-settings($settings-id, $query) {
+  $settings: map.get(config.$settings, $settings-id);
+
+  @if ($settings == null) {
+    @error "Invalid settings id.";
+  }
+
+  $data: map.get($settings, $query);
+
+  @if ($data != null) {
+    @return $data;
+  }
+
+  @if ($query == "default") {
+    @return "md";
+  } @else if ($query == "key-separator") {
+    @return "-";
+  } @else if ($query == "no-css-vars-compiled") {
+    @return false;
+  } @else if ($query == "multiplier") {
+    @return null;
+  } @else if ($query == "name") {
+    @return $settings-id;
+  } @else if ($query == "value") {
+    @error "Value should not be null.";
+  }
+
+  @return null;
+}
+
+@function find-preset($presets-id, $query) {
+  $presets: map.get(config.$presets, $presets-id);
+
+  @if ($presets == null) {
+    @error "Invalid presets id.";
+  }
+
+  $preset: map.get($presets, $query);
+
+  @if ($preset == null) {
+    @error "Preset not found.";
+  }
+
+  @return $preset;
+}
+
+@function find-settings($settings-id) {
+  $settings: map.get(config.$settings, $settings-id);
+
+  @if ($settings == null) {
+    @error "Invalid settings id.";
+  }
+
+  @return $settings;
+}
+
+@function get($settings-id, $query: null) {
+  $settings: find-settings($settings-id);
+  $query-is-invalid-css-value: meta.type-of($query) != number and
+    tools.is-css-var($query) == false;
+
+  @if ($query == null) {
+    @if (map.has-key($settings, "shorthand")) {
+      @return find-in-settings($settings-id, "shorthand");
+    } @else {
+      $query: find-in-settings($settings-id, "default");
+    }
+  }
+
+  $settings-value: map.get($settings, "value");
+
+  @if (meta.type-of($settings-value) != map) {
+    @return $settings-value;
+  }
+
+  $value: $query;
+  $multiplier: find-in-settings($settings-id, "multiplier");
+  $data: tools.find-in-map($settings-value, $query);
+
+  @if ($data == null) {
+    @if ($query-is-invalid-css-value) {
+      @if (must-warn("wtk__get__defaults-to-invalid-css-value")) {
+        @warn "Value defaulted to query, an invalid CSS value.";
+      }
+    } @else {
+      @if (must-warn("wtk__get__defaults-to-invalid-css-value")) {
+        @warn "Value defaulted to query.";
+      }
+    }
+  } @else {
+    @if (find-in-settings($settings-id, "no-css-vars-compiled")) {
+      $value: map.get($data, "value");
+    } @else {
+      $var-name: find-in-settings($settings-id, "name");
+      $key-separator: find-in-settings($settings-id, "key-separator");
+      $main-key: map.get($data, "main-key");
+      $value: var(--#{$var-name}#{$key-separator}#{$main-key});
+    }
+  }
+
+  @if ($multiplier != null) {
+    $value: calc($value * $multiplier);
+  }
+
+  @return $value;
+}
+
+@function must-warn($warning-id) {
+  @return map.get(config.$system, $warning-id);
+}

@@ -1,0 +1,76 @@
+@use "../wtk.scss";
+
+*,
+*::after,
+*::before {
+  box-sizing: border-box;
+  outline-offset: wtk.get("outline", "offset");
+  margin: 0;
+  padding: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+ol,
+ul,
+dl {
+  list-style-position: inside;
+}
+
+img {
+  shape-margin: wtk.get("spacing", "main");
+  object-fit: cover;
+  object-position: center;
+  width: 100%;
+  height: auto;
+  background-repeat: no-repeat;
+  background-size: cover;
+  vertical-align: middle;
+}
+
+html {
+  @media (prefers-reduced-motion: reduce) {
+    --duration-multiplier: #{wtk.get("reduced-motion", "duration-multiplier")};
+    --distance-multiplier: #{wtk.get("reduced-motion", "distance-multiplier")};
+    --scale-delta-multiplier: #{wtk.get(
+        "reduced-motion",
+        "scale-delta-multiplier"
+      )};
+  }
+}
+
+html {
+  --html-font-size: #{wtk.get("responsive-html-font-size", "base")};
+
+  font-size: calc(var(--html-font-size) * var(--global-ui-scale, 1));
+  hanging-punctuation: first last;
+
+  @media (orientation: portrait) {
+    --html-font-size: #{wtk.get("responsive-html-font-size", "portrait")};
+  }
+}
+
+body {
+  font-family: wtk.get("font-family", "base");
+  font-size: wtk.get("font-size", "md");
+  line-height: wtk.get("line-height", "md");
+  word-break: break-word;
+}
+
+:has(:target) {
+  @media (prefers-reduced-motion: no-preference) {
+    scroll-behavior: smooth;
+    scroll-padding-top: wtk.get("height", "scroll-padding-top");
+  }
+}

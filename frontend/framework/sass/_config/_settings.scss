@@ -1,0 +1,201 @@
+@use "sass:math";
+
+$settings: (
+  "z-index": (
+    "value": (
+      ("xs", "lowest"): 1,
+      ("sm", "low"): 10,
+      ("md", "normal"): 100,
+      ("lg", "high"): 1000,
+      ("xl", "highest"): 10000,
+    ),
+  ),
+  "opacity": (
+    "value": (
+      ("xs", "20"): 0.2,
+      ("sm", "40"): 0.4,
+      ("md", "60"): 0.6,
+      ("lg", "80"): 0.8,
+      ("xl", "100"): 1,
+      "overlay": 0.95,
+    ),
+  ),
+  "duration": (
+    "value": (
+      ("xs", "faster"): 0.1,
+      ("sm", "fast"): 0.2,
+      ("md", "normal"): 0.4,
+      ("lg", "slow"): 0.8,
+      ("xl", "slower"): 1.6,
+    ),
+    "multiplier": var(--duration-multiplier, 1),
+  ),
+  "distance": (
+    "value": (
+      "xs": min(1rem, 5%),
+      "sm": min(2rem, 10%),
+      "md": min(4em, 20%),
+      "lg": min(8rem, 40%),
+      "xl": min(16rem, 80%),
+    ),
+    "multiplier": var(--distance-multiplier, 1),
+  ),
+  "scale-delta": (
+    "value": (
+      "xs": 0.05,
+      "sm": 0.1,
+      "md": 0.2,
+      "lg": 0.4,
+      "xl": 0.8,
+    ),
+    "multiplier": var(--scale-delta-multiplier, 1),
+  ),
+  "reduced-motion": (
+    "value": (
+      "distance-multiplier": 0.25,
+      "duration-multiplier": 1.25,
+      "scale-delta-multiplier": 0.25,
+    ),
+  ),
+  "aspect-ratio": (
+    "value": (
+      ("1x1", "square"): math.div(1, 1),
+      "1x2": math.div(1, 2),
+      "2x1": math.div(2, 1),
+      "3x2": math.div(3, 2),
+      "4x3": math.div(4, 3),
+      ("9x16", "portrait"): math.div(9, 16),
+      ("16x9", "panoramic"): math.div(16, 9),
+      "21x9": math.div(21, 9),
+      ("business-card", "credit-card"): math.div(3.375, 2.125),
+      ("card", "gaming-card"): math.div(2.25, 3.5),
+    ),
+    "no-css-vars-compiled": true,
+  ),
+  "outline": (
+    "value": (
+      "offset": max(-1px, -0.0625rem),
+      "style": solid,
+      "width": max(2px, 0.125rem),
+    ),
+    "shorthand": var(--outline-width) var(--outline-style) var(--clr-outline),
+  ),
+  "border": (
+    "value": (
+      "radius": max(5px, 0.3125rem),
+      "style": solid,
+      "width": max(1.5px, 0.0938rem),
+    ),
+    "shorthand": var(--border-width) var(--border-style) var(--clr-border),
+  ),
+  "spacing": (
+    "value": (
+      "xs": min(0.4rem, 1.6vw),
+      "sm": min(0.8rem, 3.2vw),
+      "md": min(1.6rem, 6.4vw),
+      "lg": min(3.2rem, 12.8vw),
+      "xl": min(6.4rem, 25.6vw),
+      "click": max(50px, 2.5vw),
+      "main": clamp(12px, 2.4vw, 1.6rem),
+    ),
+    "default": "main",
+    "multiplier": var(--global-spacing-multiplier, 1),
+  ),
+  "width": (
+    "value": (
+      "xs": 8rem,
+      "sm": 16rem,
+      "md": 24rem,
+      "lg": 40rem,
+      "xl": 64rem,
+      "article": 80ch,
+      ("avatar", "profile-pic"): 4rem,
+      "main-content": 51rem,
+      "profile-card": 10rem,
+      "text-box": 50ch,
+    ),
+  ),
+  "height": (
+    "value": (
+      "xs": 8rem,
+      "sm": 16rem,
+      "md": 24rem,
+      "lg": 40rem,
+      "xl": 64rem,
+      "input": 2.5rem,
+      "panel": max(55px, 3rem),
+      "scroll-padding-top": 2.5rem,
+      "thumbnail": 4rem,
+    ),
+  ),
+  "font-family": (
+    "value": (
+      "base": sans-serif,
+      "input": sans-serif,
+      "mono": monospace,
+      "pop": serif,
+    ),
+    "default": "base",
+  ),
+  "font-size": (
+    "value": (
+      "xs": 0.65rem,
+      "sm": 0.8rem,
+      "md": 1rem,
+      "lg": 1.25rem,
+      "xl": 1.75rem,
+      "hero": 2.5rem,
+    ),
+    "multiplier": var(--global-font-size-multiplier, 1),
+  ),
+  "font-weight": (
+    "value": (
+      ("xs", "thin"): 100,
+      ("sm", "light"): 300,
+      ("md", "regular"): 400,
+      ("lg", "medium"): 500,
+      ("xl", "bold"): 700,
+      "black": 900,
+    ),
+  ),
+  "line-height": (
+    "value": (
+      "xs": 1.2,
+      "sm": 1.4,
+      "md": 1.6,
+      "lg": 1.8,
+      "xl": 2,
+    ),
+    "multiplier": var(--global-line-height-multiplier, 1),
+  ),
+  "clr-text-dark": (
+    "value": hsl(0, 0%, 10%),
+  ),
+  "clr-text-light": (
+    "value": hsl(0, 0%, 95%),
+  ),
+  "clr-darkener": (
+    "value": hsl(0, 0%, 10%),
+  ),
+  "clr-lightener": (
+    "value": hsl(0, 0%, 95%),
+  ),
+  "screen-width-breakpoints": (
+    "value": (
+      ("xs", "mobile"): 400px,
+      ("sm", "tablet"): 800px,
+      ("md", "laptop"): 1200px,
+      ("lg", "desktop"): 1600px,
+      ("xl", "high-dpi"): 2000px,
+    ),
+    "no-css-vars-compiled": true,
+  ),
+  "responsive-html-font-size": (
+    "value": (
+      "base": max(14px, 0.875em + 0.125vw),
+      "portrait": max(15px, 0.9375em + 0.25vw),
+      "ultrawide": max(13px, 0.8125em + 0.0625vw),
+    ),
+    "default": "base",
+  ),
+);
