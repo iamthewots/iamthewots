@@ -1,0 +1,57 @@
+@use "../modules/tools.scss";
+@use "../modules/ui.scss";
+@use "../wtk.scss";
+
+@each $visibility in "invisible", "hidden", "removed" {
+  .#{$visibility} {
+    @include ui.apply-visibility($visibility);
+
+    @each $keyset, $value in wtk.find-settings("screen-width-breakpoints", true)
+    {
+      @each $query in "after", "before" {
+        @include tools.extend-selector-with-keyset("&-#{$query}", $keyset) {
+          @include ui.respond-to-screen-width($value, $query) {
+            @include ui.apply-visibility($visibility);
+          }
+        }
+      }
+    }
+  }
+}
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.overflow-x {
+  flex-wrap: nowrap;
+  display: flex;
+  overflow-x: auto;
+  max-width: 100%;
+
+  & > * {
+    flex: 0 0 auto;
+  }
+}
+
+.overflow-y {
+  overflow-y: auto;
+  max-height: max(100vh, 100%);
+}
+
+.text-overflow {
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+
+  @supports (display: -webkit-box) {
+    @for $i from 1 through 5 {
+      --webkit-line-clamp: #{$i};
+      --webkit-box-orient: vertical;
+
+      overflow: hidden;
+      display: -webkit-box;
+    }
+  }
+}

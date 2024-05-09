@@ -1,4 +1,5 @@
 @use "./tools.scss";
+@use "../wtk.scss";
 @use "sass:map";
 @use "sass:math";
 @use "sass:meta";
@@ -9,8 +10,25 @@ $screen-queries: (
   ("before", "<"): max-width,
 );
 
+@function parse-screen-width($value) {
+  @if (meta.type-of($value) != number) {
+    $value: wtk.get("screen-width-breakpoints", $value);
+  }
+
+  $unit: math.unit($value);
+  $value: math.div($value, $value * 0 + 1);
+
+  @if ($unit == px) {
+    @return math.div($value, 16) * 1em;
+  } @else if ($unit == em or $unit == rem) {
+    @return $value * 1em;
+  } @else {
+    @error "Unable to parse screen width.";
+  }
+}
+
 @function parse-screen-query($value) {
-  $data: tools.find-in-settings($screen-queries, $value);
+  $data: tools.find-in-map($screen-queries, $value);
 
   @if ($data != null) {
     @return map.get($data, "value");
@@ -18,6 +36,17 @@ $screen-queries: (
     @return $value;
   } @else {
     @error "Invalid input.";
+  }
+}
+
+@mixin apply-visibility($visibility) {
+  @if ($visibility == "invisible") {
+    visibility: hidden !important;
+  } @else if ($visibility == "hidden") {
+    position: fixed !important;
+    right: -200% !important;
+  } @else if ($visibility == "removed") {
+    display: none !important;
   }
 }
 
@@ -32,17 +61,6 @@ $screen-queries: (
 @mixin respond-to-pointer() {
   @media (pointer: fine) {
     @content;
-  }
-}
-
-@mixin respond-to-visibility($visibility) {
-  @if ($visibility == "invisible") {
-    visibility: hidden !important;
-  } @else if ($visibility == "hidden") {
-    position: fixed !important;
-    right: -100% !important;
-  } @else if ($visibility == "removed") {
-    display: none !important;
   }
 }
 

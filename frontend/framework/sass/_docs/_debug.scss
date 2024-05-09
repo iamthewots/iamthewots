@@ -1,6 +1,0 @@
-@use "../modules/theme.scss";
-
-:root {
-  @include theme.add-color("twitch", #6441a4);
-  @include theme.add-color("twitch-puke", "twitch", ("darkener": #8b0086));
-}

@@ -20,16 +20,18 @@
         $key-separator
       );
     }
-  }
 
-  @each $settings-id, $settings in settings.$settings {
     $multiplier: wtk.find-in-settings($settings-id, "multiplier");
-    
-    @if ($multiplier != null) {
-      $var-name: tools.extract-var-name($multiplier);
-      $var-fallback: tools.extract-var-fallback($multiplier);
 
-      --#{$var-name}: 1;
+    @if ($multiplier != null) {
+      @if (tools.is-css-var($multiplier)) {
+        $var-name: tools.extract-var-name($multiplier);
+        $var-fallback: tools.extract-var-fallback($multiplier);
+
+        --#{$var-name}: #{$var-fallback};
+      } @else {
+        --#{$settings-id}-multiplier: #{$multiplier};
+      }
     }
   }
 }

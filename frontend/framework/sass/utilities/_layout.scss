@@ -1,0 +1,202 @@
+@use "../modules/tools.scss";
+@use "../wtk.scss";
+@use "sass:map";
+
+$positioning: (
+  "x": (
+    "left": (
+      "flex": flex-start,
+      "grid": start,
+    ),
+    "right": (
+      "flex": flex-end,
+      "grid": end,
+    ),
+    "center": (
+      "flex": center,
+      "grid": center,
+    ),
+  ),
+  "y": (
+    "top": (
+      "flex": flex-start,
+      "grid": start,
+    ),
+    "bottom": (
+      "flex": flex-end,
+      "grid": end,
+    ),
+    "center": (
+      "flex": center,
+      "grid": center,
+    ),
+  ),
+);
+
+.position-relative {
+  position: relative;
+}
+
+.set-centered-content {
+  place-items: center;
+  grid-template-columns: minmax(0, 1fr);
+  display: grid;
+}
+
+.set-centered-position {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@each $display-value in flex, grid {
+  @each $y-key, $y-value in map.get($positioning, "y") {
+    @each $x-key, $x-value in map.get($positioning, "x") {
+      .#{$display-value}-#{$y-key}-#{$x-key} {
+        align-items: map.get($y-value, $display-value);
+
+        @if ($display-value == "flex") {
+          justify-content: map.get($x-value, $display-value);
+        } @else {
+          justify-items: map.get($x-value, $display-value);
+        }
+
+        display: $display-value;
+      }
+    }
+  }
+}
+
+.flex {
+  display: flex;
+
+  @for $i from 1 through 3 {
+    &-grow-#{$i} {
+      --flex-grow: #{$i};
+
+      flex-grow: $i;
+    }
+  }
+
+  @each $value in wrap, nowrap, wrap-reverse {
+    &-#{$value} {
+      flex-wrap: $value;
+    }
+  }
+}
+
+.set-flex-layout {
+  --align-items: flex-start;
+  --justify-content: flex-start;
+  --layout-main-width: auto;
+  --flex-grow: 1;
+  --flex-wrap: wrap;
+
+  align-items: var(--align-items);
+  justify-content: var(--justify-content);
+  flex-wrap: var(--flex-wrap);
+
+  & > * {
+    flex-basis: var(--layout-main-width);
+    flex-grow: var(--flex-grow);
+    flex-shrink: 1;
+  }
+}
+
+.grid {
+  display: grid;
+
+  @each $value in column, dense, row {
+    &-flow-#{$value} {
+      --grid-auto-flow: #{$value};
+
+      grid-auto-flow: $value;
+    }
+  }
+
+  @each $value in auto-fill, auto-fit {
+    &-#{$value} {
+      --repeat-function: #{$value};
+    }
+  }
+}
+
+.set-content-grid-layout {
+  --gutter-width: calc(#{wtk.get("width", "main-content")} * 0.15);
+  --layout-main-width: #{wtk.get("width", "main-content")};
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, var(--gutter-width))
+    minmax(100%, var(--layout-main-width))
+    minmax(0, var(--gutter-width))
+    minmax(0, 1fr);
+  display: grid;
+
+  & > * {
+    grid-column: 3/4;
+  }
+
+  $column-extensions: (
+    "gutters": 2/5,
+    "left-gutter": 2/4,
+    "right-gutter": 2/4,
+    "full-width": 1/6,
+    "left": 1/4,
+    "right": 3/6,
+  );
+
+  @each $key, $value in $column-extensions {
+    ._extend-to-#{$key} {
+      grid-column: $value;
+    }
+  }
+}
+
+.set-sandwich-grid-layout {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  display: grid;
+}
+
+.set-staggered-grid-layout {
+  --layout-main-width: calc(#{wtk.get("width", "main-content")} * 0.6);
+  --layout-main-height: auto;
+  --justify-self-odd: start;
+  --justify-self-even: end;
+
+  grid-auto-rows: var(--layout-main-height);
+  grid-template-columns: minmax(0, 1fr);
+  display: grid;
+
+  & > * {
+    width: 100%;
+    max-width: var(--layout-main-width);
+
+    &:nth-child(odd) {
+      justify-self: var(--justify-self-odd);
+    }
+
+    &:nth-child(even) {
+      justify-self: var(--justify-self-even);
+    }
+  }
+}
+
+@each $axis in "x", "y" {
+  @each $keyset in map.keys(wtk.find-settings("spacing", true)) {
+    $value: wtk.get("spacing", $keyset);
+
+    @include tools.extend-selector-with-keyset(
+      ".set-spreading-#{$axis}",
+      $keyset
+    ) {
+      & > *:not(:last-child) {
+        @if ($axis == "x") {
+          margin-right: $value;
+        } @else {
+          margin-bottom: $value;
+        }
+      }
+    }
+  }
+}

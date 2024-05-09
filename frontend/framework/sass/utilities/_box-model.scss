@@ -1,0 +1,114 @@
+@use "../modules/tools.scss";
+@use "../wtk.scss";
+@use "sass:map";
+
+@each $keyset, $value in wtk.find-settings("aspect-ratio", true) {
+  @include tools.extend-selector-with-keyset(".aspect-ratio", $keyset) {
+    aspect-ratio: $value;
+  }
+}
+
+.border {
+  $value: wtk.get("border");
+
+  border: $value;
+
+  @each $coordinate in "left", "right", "top", "bottom" {
+    &-#{$coordinate} {
+      border-#{$coordinate}: $value;
+    }
+  }
+
+  &-circle {
+    border-radius: 100%;
+  }
+
+  &-round {
+    border-radius: 100vh;
+  }
+
+  &-rounded {
+    border-radius: wtk.get("border", "radius");
+  }
+
+  &-square {
+    border-radius: 0;
+  }
+}
+
+@each $property in "margin", "padding", "gap" {
+  @each $keyset in map.keys(wtk.find-settings("spacing", true)) {
+    $value: wtk.get("spacing", $keyset);
+
+    @include tools.extend-selector-with-keyset(".#{$property}", $keyset) {
+      @if ($property == "gap") {
+        column-gap: $value;
+        row-gap: $value;
+      } @else {
+        #{$property}-left: $value;
+        #{$property}-right: $value;
+      }
+    }
+
+    @each $axis in "x", "y" {
+      @include tools.extend-selector-with-keyset(
+        ".#{$property}-#{$axis}",
+        $keyset
+      ) {
+        @if ($property == "gap") {
+          @if ($axis == "x") {
+            column-gap: $value;
+          } @else {
+            row-gap: $value;
+          }
+        } @else {
+          @if ($axis == "x") {
+            #{$property}-left: $value;
+            #{$property}-right: $value;
+          } @else {
+            #{$property}-top: $value;
+            #{$property}-bottom: $value;
+          }
+        }
+      }
+    }
+
+    @if ($property != "gap") {
+      @each $coordinate in "left", "right", "top", "bottom" {
+        @include tools.extend-selector-with-keyset(
+          ".#{$property}-#{$coordinate}",
+          $keyset
+        ) {
+          #{$property}-#{$coordinate}: $value;
+        }
+      }
+    }
+  }
+}
+
+@each $property in "width", "height" {
+  .#{$property}-100 {
+    #{$property}: 100%;
+  }
+
+  .max-#{$property}-100 {
+    max-#{$property}: 100%;
+  }
+
+  @each $keyset in map.keys(wtk.find-settings($property, true)) {
+    $value: wtk.get($property, $keyset);
+
+    @include tools.extend-selector-with-keyset(".#{$property}", $keyset) {
+      #{$property}: $value;
+
+      @if ($property == "width") {
+        max-width: 100%;
+      }
+    }
+  }
+}
+
+.fit {
+  width: 100%;
+  height: 100%;
+}

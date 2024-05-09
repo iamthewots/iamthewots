@@ -168,16 +168,20 @@ $settings: (
     ),
     "multiplier": var(--global-line-height-multiplier, 1),
   ),
-  "clr-text-dark": (
+  "color-space": (
+    "value": srgb,
+    "no-css-vars-compiled": true,
+  ),
+  "color-darkener": (
     "value": hsl(0, 0%, 10%),
   ),
-  "clr-text-light": (
+  "color-lightener": (
     "value": hsl(0, 0%, 95%),
   ),
-  "clr-darkener": (
+  "color-text-dark": (
     "value": hsl(0, 0%, 10%),
   ),
-  "clr-lightener": (
+  "color-text-light": (
     "value": hsl(0, 0%, 95%),
   ),
   "screen-width-breakpoints": (

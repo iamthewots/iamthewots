@@ -1,0 +1,17 @@
+@use "../modules/theme.scss";
+@use "../wtk.scss";
+
+:root {
+  @include theme.add-color("twitch", #6441a4);
+  @include theme.add-color(
+    "twitch-puke",
+    "twitch",
+    (
+      "lightener": lightgreen,
+    )
+  );
+}
+
+.box {
+  background-color: theme.get("twitch", $lightness: -25%, $alpha: 0.65);
+}

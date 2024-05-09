@@ -49,14 +49,18 @@
   @return $preset;
 }
 
-@function find-settings($settings-id) {
+@function find-settings($settings-id, $value-only: false) {
   $settings: map.get(config.$settings, $settings-id);
 
   @if ($settings == null) {
     @error "Invalid settings id.";
   }
 
-  @return $settings;
+  @if ($value-only) {
+    @return map.get($settings, "value");
+  } @else {
+    @return $settings;
+  }
 }
 
 @function get($settings-id, $query: null) {
@@ -88,7 +92,7 @@
         @warn "Value defaulted to query, an invalid CSS value.";
       }
     } @else {
-      @if (must-warn("wtk__get__defaults-to-invalid-css-value")) {
+      @if (must-warn("wtk__get__defaults-to-query")) {
         @warn "Value defaulted to query.";
       }
     }

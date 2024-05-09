@@ -1,27 +1,71 @@
 @use "./chroma.scss";
 @use "./tools.scss";
 @use "../wtk.scss";
+@use "sass:color";
 @use "sass:list";
 @use "sass:map";
+@use "sass:math";
 @use "sass:meta";
 @use "sass:string";
 
-$color-scheme-properties: ("outline", "border", "background", "text", "shadow");
-$reserved-color-names: list.join(
-  $color-scheme-properties,
-  ("darkener", "lightener", "text-dark", "text-light")
-);
+$color-properties: ("outline", "border", "background", "text", "shadow");
+$reserved-color-names: "darkener", "lightener", "text-dark", "text-light";
+
+@function get(
+  $color-value,
+  $lightness: 0,
+  $alpha: 1,
+  $color-space: wtk.get("color-space")
+) {
+  $color-value: validate-color-value($color-value);
+  $output-color: $color-value;
+  $mixing-color: null;
+  $lightness: math.clamp(-100%, $lightness, 100%);
+  $alpha: math.clamp(0, $alpha, 1);
+  $transparency: 100% - $alpha * 100%;
+
+  @if ($lightness != 0%) {
+    $color-darkener: var(--color-darkener);
+    $color-lightener: var(--color-lightener);
+
+    @if (meta.type-of($color-value) == string) {
+      $var-name: tools.extract-var-name($color-value);
+      $color-darkener: var(--#{$var-name}-darkener);
+      $color-lightener: var(--#{$var-name}-lightener);
+    }
+
+    @if ($lightness > 0%) {
+      $mixing-color: $color-lightener;
+    } @else {
+      $mixing-color: $color-darkener;
+    }
+
+    $lightness: math.abs($lightness);
+    $output-color: color-mix(
+      in $color-space,
+      $output-color,
+      $mixing-color $lightness
+    );
+  }
+
+  @if ($transparency > 0%) {
+    $output-color: color-mix(
+      in $color-space,
+      $output-color,
+      transparent $transparency
+    );
+  }
+
+  @return $output-color;
+}
 
 @function validate-color-name($color-name, $allow-reserved-names: false) {
   $color-name: string.to-lower-case(tools.remove-whitespaces($color-name));
 
-  @if (
-    list.index($reserved-color-names, $color-name) !=
-      null and
-      $allow-reserved-names ==
-      false
-  ) {
-    @error "Reserved color name.";
+  @if (list.index($reserved-color-names, $color-name) != null) {
+    @if ($allow-reserved-names == false) {
+      @error "Reserved color name.";
+    }
   }
 
   @return $color-name;
@@ -30,39 +74,39 @@ $reserved-color-names: list.join(
 @function validate-color-value($color-value) {
   @if (meta.type-of($color-value) == color) {
     @return $color-value;
-  } @else if (meta.type-of($color-value) == string) {
-    $string: tools.remove-whitespaces($color-value);
-
-    @if (tools.is-css-var($string)) {
-      $var-name: tools.extract-var-name($string);
-
-      @if (string.index($var-name, "--clr") == 1) {
-        @return $string;
-      } @else {
-        @error "Invalid color string.";
-      }
-    } @else {
-      @return var(--clr-#{$string});
-    }
+  } @else if (meta.type-of($color-value) != string) {
+    @error "Invalid color value.";
   }
 
-  @error "Invalid color value.";
+  $string: tools.remove-whitespaces($color-value);
+
+  @if (tools.is-css-var($string)) {
+    $var-name: tools.extract-var-name($string);
+
+    @if (string.index($var-name, "color") == 1) {
+      @return $string;
+    } @else {
+      @error "Variable is not a theme color.";
+    }
+  } @else {
+    @return var(--color-#{$string});
+  }
 }
 
 @mixin add-color(
   $color-name,
   $color-value,
   $options: (),
-  $allow-reserved-color-names: false
+  $allow-reserved-names: false
 ) {
-  $color-name: validate-color-name($color-name, $allow-reserved-color-names);
+  $color-name: validate-color-name($color-name, $allow-reserved-names);
   $color-value: validate-color-value($color-value);
 
   @if (meta.type-of($options) != map) {
     $options: ();
   }
 
-  @each $key in "text", "darkener", "lightener" {
+  @each $key in "text", "darkener", "lightener", "marker" {
     $value: map.get($options, $key);
 
     @if (meta.type-of($color-value) == string and $value == null) {
@@ -71,25 +115,25 @@ $reserved-color-names: list.join(
     } @else if ($value == null) {
       @if ($key == "text") {
         @if (chroma.is-color-dark($color-value)) {
-          $value: var(--clr-text-light);
+          $value: var(--color-text-light);
         } @else {
-          $value: var(--clr-text-dark);
+          $value: var(--color-text-dark);
         }
-      } @else if ($key == "darkener" or $key == "lightener") {
-        $value: var(--clr-#{$key});
       }
-    } @else {
-      $value: validate-color-value($value);
+      @if ($key == "darkener" or $key == "lightener") {
+        $value: var(--color-#{$key});
+      }
+      @if ($key == "marker") {
+        $value: color.invert($color-value);
+      }
     }
 
     $options: map.set($options, $key, $value);
   }
 
-  --clr-#{$color-name}: #{$color-value};
-  --clr-#{$color-name}--text: #{map.get($options, "text")};
-  --clr-#{$color-name}--darkener: #{map.get($options, "darkener")};
-  --clr-#{$color-name}--lightener: #{map.get($options, "lightener")};
-}
+  --color-#{$color-name}: #{$color-value};
 
-@mixin use-color-classes($color-names...) {
+  @each $key, $value in $options {
+    --color-#{$color-name}--#{$key}: #{$value};
+  }
 }

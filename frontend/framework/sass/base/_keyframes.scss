@@ -26,7 +26,7 @@
   @if ($keyframes-id == "draw-from") {
     $from-distance: 100%;
   } @else {
-    $from-distance: var(--distance, #{wtk.get("distance")});
+    $from-distance: var(--animation-distance, #{wtk.get("distance")});
   }
 
   @each $coordinate in "left", "right", "top", "bottom" {
@@ -53,7 +53,7 @@
 
 @each $keyframes-id in "zoom-in", "zoom-out" {
   $from-scale: 1;
-  $scale-delta: var(--scale-delta, wtk.get("scale-delta"));
+  $scale-delta: var(--animation-scale-delta, wtk.get("scale-delta"));
 
   @if ($keyframes-id == "zoom-in") {
     $from-scale: 1 - $scale-delta;
