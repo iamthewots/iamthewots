@@ -13,7 +13,7 @@ $reserved-color-names: "darkener", "lightener", "text-dark", "text-light";
 
 @function get(
   $color-value,
-  $lightness: 0,
+  $lightness: 0%,
   $alpha: 1,
   $color-space: wtk.get("color-space")
 ) {
@@ -25,26 +25,17 @@ $reserved-color-names: "darkener", "lightener", "text-dark", "text-light";
   $transparency: 100% - $alpha * 100%;
 
   @if ($lightness != 0%) {
-    $color-darkener: var(--color-darkener);
-    $color-lightener: var(--color-lightener);
-
-    @if (meta.type-of($color-value) == string) {
-      $var-name: tools.extract-var-name($color-value);
-      $color-darkener: var(--#{$var-name}-darkener);
-      $color-lightener: var(--#{$var-name}-lightener);
-    }
-
     @if ($lightness > 0%) {
-      $mixing-color: $color-lightener;
+      $mixing-color: var(--color-lightener);
     } @else {
-      $mixing-color: $color-darkener;
+      $mixing-color: var(--color-darkener);
     }
 
-    $lightness: math.abs($lightness);
+    $mixing-percentage: math.abs($lightness);
     $output-color: color-mix(
       in $color-space,
       $output-color,
-      $mixing-color $lightness
+      $mixing-color $mixing-percentage
     );
   }
 
@@ -97,19 +88,28 @@ $reserved-color-names: "darkener", "lightener", "text-dark", "text-light";
   $color-name,
   $color-value,
   $options: (),
-  $allow-reserved-names: false
+  $override-reserved-color: false
 ) {
-  $color-name: validate-color-name($color-name, $allow-reserved-names);
+  $color-name: validate-color-name($color-name, $override-reserved-color);
   $color-value: validate-color-value($color-value);
 
   @if (meta.type-of($options) != map) {
     $options: ();
   }
 
-  @each $key in "text", "darkener", "lightener", "marker" {
+  --color-#{$color-name}: #{$color-value};
+
+  @each $key in "text", "contrast" {
     $value: map.get($options, $key);
 
-    @if (meta.type-of($color-value) == string and $value == null) {
+    @if (
+      meta.type-of($color-value) ==
+        string and
+        $value ==
+        null and
+        $key !=
+        "contrast-text"
+    ) {
       $var-name: tools.extract-var-name($color-value);
       $value: var(--#{$var-name}--#{$key});
     } @else if ($value == null) {
@@ -120,20 +120,14 @@ $reserved-color-names: "darkener", "lightener", "text-dark", "text-light";
           $value: var(--color-text-dark);
         }
       }
-      @if ($key == "darkener" or $key == "lightener") {
-        $value: var(--color-#{$key});
-      }
-      @if ($key == "marker") {
+
+      @if ($key == "contrast") {
         $value: color.invert($color-value);
       }
+    } @else {
+      $value: validate-color-value($value);
     }
 
-    $options: map.set($options, $key, $value);
-  }
-
-  --color-#{$color-name}: #{$color-value};
-
-  @each $key, $value in $options {
     --color-#{$color-name}--#{$key}: #{$value};
   }
 }
