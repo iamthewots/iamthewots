@@ -34,13 +34,13 @@
 }
 
 @function find-preset($presets-id, $query) {
-  $presets: map.get(config.$presets, $presets-id);
+  $presets-map: map.get(config.$presets, $presets-id);
 
   @if ($presets == null) {
     @error "Invalid presets id.";
   }
 
-  $preset: map.get($presets, $query);
+  $preset: map.get($presets-map, $query);
 
   @if ($preset == null) {
     @error "Preset not found.";
