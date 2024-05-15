@@ -31,6 +31,16 @@
   --reduced-motion-distance-multiplier: 0.25;
   --reduced-motion-duration-multiplier: 1.25;
   --reduced-motion-scale-delta-multiplier: 0.25;
+  --aspect-ratio-1x1: 1;
+  --aspect-ratio-1x2: 0.5;
+  --aspect-ratio-2x1: 2;
+  --aspect-ratio-3x2: 1.5;
+  --aspect-ratio-4x3: 1.3333333333;
+  --aspect-ratio-9x16: 0.5625;
+  --aspect-ratio-16x9: 1.7777777778;
+  --aspect-ratio-21x9: 2.3333333333;
+  --aspect-ratio-business-card: 1.5882352941;
+  --aspect-ratio-card: 0.6428571429;
   --outline-offset: max(-1px, -0.0625rem);
   --outline-style: solid;
   --outline-width: max(2px, 0.125rem);
@@ -269,6 +279,229 @@ body {
   :has(:target) {
     scroll-behavior: smooth;
     scroll-padding-top: var(--height-scroll-padding-top);
+  }
+}
+
+.invisible {
+  visibility: hidden !important;
+}
+@media screen and (min-width: 25em) {
+  .invisible-after-xs, .invisible-after-mobile {
+    visibility: hidden !important;
+  }
+}
+@media screen and (max-width: 25em) {
+  .invisible-before-xs, .invisible-before-mobile {
+    visibility: hidden !important;
+  }
+}
+@media screen and (min-width: 50em) {
+  .invisible-after-sm, .invisible-after-tablet {
+    visibility: hidden !important;
+  }
+}
+@media screen and (max-width: 50em) {
+  .invisible-before-sm, .invisible-before-tablet {
+    visibility: hidden !important;
+  }
+}
+@media screen and (min-width: 75em) {
+  .invisible-after-md, .invisible-after-laptop {
+    visibility: hidden !important;
+  }
+}
+@media screen and (max-width: 75em) {
+  .invisible-before-md, .invisible-before-laptop {
+    visibility: hidden !important;
+  }
+}
+@media screen and (min-width: 100em) {
+  .invisible-after-lg, .invisible-after-desktop {
+    visibility: hidden !important;
+  }
+}
+@media screen and (max-width: 100em) {
+  .invisible-before-lg, .invisible-before-desktop {
+    visibility: hidden !important;
+  }
+}
+@media screen and (min-width: 125em) {
+  .invisible-after-xl, .invisible-after-high-dpi {
+    visibility: hidden !important;
+  }
+}
+@media screen and (max-width: 125em) {
+  .invisible-before-xl, .invisible-before-high-dpi {
+    visibility: hidden !important;
+  }
+}
+
+.hidden {
+  position: fixed !important;
+  right: -200% !important;
+}
+@media screen and (min-width: 25em) {
+  .hidden-after-xs, .hidden-after-mobile {
+    position: fixed !important;
+    right: -200% !important;
+  }
+}
+@media screen and (max-width: 25em) {
+  .hidden-before-xs, .hidden-before-mobile {
+    position: fixed !important;
+    right: -200% !important;
+  }
+}
+@media screen and (min-width: 50em) {
+  .hidden-after-sm, .hidden-after-tablet {
+    position: fixed !important;
+    right: -200% !important;
+  }
+}
+@media screen and (max-width: 50em) {
+  .hidden-before-sm, .hidden-before-tablet {
+    position: fixed !important;
+    right: -200% !important;
+  }
+}
+@media screen and (min-width: 75em) {
+  .hidden-after-md, .hidden-after-laptop {
+    position: fixed !important;
+    right: -200% !important;
+  }
+}
+@media screen and (max-width: 75em) {
+  .hidden-before-md, .hidden-before-laptop {
+    position: fixed !important;
+    right: -200% !important;
+  }
+}
+@media screen and (min-width: 100em) {
+  .hidden-after-lg, .hidden-after-desktop {
+    position: fixed !important;
+    right: -200% !important;
+  }
+}
+@media screen and (max-width: 100em) {
+  .hidden-before-lg, .hidden-before-desktop {
+    position: fixed !important;
+    right: -200% !important;
+  }
+}
+@media screen and (min-width: 125em) {
+  .hidden-after-xl, .hidden-after-high-dpi {
+    position: fixed !important;
+    right: -200% !important;
+  }
+}
+@media screen and (max-width: 125em) {
+  .hidden-before-xl, .hidden-before-high-dpi {
+    position: fixed !important;
+    right: -200% !important;
+  }
+}
+
+.removed {
+  display: none !important;
+}
+@media screen and (min-width: 25em) {
+  .removed-after-xs, .removed-after-mobile {
+    display: none !important;
+  }
+}
+@media screen and (max-width: 25em) {
+  .removed-before-xs, .removed-before-mobile {
+    display: none !important;
+  }
+}
+@media screen and (min-width: 50em) {
+  .removed-after-sm, .removed-after-tablet {
+    display: none !important;
+  }
+}
+@media screen and (max-width: 50em) {
+  .removed-before-sm, .removed-before-tablet {
+    display: none !important;
+  }
+}
+@media screen and (min-width: 75em) {
+  .removed-after-md, .removed-after-laptop {
+    display: none !important;
+  }
+}
+@media screen and (max-width: 75em) {
+  .removed-before-md, .removed-before-laptop {
+    display: none !important;
+  }
+}
+@media screen and (min-width: 100em) {
+  .removed-after-lg, .removed-after-desktop {
+    display: none !important;
+  }
+}
+@media screen and (max-width: 100em) {
+  .removed-before-lg, .removed-before-desktop {
+    display: none !important;
+  }
+}
+@media screen and (min-width: 125em) {
+  .removed-after-xl, .removed-after-high-dpi {
+    display: none !important;
+  }
+}
+@media screen and (max-width: 125em) {
+  .removed-before-xl, .removed-before-high-dpi {
+    display: none !important;
+  }
+}
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.overflow-x {
+  flex-wrap: nowrap;
+  display: flex;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.overflow-x > * {
+  flex: 0 0 auto;
+}
+
+.overflow-y {
+  overflow-y: auto;
+  max-height: max(100vh, 100%);
+}
+
+.text-overflow {
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+@supports (display: -webkit-box) {
+  .text-overflow {
+    --webkit-line-clamp: 1;
+    --webkit-box-orient: vertical;
+    overflow: hidden;
+    display: -webkit-box;
+    --webkit-line-clamp: 2;
+    --webkit-box-orient: vertical;
+    overflow: hidden;
+    display: -webkit-box;
+    --webkit-line-clamp: 3;
+    --webkit-box-orient: vertical;
+    overflow: hidden;
+    display: -webkit-box;
+    --webkit-line-clamp: 4;
+    --webkit-box-orient: vertical;
+    overflow: hidden;
+    display: -webkit-box;
+    --webkit-line-clamp: 5;
+    --webkit-box-orient: vertical;
+    overflow: hidden;
+    display: -webkit-box;
   }
 }
 
@@ -1439,227 +1672,18 @@ body {
   text-transform: uppercase;
 }
 
-.invisible {
-  visibility: hidden !important;
-}
-@media screen and (min-width: 25em) {
-  .invisible-after-xs, .invisible-after-mobile {
-    visibility: hidden !important;
-  }
-}
-@media screen and (max-width: 25em) {
-  .invisible-before-xs, .invisible-before-mobile {
-    visibility: hidden !important;
-  }
-}
-@media screen and (min-width: 50em) {
-  .invisible-after-sm, .invisible-after-tablet {
-    visibility: hidden !important;
-  }
-}
-@media screen and (max-width: 50em) {
-  .invisible-before-sm, .invisible-before-tablet {
-    visibility: hidden !important;
-  }
-}
-@media screen and (min-width: 75em) {
-  .invisible-after-md, .invisible-after-laptop {
-    visibility: hidden !important;
-  }
-}
-@media screen and (max-width: 75em) {
-  .invisible-before-md, .invisible-before-laptop {
-    visibility: hidden !important;
-  }
-}
-@media screen and (min-width: 100em) {
-  .invisible-after-lg, .invisible-after-desktop {
-    visibility: hidden !important;
-  }
-}
-@media screen and (max-width: 100em) {
-  .invisible-before-lg, .invisible-before-desktop {
-    visibility: hidden !important;
-  }
-}
-@media screen and (min-width: 125em) {
-  .invisible-after-xl, .invisible-after-high-dpi {
-    visibility: hidden !important;
-  }
-}
-@media screen and (max-width: 125em) {
-  .invisible-before-xl, .invisible-before-high-dpi {
-    visibility: hidden !important;
-  }
+.text-is-title {
+  font-family: var(--font-family-pop);
+  font-size: calc(var(--font-size-xl) * var(--global-font-size-multiplier, 1));
+  font-weight: var(--font-weight-xl);
+  line-height: calc(var(--line-height-lg) * var(--global-line-height-multiplier, 1));
 }
 
-.hidden {
-  position: fixed !important;
-  right: -200% !important;
-}
-@media screen and (min-width: 25em) {
-  .hidden-after-xs, .hidden-after-mobile {
-    position: fixed !important;
-    right: -200% !important;
-  }
-}
-@media screen and (max-width: 25em) {
-  .hidden-before-xs, .hidden-before-mobile {
-    position: fixed !important;
-    right: -200% !important;
-  }
-}
-@media screen and (min-width: 50em) {
-  .hidden-after-sm, .hidden-after-tablet {
-    position: fixed !important;
-    right: -200% !important;
-  }
-}
-@media screen and (max-width: 50em) {
-  .hidden-before-sm, .hidden-before-tablet {
-    position: fixed !important;
-    right: -200% !important;
-  }
-}
-@media screen and (min-width: 75em) {
-  .hidden-after-md, .hidden-after-laptop {
-    position: fixed !important;
-    right: -200% !important;
-  }
-}
-@media screen and (max-width: 75em) {
-  .hidden-before-md, .hidden-before-laptop {
-    position: fixed !important;
-    right: -200% !important;
-  }
-}
-@media screen and (min-width: 100em) {
-  .hidden-after-lg, .hidden-after-desktop {
-    position: fixed !important;
-    right: -200% !important;
-  }
-}
-@media screen and (max-width: 100em) {
-  .hidden-before-lg, .hidden-before-desktop {
-    position: fixed !important;
-    right: -200% !important;
-  }
-}
-@media screen and (min-width: 125em) {
-  .hidden-after-xl, .hidden-after-high-dpi {
-    position: fixed !important;
-    right: -200% !important;
-  }
-}
-@media screen and (max-width: 125em) {
-  .hidden-before-xl, .hidden-before-high-dpi {
-    position: fixed !important;
-    right: -200% !important;
-  }
-}
-
-.removed {
-  display: none !important;
-}
-@media screen and (min-width: 25em) {
-  .removed-after-xs, .removed-after-mobile {
-    display: none !important;
-  }
-}
-@media screen and (max-width: 25em) {
-  .removed-before-xs, .removed-before-mobile {
-    display: none !important;
-  }
-}
-@media screen and (min-width: 50em) {
-  .removed-after-sm, .removed-after-tablet {
-    display: none !important;
-  }
-}
-@media screen and (max-width: 50em) {
-  .removed-before-sm, .removed-before-tablet {
-    display: none !important;
-  }
-}
-@media screen and (min-width: 75em) {
-  .removed-after-md, .removed-after-laptop {
-    display: none !important;
-  }
-}
-@media screen and (max-width: 75em) {
-  .removed-before-md, .removed-before-laptop {
-    display: none !important;
-  }
-}
-@media screen and (min-width: 100em) {
-  .removed-after-lg, .removed-after-desktop {
-    display: none !important;
-  }
-}
-@media screen and (max-width: 100em) {
-  .removed-before-lg, .removed-before-desktop {
-    display: none !important;
-  }
-}
-@media screen and (min-width: 125em) {
-  .removed-after-xl, .removed-after-high-dpi {
-    display: none !important;
-  }
-}
-@media screen and (max-width: 125em) {
-  .removed-before-xl, .removed-before-high-dpi {
-    display: none !important;
-  }
-}
-
-.overflow-hidden {
-  overflow: hidden;
-}
-
-.overflow-x {
-  flex-wrap: nowrap;
-  display: flex;
-  overflow-x: auto;
-  max-width: 100%;
-}
-.overflow-x > * {
-  flex: 0 0 auto;
-}
-
-.overflow-y {
-  overflow-y: auto;
-  max-height: max(100vh, 100%);
-}
-
-.text-overflow {
-  overflow-x: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
-}
-@supports (display: -webkit-box) {
-  .text-overflow {
-    --webkit-line-clamp: 1;
-    --webkit-box-orient: vertical;
-    overflow: hidden;
-    display: -webkit-box;
-    --webkit-line-clamp: 2;
-    --webkit-box-orient: vertical;
-    overflow: hidden;
-    display: -webkit-box;
-    --webkit-line-clamp: 3;
-    --webkit-box-orient: vertical;
-    overflow: hidden;
-    display: -webkit-box;
-    --webkit-line-clamp: 4;
-    --webkit-box-orient: vertical;
-    overflow: hidden;
-    display: -webkit-box;
-    --webkit-line-clamp: 5;
-    --webkit-box-orient: vertical;
-    overflow: hidden;
-    display: -webkit-box;
-  }
+.text-is-title-secondary {
+  font-family: var(--font-family-pop);
+  font-size: calc(var(--font-size-lg) * var(--global-font-size-multiplier, 1));
+  font-weight: var(--font-weight-lg);
+  line-height: calc(var(--line-height-md) * var(--global-line-height-multiplier, 1));
 }
 
 /*# sourceMappingURL=main.css.map */

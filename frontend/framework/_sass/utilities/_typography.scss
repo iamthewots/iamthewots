@@ -1,0 +1,41 @@
+@use "../modules/tools.scss";
+@use "../wtk.scss";
+@use "sass:map";
+
+@each $property in "font-family", "font-size", "line-height" {
+  @each $keyset in map.keys(wtk.find-settings($property, true)) {
+    $preset-settings: wtk.get($property, $keyset);
+
+    @include tools.extend-selector-with-keyset(".#{$property}", $keyset) {
+      #{$property}: $preset-settings;
+    }
+  }
+}
+
+.text {
+  @each $preset-settings in left, right, center, justify {
+    &-align-#{$preset-settings} {
+      text-align: $preset-settings;
+    }
+  }
+
+  @each $preset-settings in none, underline, wavy {
+    &-decoration-#{$preset-settings} {
+      text-decoration: $preset-settings;
+    }
+  }
+
+  @each $preset-settings in capitalize, lowercase, uppercase {
+    &-transform-#{$preset-settings} {
+      text-transform: $preset-settings;
+    }
+  }
+}
+
+@each $preset-name, $preset-settings in wtk.find-presets("typography") {
+  .text-is-#{$preset-name} {
+    @each $property, $value in $preset-settings {
+      #{$property}: wtk.get($property, $value);
+    }
+  }
+}
