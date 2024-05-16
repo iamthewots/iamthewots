@@ -183,6 +183,19 @@ $settings: (
   "color-text-light": (
     "value": hsl(0, 0%, 95%),
   ),
+  "color-shade": (
+    "value": (
+      ("100", "thin", "highlight-3"): 45%,
+      ("200", "extra-light", "highlight-2"): 30%,
+      ("300", "light", "highlight-1"): 15%,
+      ("400", "normal"): 0%,
+      ("500", "medium"): -15%,
+      ("600", "semibold"): -30%,
+      ("700", "bold"): -45%,
+    ),
+    "default": "400",
+    "no-css-vars-compiled": true,
+  ),
   "screen-width-breakpoints": (
     "value": (
       ("xs", "mobile"): 400px,
