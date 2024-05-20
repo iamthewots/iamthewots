@@ -4,14 +4,14 @@
 
 @each $visibility in "invisible", "hidden", "removed" {
   .#{$visibility} {
-    @include ui.apply-visibility($visibility);
+    @include ui.set-visibility($visibility);
 
     @each $keyset, $value in wtk.find-settings("screen-width-breakpoints", true)
     {
       @each $query in "after", "before" {
         @include tools.extend-selector-with-keyset("&-#{$query}", $keyset) {
           @include ui.respond-to-screen-width($value, $query) {
-            @include ui.apply-visibility($visibility);
+            @include ui.set-visibility($visibility);
           }
         }
       }

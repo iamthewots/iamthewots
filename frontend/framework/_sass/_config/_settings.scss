@@ -2,6 +2,10 @@
 
 $settings: (
   "z-index": (
+    "allow": (
+      unitless,
+    ),
+    "default": var(--z-index-md),
     "value": (
       ("xs", "lowest"): 1,
       ("sm", "low"): 10,
@@ -11,6 +15,10 @@ $settings: (
     ),
   ),
   "opacity": (
+    "allow": (
+      unitless,
+    ),
+    "default": 1,
     "value": (
       ("xs", "20"): 0.2,
       ("sm", "40"): 0.4,
@@ -21,6 +29,11 @@ $settings: (
     ),
   ),
   "duration": (
+    "allow": (
+      time,
+    ),
+    "default": var(--duration-md),
+    "multiplier": var(--duration-multiplier, 1),
     "value": (
       ("xs", "faster"): 0.1,
       ("sm", "fast"): 0.2,
@@ -28,9 +41,13 @@ $settings: (
       ("lg", "slow"): 0.8,
       ("xl", "slower"): 1.6,
     ),
-    "multiplier": var(--duration-multiplier, 1),
   ),
   "distance": (
+    "allow": (
+      size,
+    ),
+    "default": var(--distance-md),
+    "multiplier": var(--distance-multiplier, 1),
     "value": (
       "xs": min(1rem, 5%),
       "sm": min(2rem, 10%),
@@ -38,9 +55,13 @@ $settings: (
       "lg": min(8rem, 40%),
       "xl": min(16rem, 80%),
     ),
-    "multiplier": var(--distance-multiplier, 1),
   ),
   "scale-delta": (
+    "allow": (
+      unitless,
+    ),
+    "default": var(--scale-delta-md),
+    "multiplier": var(--scale-delta-multiplier, 1),
     "value": (
       "xs": 0.05,
       "sm": 0.1,
@@ -48,7 +69,6 @@ $settings: (
       "lg": 0.4,
       "xl": 0.8,
     ),
-    "multiplier": var(--scale-delta-multiplier, 1),
   ),
   "reduced-motion": (
     "value": (
@@ -58,6 +78,9 @@ $settings: (
     ),
   ),
   "aspect-ratio": (
+    "allow": (
+      unitless,
+    ),
     "value": (
       ("1x1", "square"): math.div(1, 1),
       "1x2": math.div(1, 2),
@@ -72,22 +95,27 @@ $settings: (
     ),
   ),
   "outline": (
+    "default": var(--outline-width) var(--outline-style) var(--color-outline),
     "value": (
       "offset": max(-1px, -0.0625rem),
       "style": solid,
       "width": max(2px, 0.125rem),
     ),
-    "shorthand": var(--outline-width) var(--outline-style) var(--clr-outline),
   ),
   "border": (
+    "default": var(--border-width) var(--border-style) var(--color-border),
     "value": (
       "radius": max(5px, 0.3125rem),
       "style": solid,
       "width": max(1.5px, 0.0938rem),
     ),
-    "shorthand": var(--border-width) var(--border-style) var(--clr-border),
   ),
   "spacing": (
+    "allow": (
+      size,
+    ),
+    "default": var(--spacing-main),
+    "multiplier": var(--global-spacing-multiplier, 1),
     "value": (
       "xs": min(0.4rem, 1.6vw),
       "sm": min(0.8rem, 3.2vw),
@@ -97,8 +125,6 @@ $settings: (
       "click": max(50px, 2.5vw),
       "main": clamp(12px, 2.4vw, 1.6rem),
     ),
-    "default": "main",
-    "multiplier": var(--global-spacing-multiplier, 1),
   ),
   "width": (
     "value": (
@@ -128,15 +154,20 @@ $settings: (
     ),
   ),
   "font-family": (
+    "default": var(--font-family-base),
     "value": (
       "base": sans-serif,
       "input": sans-serif,
       "mono": monospace,
       "pop": serif,
     ),
-    "default": "base",
   ),
   "font-size": (
+    "allow": (
+      size,
+    ),
+    "default": var(--font-size-md),
+    "multiplier": var(--global-font-size-multiplier, 1),
     "value": (
       "xs": 0.65rem,
       "sm": 0.8rem,
@@ -145,9 +176,9 @@ $settings: (
       "xl": 1.75rem,
       "hero": 2.5rem,
     ),
-    "multiplier": var(--global-font-size-multiplier, 1),
   ),
   "font-weight": (
+    "default": var(--font-weight-regular),
     "value": (
       ("xs", "thin"): 100,
       ("sm", "light"): 300,
@@ -158,6 +189,8 @@ $settings: (
     ),
   ),
   "line-height": (
+    "default": var(--line-height-md),
+    "multiplier": var(--global-line-height-multiplier, 1),
     "value": (
       "xs": 1.2,
       "sm": 1.4,
@@ -165,25 +198,20 @@ $settings: (
       "lg": 1.8,
       "xl": 2,
     ),
-    "multiplier": var(--global-line-height-multiplier, 1),
   ),
   "color-space": (
+    "do-not-compile-css-vars": true,
     "value": srgb,
-    "no-css-vars-compiled": true,
   ),
   "color-darkener": (
     "value": hsl(0, 0%, 10%),
   ),
   "color-lightener": (
-    "value": hsl(0, 0%, 95%),
-  ),
-  "color-text-dark": (
     "value": hsl(0, 0%, 10%),
   ),
-  "color-text-light": (
-    "value": hsl(0, 0%, 95%),
-  ),
   "color-shade": (
+    "default": 0%,
+    "do-not-compile-css-vars": true,
     "value": (
       ("100", "thin", "highlight-3"): 45%,
       ("200", "extra-light", "highlight-2"): 30%,
@@ -193,10 +221,9 @@ $settings: (
       ("600", "semibold"): -30%,
       ("700", "bold"): -45%,
     ),
-    "default": "400",
-    "no-css-vars-compiled": true,
   ),
   "screen-width-breakpoints": (
+    "do-not-compile-css-vars": true,
     "value": (
       ("xs", "mobile"): 400px,
       ("sm", "tablet"): 800px,
@@ -204,7 +231,6 @@ $settings: (
       ("lg", "desktop"): 1600px,
       ("xl", "high-dpi"): 2000px,
     ),
-    "no-css-vars-compiled": true,
   ),
   "responsive-html-font-size": (
     "value": (
@@ -212,6 +238,5 @@ $settings: (
       "portrait": max(15px, 0.9375em + 0.25vw),
       "ultrawide": max(13px, 0.8125em + 0.0625vw),
     ),
-    "default": "base",
   ),
 );

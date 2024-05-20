@@ -48,9 +48,7 @@ html {
         "scale-delta-multiplier"
       )};
   }
-}
 
-html {
   --html-font-size: #{wtk.get("responsive-html-font-size", "base")};
 
   font-size: calc(var(--html-font-size) * var(--global-ui-scale, 1));
@@ -62,7 +60,7 @@ html {
 }
 
 body {
-  font-family: wtk.get("font-family", "base");
+  font-family: wtk.get("font-family", "base"), sans-serif;
   font-size: wtk.get("font-size", "md");
   line-height: wtk.get("line-height", "md");
   word-break: break-word;

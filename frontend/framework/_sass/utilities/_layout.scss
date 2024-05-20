@@ -2,7 +2,7 @@
 @use "../wtk.scss";
 @use "sass:map";
 
-$positioning: (
+$positioning-map: (
   "x": (
     "left": (
       "flex": flex-start,
@@ -49,8 +49,8 @@ $positioning: (
 }
 
 @each $display-value in flex, grid {
-  @each $y-key, $y-value in map.get($positioning, "y") {
-    @each $x-key, $x-value in map.get($positioning, "x") {
+  @each $y-key, $y-value in map.get($positioning-map, "y") {
+    @each $x-key, $x-value in map.get($positioning-map, "x") {
       .#{$display-value}-#{$y-key}-#{$x-key} {
         align-items: map.get($y-value, $display-value);
 

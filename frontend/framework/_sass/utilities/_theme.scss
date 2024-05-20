@@ -1,0 +1,33 @@
+@use "../modules/fx.scss";
+@use "../modules/theme.scss";
+@use "../modules/ui.scss";
+@use "../wtk.scss";
+@use "sass:map";
+
+@each $preset-name in map.keys(wtk.find-presets("box-shadow")) {
+  .box-shadow-#{$preset-name} {
+    @include fx.set-box-shadow($preset-name);
+  }
+}
+
+.wrapper {
+  @include theme.set-color-property("background", "main");
+
+  border: wtk.get("border");
+  border-radius: wtk.get("border", "radius");
+  padding: wtk.get("spacing", "main");
+}
+
+@include ui.respond-to-pointer() {
+  $selector: ".highlight:hover";
+
+  @for $i from 1 through 3 {
+    $shade: wtk.get("color-shade", "highlight-#{$i}");
+
+    #{$selector} {
+      background-color: theme.get-color("background", $shade);
+    }
+
+    $selector: "#{$selector} > .highlight:hover";
+  }
+}

@@ -4,30 +4,30 @@
 
 @each $property in "font-family", "font-size", "line-height" {
   @each $keyset in map.keys(wtk.find-settings($property, true)) {
-    $preset-settings: wtk.get($property, $keyset);
+    $value: wtk.get($property, $keyset);
 
     @include tools.extend-selector-with-keyset(".#{$property}", $keyset) {
-      #{$property}: $preset-settings;
+      #{$property}: $value;
     }
   }
 }
 
 .text {
-  @each $preset-settings in left, right, center, justify {
-    &-align-#{$preset-settings} {
-      text-align: $preset-settings;
+  @each $value in left, right, center, justify {
+    &-align-#{$value} {
+      text-align: $value;
     }
   }
 
-  @each $preset-settings in none, underline, wavy {
-    &-decoration-#{$preset-settings} {
-      text-decoration: $preset-settings;
+  @each $value in none, underline, wavy {
+    &-decoration-#{$value} {
+      text-decoration: $value;
     }
   }
 
-  @each $preset-settings in capitalize, lowercase, uppercase {
-    &-transform-#{$preset-settings} {
-      text-transform: $preset-settings;
+  @each $value in capitalize, lowercase, uppercase {
+    &-transform-#{$value} {
+      text-transform: $value;
     }
   }
 }

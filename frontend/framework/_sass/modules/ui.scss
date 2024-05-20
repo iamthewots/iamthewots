@@ -4,49 +4,38 @@
 @use "sass:math";
 @use "sass:meta";
 
-$screen-queries: (
+$screen-queries-aliases: (
   ("equal", "="): width,
   ("after", ">"): min-width,
   ("before", "<"): max-width,
 );
 
-@function parse-screen-width($value) {
-  @if (meta.type-of($value) != number) {
-    $value: wtk.get("screen-width-breakpoints", $value);
+@function parse-screen-width($input-value) {
+  @if (tools.is-of-type($input-value, size) == false) {
+    $input-value: wtk.get("screen-width-breakpoints", $input-value);
   }
 
-  $unit: math.unit($value);
-  $value: math.div($value, $value * 0 + 1);
+  $input-value-unit: math.unit($input-value);
+  $input-value: math.div($input-value, $input-value * 0 + 1);
 
-  @if ($unit == px) {
-    @return math.div($value, 16) * 1em;
-  } @else if ($unit == em or $unit == rem) {
-    @return $value * 1em;
+  @if ($input-value-unit == px) {
+    @return math.div($input-value, 16) * 1em;
+  } @else if ($input-value-unit == em or $input-value-unit == rem) {
+    @return $input-value * 1em;
   } @else {
-    @error "Unable to parse screen width.";
+    @error "Unable to parse screen width from #{$input-value}.";
   }
 }
 
-@function parse-screen-query($value) {
-  $data: tools.find-in-map($screen-queries, $value);
+@function parse-screen-query($input-value) {
+  $search-result: tools.find-in-map($screen-queries-aliases, $input-value);
 
-  @if ($data != null) {
-    @return map.get($data, "value");
-  } @else if (meta.type-of($value) == string) {
-    @return $value;
+  @if ($search-result != null) {
+    @return map.get($search-result, "value");
+  } @else if (meta.type-of($input-value) == string) {
+    @return $input-value;
   } @else {
-    @error "Invalid input.";
-  }
-}
-
-@mixin apply-visibility($visibility) {
-  @if ($visibility == "invisible") {
-    visibility: hidden !important;
-  } @else if ($visibility == "hidden") {
-    position: fixed !important;
-    right: -200% !important;
-  } @else if ($visibility == "removed") {
-    display: none !important;
+    @error "Unable to parse screen query from #{$input-value}.";
   }
 }
 
@@ -70,5 +59,18 @@ $screen-queries: (
 
   @media screen and (#{$screen-query}: #{$screen-width}) {
     @content;
+  }
+}
+
+@mixin set-visibility($visibility-type) {
+  @if ($visibility-type == "invisible") {
+    visibility: hidden !important;
+  } @else if ($visibility-type == "hidden") {
+    position: fixed !important;
+    right: -200% !important;
+  } @else if ($visibility-type == "removed") {
+    display: none !important;
+  } @else {
+    @error "Unrecognized visibility type.";
   }
 }

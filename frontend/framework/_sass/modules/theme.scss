@@ -1,6 +1,7 @@
 @use "./chroma.scss";
 @use "./tools.scss";
 @use "../wtk.scss";
+@use "sass:color";
 @use "sass:list";
 @use "sass:map";
 @use "sass:math";
@@ -11,199 +12,198 @@ $color-space: wtk.get("color-space");
 $color-properties: "shadow", "outline", "border", "background", "text";
 $reserved-color-names: "darkener", "lightener", "text-dark", "text-light";
 
-@function change-alpha($color, $alpha: 1) {
-  @if (meta.type-of($alpha) == string) {
-    $alpha: wtk.get("opacity", $alpha);
+@function change-color-alpha($color-value, $input-alpha: 1) {
+  @if (meta.type-of($input-alpha) == string) {
+    $input-alpha: wtk.get("opacity", $input-alpha);
   }
 
-  @if (meta.type-of($alpha) != number) {
-    @error "Invalid alpha value.";
-  } @else if ($alpha == 1) {
-    @return $color;
+  @if ($input-alpha == 1) {
+    @return $color-value;
+  } @else if (meta.type-of($input-alpha) == number) {
+    $input-alpha: math.clamp(0, $input-alpha, 1);
+  } @else if (tools.is-css-var($input-alpha) == false) {
+    @error "Unable to parse alpha from #{$input-alpha}.";
   }
 
-  $alpha: math.clamp(0, $alpha, 1);
-  $transparency: 100% - $alpha * 100%;
-
-  @return color-mix(in $color-space, $color, transparent $transparency);
+  @return color-mix(
+    in $color-space,
+    $color-value,
+    transparent calc(100% - $input-alpha * 100%)
+  );
 }
 
-@function change-shade($color, $shade: 0%) {
-  @if (meta.type-of($shade) == string) {
-    $shade: wtk.get("color-shade", $shade);
+@function change-color-shade($color-value, $input-shade: 0%) {
+  @if (meta.type-of($input-shade) == string) {
+    $input-shade: wtk.get("color-shade", $input-shade);
   }
 
-  @if (meta.type-of($shade) != number) {
-    @error "Invalid shade value.";
-  } @else if ($shade == 0%) {
-    @return $color;
-  }
-
-  $shade: math.clamp(-100%, $shade, 100%);
-  $darkener: var(--color-darkener);
-  $lightener: var(--color-lightener);
-
-  @if (meta.type-of($color) == string and is-color-mix($color) == false) {
-    $color-name: extract-color-name($color);
-    $darkener: var(--color-#{$color-name}--darkener, #{$darkener});
-    $lightener: var(--color-#{$color-name}--lightener, #{$lightener});
-  }
-
-  $color-2: $darkener;
-
-  @if ($shade > 0%) {
-    $color-2: $lightener;
-  }
-
-  @return color-mix(in $color-space, $color, $color-2 math.abs($shade));
-}
-
-@function extract-color-name($string) {
-  @if (is-color-a-theme-var($string)) {
-    $var-name: tools.extract-var-name($string);
-
-    @return string.slice($var-name, 7);
-  } @else if (meta.type-of($string) == string) {
-    @return parse-color-name($string);
+  @if ($input-shade == 0%) {
+    @return $color-value;
+  } @else if (meta.type-of($input-shade) == number) {
+    $input-shade: math.clamp(-100%, $input-shade, 100%);
   } @else {
-    @error "Unable to extract color name.";
+    @error "Unable to parse shade from #{$input-shade}.";
+  }
+
+  $mixing-color: var(--color-darkener);
+
+  @if ($input-shade > 0%) {
+    $mixing-color: var(--color-lightener);
+  }
+
+  @return color-mix(in $color-space, $color-value math.abs($input-shade));
+}
+
+@function extract-color-name($input-string) {
+  $color-name: null;
+
+  @if (is-css-var-a-theme-color($input-string)) {
+    $css-var-name: tools.extract-css-var-name($input-string);
+    $color-name: string.slice($css-var-name, 7);
+  } @else if (meta.type-of($input-string) == string) {
+    $color-name: validate-color-name($input-string);
+  }
+
+  @if ($color-name == null) {
+    @error "Unable to extract color name from #{$input-string}.";
+  }
+
+  @return $color-name;
+}
+
+@function get-color($color-value, $input-shade: 0%, $input-alpha: 1) {
+  @if (is-color-mix($color-value) == false) {
+    $color-value: validate-color-value($color-value);
+  }
+
+  $color-value: change-color-shade($color-value, $input-shade);
+  $color-value: change-color-alpha($color-value, $input-alpha);
+
+  @return $color-value;
+}
+
+@function is-color-mix($input-value) {
+  @if (meta.type-of($input-value) != string) {
+    @return false;
+  } @else {
+    @return string.index($input-value, "color-mix(") == 1;
   }
 }
 
-@function get($color, $shade: 0%, $alpha: 1) {
-  $color: parse-color($color);
-  $color: change-shade($color, $shade);
-  $color: change-alpha($color, $alpha);
-
-  @return $color;
-}
-
-@function is-color-mix($value) {
-  @return meta.type-of($value) == string and string.index($value, "color-mix(")
-    == 1;
-}
-
-@function is-color-name-reserved($color-name) {
-  @return list.index($reserved-color-names, $color-name) != null;
-}
-
-@function is-color-a-theme-var($color) {
-  @if (tools.is-css-var($color)) {
-    $var-name: tools.extract-var-name($color);
-
-    @return string.index($var-name, "color-") == 1;
-  } @else {
+@function is-css-var-a-theme-color($css-var) {
+  @if (tools.is-css-var($css-var) == false) {
     @return false;
   }
+
+  $css-var-name: tools.extract-css-var-name($css-var);
+
+  @return string.index($css-var-name, "color-") == 1;
 }
 
-@function parse-color($value) {
-  @if (meta.type-of($value) == string and is-color-mix($value) == false) {
-    $color-name: extract-color-name($value);
+@function validate-color-name($input-string) {
+  @if (meta.type-of($input-string) != string) {
+    @error "Color name must be a string.";
+  }
+
+  @return string.to-lower-case(tools.remove-whitespaces($input-string));
+}
+
+@function validate-color-value($input-value) {
+  @if (meta.type-of($input-value) == color) {
+    @return $input-value;
+  } @else if (meta.type-of($input-value) == string) {
+    $color-name: extract-color-name($input-value);
 
     @return var(--color-#{$color-name});
-  } @else if (meta.type-of($value) == color) {
-    @return $value;
   } @else {
-    @error "Unable to parse color.";
+    @error "Unable to parse color value from #{$input-value}.";
   }
 }
 
-@function parse-color-name($string) {
-  @if (meta.type-of($string) != string) {
-    @error "Not a string.";
-  }
-
-  @return string.to-lower-case(tools.remove-whitespaces($string));
-}
-
-@function parse-text-color($color, $options: null) {
-  $text-color: null;
-
-  @if (meta.type-of($options) == color) {
-    @return $options;
-  } @else if (meta.type-of($options) == map) {
-    $text-color: map.get($options, "text");
-  }
-
-  @if ($text-color != null) {
-    @return $text-color;
-  }
-
-  @if (meta.type-of($color) == color) {
-    @if (chroma.is-color-dark($color)) {
-      @return var(--color-text-light);
+@function validate-color-value-text(
+  $main-color-value,
+  $text-color-value: null
+) {
+  @if (meta.type-of($text-color-value) == string) {
+    $text-color-name: extract-color-name($text-color-value);
+    $text-color-value: var(--color-#{$text-color-name});
+  } @else if (meta.type-of($text-color-value) != color) {
+    @if (is-css-var-a-theme-color($main-color-value)) {
+      $main-color-name: extract-color-name($main-color-value);
+      $text-color-value: var(--color-#{$main-color-name}--text);
     } @else {
-      @return var(--color-text-dark);
+      @if (chroma.is-color-dark($main-color-value)) {
+        $text-color-value: var(--color-text-light);
+      } @else {
+        $text-color-value: var(--color-text-dark);
+      }
     }
-  } @else if (meta.type-of($color) == string) {
-    $color-name: extract-color-name($color);
-
-    @return var(--color-#{$color-name}--text);
   } @else {
-    @error "Unable to retrieve text color.";
+    $text-color-value: currentColor;
+  }
+
+  @return $text-color-value;
+}
+
+@mixin add-color(
+  $color-name,
+  $main-color-value,
+  $text-color-value: null,
+  $override-reserved-color: false
+) {
+  $color-name: validate-color-name($color-name);
+  $main-color-value: validate-color-value($main-color-value);
+  $text-color-value: validate-color-value-text(
+    $main-color-value,
+    $text-color-value
+  );
+
+  @if (
+    list.index($reserved-color-names, $color-name) !=
+      null and
+      $override-reserved-color ==
+      false
+  ) {
+    @error "#{$color-name} is a reserved color name.";
+  }
+
+  --color-#{$color-name}: #{$main-color-value};
+  --color-#{$color-name}--text: #{$text-color-value};
+}
+
+@mixin set-color-property($color-property, $color-value) {
+  @if (list.index($color-properties, $color-property) == null) {
+    @error "Unrecognized or unsupported color property.";
+  }
+
+  $color-value: validate-color-value($color-value);
+
+  --color-#{$color-property}: #{$color-value};
+
+  @if ($color-property == "background") {
+    $color-value-text: validate-color-value-text($color-value);
+
+    --color-text: #{$color-value-text};
+
+    background-color: $color-value;
+    color: $color-value-text;
+  } @else if ($color-property == "text") {
+    color: $color-value;
+  } @else if ($color-property != "shadow") {
+    #{$color-property}-color: $color-value;
   }
 }
 
-@mixin add-color($color-name, $color, $options: (), $override: false) {
-  $color-name: parse-color-name($color-name);
+@mixin use-color-classes($color-name, $input-properties...) {
+  @each $color-property in $color-properties {
+    $color-property-is-requested: list.length($input-properties) ==
+      0 or
+      list.index($input-properties, $color-property) !=
+      null;
 
-  @if (is-color-name-reserved($color-name) and $override == false) {
-    @error "Reserved color name.";
-  }
-
-  $color: parse-color($color);
-
-  --color-#{$color-name}: #{$color};
-  --color-#{$color-name}--text: #{parse-text-color($color, $options)};
-
-  @each $key in "darkener", "lightener", "marker" {
-    @if (meta.type-of($options) == map) {
-      $option-color: map.get($options, $key);
-
-      @if ($option-color != null) {
-        --color-#{$color-name}--#{$key}: #{parse-color($option-color)};
-      }
-    }
-  }
-}
-
-@mixin use-color-classes($color-name, $properties...) {
-  $add-all-classes: list.length($properties) == 0;
-
-  @each $property in $color-properties {
-    @if ($add-all-classes or list.index($properties, "shadow") != null) {
-      .shadow-color-#{$color-name} {
-        --color-shadow: var(--color-#{$color-name});
-        --color-shadow--darkener: var(--color-#{$color-name}--darkener);
-        --color-shadow--lightener: var(--color-#{$color-name}--lightener);
-      }
-    }
-
-    @if ($add-all-classes or list.index($properties, "outline") != null) {
-      .outline-color-#{$color-name} {
-        outline-color: var(--color-#{$color-name});
-      }
-    }
-
-    @if ($add-all-classes or list.index($properties, "border") != null) {
-      .border-color-#{$color-name} {
-        border-color: var(--color-#{$color-name});
-      }
-    }
-
-    @if ($add-all-classes or list.index($properties, "background") != null) {
-      .background-color-#{$color-name} {
-        --color-marker: var(--color-#{$color-name}--marker);
-
-        background-color: var(--color-#{$color-name});
-        color: var(--color-#{$color-name}--text);
-      }
-    }
-
-    @if ($add-all-classes or list.index($properties, "text") != null) {
-      .text-color-#{$color-name} {
-        color: var(--color-#{$color-name});
+    @if ($color-property-is-requested) {
+      .#{$color-property}-color-#{$color-name} {
+        @include set-color-property($color-property, $color-name);
       }
     }
   }

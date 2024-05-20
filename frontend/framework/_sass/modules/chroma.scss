@@ -13,48 +13,50 @@ $luminance-channel-multipliers: (
 $average-luminance-range: (0.45, 0.55);
 $optimal-contrast-range: (4.5, 7);
 
-@function choose-color-with-best-contrast($color-1, $color-2-list...) {
-  $color-2-list: tools.get-list-from-arglist($color-2-list);
-  $best-contrast-found: 0;
-  $chosen-color: $color-1;
+@function choose-color-with-best-contrast($input-color, $color-candidates...) {
+  $color-candidates: tools.get-list-from-arglist($color-candidates);
+  $higher-contrast-found: 0;
+  $output-color: $input-color;
 
-  @each $color-2 in $color-2-list {
-    @if (meta.type-of($color-2) == color) {
-      $contrast: get-contrast($color-1, $color-2);
+  @each $color-candidate in $color-candidates {
+    @if (meta.type-of($color-candidate) == color) {
+      $contrast: get-contrast($input-color, $color-candidate);
 
-      @if ($contrast > $best-contrast-found) {
-        $best-contrast-found: $contrast;
-        $chosen-color: $color-2;
+      @if ($contrast > $higher-contrast-found) {
+        $higher-contrast-found: $contrast;
+        $output-color: $color-candidate;
       }
     }
   }
 
-  @return $chosen-color;
+  @return $output-color;
 }
 
-@function get-contrast($color-1, $color-2) {
-  $luminance-1: get-luminance($color-1);
-  $luminance-2: get-luminance($color-2);
-  $higher-luminance: $luminance-1;
-  $lower-luminance: $luminance-2;
+@function get-contrast($input-color-1, $input-color-2) {
+  $input-color-1-luminance: get-luminance($input-color-1);
+  $input-color-2-luminance: get-luminance($input-color-2);
+  $higher-luminance: $input-color-1-luminance;
+  $lower-luminance: $input-color-2-luminance;
 
-  @if ($luminance-2 > $luminance-1) {
-    $higher-luminance: $luminance-2;
-    $lower-luminance: $luminance-1;
+  @if ($input-color-2-luminance > $input-color-1-luminance) {
+    $higher-luminance: $input-color-2-luminance;
+    $lower-luminance: $input-color-1-luminance;
   }
 
-  @return math.div($higher-luminance + 0.05, $lower-luminance + 0.05);
+  $contrast: math.div($higher-luminance + 0.05, $lower-luminance + 0.05);
+
+  @return $contrast;
 }
 
-@function get-luminance($color) {
-  $color-channels: (
-    "red": color.red($color),
-    "green": color.green($color),
-    "blue": color.blue($color),
+@function get-luminance($input-color) {
+  $input-color-channels: (
+    "red": color.red($input-color),
+    "green": color.green($input-color),
+    "blue": color.blue($input-color),
   );
   $luminance: 0;
 
-  @each $channel-name, $channel-value in $color-channels {
+  @each $channel-name, $channel-value in $input-color-channels {
     $channel-value: math.div($channel-value, 255);
 
     @if ($channel-value < 0.03928) {
@@ -70,54 +72,56 @@ $optimal-contrast-range: (4.5, 7);
   @return $luminance;
 }
 
-@function is-color-dark($color) {
+@function is-color-dark($input-color) {
   $tests-passed: 0;
 
-  @if (color.lightness($color) < 50%) {
+  @if (color.lightness($input-color) < 50%) {
     $tests-passed: $tests-passed + 1;
   }
 
-  @if (get-luminance($color) < 0.5) {
+  @if (get-luminance($input-color) < 0.5) {
     $tests-passed: $tests-passed + 1;
   }
 
-  @if (get-contrast($color, #fff) > get-contrast($color, #000)) {
+  @if (get-contrast($input-color, #fff) > get-contrast($input-color, #000)) {
     $tests-passed: $tests-passed + 1;
   }
 
   @return $tests-passed >= 2;
 }
 
-@function is-color-light($color) {
-  @return is-color-dark($color) == false;
+@function is-color-light($input-color) {
+  @return is-color-dark($input-color) == false;
 }
 
-@function is-contrast-high($color-1, $color-2) {
-  @return get-contrast($color-1, $color-2) >
-    list.nth($optimal-contrast-range, 2);
+@function is-contrast-high($input-color-1, $input-color-2) {
+  $contrast: get-contrast($input-color-1, $input-color-2);
+  $optimal-contrast-higher-end: list.nth($optimal-contrast-range, 2);
+
+  @return $contrast > $optimal-contrast-higher-end;
 }
 
-@function is-contrast-low($color-1, $color-2) {
-  @return get-contrast($color-1, $color-2) <
-    list.nth($optimal-contrast-range, 1);
+@function is-contrast-low($input-color-1, $input-color-2) {
+  $contrast: get-contrast($input-color-1, $input-color-2);
+  $optimal-contrast-lower-end: list.nth($optimal-contrast-range, 1);
+
+  @return $contrast < $optimal-contrast-lower-end;
 }
 
-@function is-contrast-optimal($color-1, $color-2) {
-  @return is-contrast-low($color-1, $color-2) == false and
-    is-contrast-high($color-1, $color-2) == false;
+@function is-contrast-optimal($input-color-1, $input-color-2) {
+  $contrast: get-contrast($input-color-1, $input-color-2);
+  $optimal-contrast-lower-end: list.nth($optimal-contrast-range, 1);
+  $optimal-contrast-higher-end: list.nth($optimal-contrast-range, 2);
+
+  @return $contrast >= $optimal-contrast-lower-end and $contrast <=
+    $optimal-contrast-higher-end;
 }
 
-@function is-luminance-average($value) {
-  $luminance: 0;
+@function is-luminance-average($input-color) {
+  $luminance: get-luminance($input-color);
+  $average-luminance-lower-end: list.nth($average-luminance-range, 1);
+  $average-luminance-higher-end: list.nth($average-luminance-range, 2);
 
-  @if (meta.type-of($value) == color) {
-    $luminance: get-luminance($value);
-  } @else if (meta.type-of($value) == number) {
-    $luminance: math.clamp(0, $value, 1);
-  } @else {
-    @error "Invalid input.";
-  }
-
-  @return $luminance > list.nth($average-luminance-range, 1) and $luminance <
-    list.nth($average-luminance-range, 2);
+  @return $luminance >= $average-luminance-lower-end and $luminance <=
+    $average-luminance-higher-end;
 }

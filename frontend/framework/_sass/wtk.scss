@@ -3,111 +3,114 @@
 @use "sass:map";
 @use "sass:meta";
 
-@function find-in-settings($settings-id, $query) {
-  $settings: map.get(config.$settings, $settings-id);
+@function find-settings($settings-id, $return-value-only: false) {
+  $settings-map: map.get(config.$settings, $settings-id);
 
-  @if ($settings == null) {
-    @error "Invalid settings id.";
+  @if ($settings-map == null) {
+    @error "No settings found with the id #{$settings-id}.";
   }
 
-  $data: map.get($settings, $query);
+  @if ($return-value-only) {
+    @return map.get($settings-map, "value");
+  } @else {
+    @return $settings-map;
+  }
+}
 
-  @if ($data != null) {
-    @return $data;
+@function find-presets($presets-id, $query-value: null) {
+  $presets-map: map.get(config.$presets, $presets-id);
+
+  @if ($presets-map == null) {
+    @error "No presets found with the id #{$presets-id}.";
   }
 
-  @if ($query == "default") {
-    @return "md";
-  } @else if ($query == "key-separator") {
-    @return "-";
-  } @else if ($query == "no-css-vars-compiled") {
+  @if ($query-value == null) {
+    @return $presets-map;
+  }
+
+  $preset-map: map.get($presets-map, $query-value);
+
+  @if ($preset-map != null) {
+    @return $preset-map;
+  } @else {
+    @error "No preset found in #{$presets-id} for #{$query-value}.";
+  }
+}
+
+@function get-settings-parameter($settings-id, $query-value) {
+  $settings-map: find-settings($settings-id);
+  $output-value: map.get($settings-map, $query-value);
+
+  @if ($output-value != null) {
+    @return $output-value;
+  }
+
+  @if ($query-value == "do-not-compile-css-vars") {
     @return false;
-  } @else if ($query == "multiplier") {
-    @return null;
-  } @else if ($query == "name") {
+  } @else if ($query-value == "key-separator") {
+    @return "-";
+  } @else if ($query-value == "name") {
     @return $settings-id;
-  } @else if ($query == "value") {
-    @error "Value should not be null.";
   }
 
   @return null;
 }
 
-@function find-presets($presets-id) {
-  $presets: map.get(config.$presets, $presets-id);
-
-  @if ($presets == null) {
-    @error "Invalid presets id.";
-  }
-
-  @return $presets;
-}
-
-@function find-settings($settings-id, $value-only: false) {
-  $settings: map.get(config.$settings, $settings-id);
-
-  @if ($settings == null) {
-    @error "Invalid settings id.";
-  }
-
-  @if ($value-only) {
-    @return map.get($settings, "value");
-  } @else {
-    @return $settings;
-  }
-}
-
-@function get($settings-id, $query: null) {
-  $settings: find-settings($settings-id);
-  $query-is-invalid-css-value: meta.type-of($query) != number and
-    tools.is-css-var($query) == false;
-
-  @if ($query == null) {
-    @if (map.has-key($settings, "shorthand")) {
-      @return find-in-settings($settings-id, "shorthand");
-    } @else {
-      $query: find-in-settings($settings-id, "default");
-    }
-  }
-
-  $settings-value: map.get($settings, "value");
+@function get($settings-id, $query-value: null) {
+  $settings-map: find-settings($settings-id);
+  $settings-value: map.get($settings-map, "value");
 
   @if (meta.type-of($settings-value) != map) {
     @return $settings-value;
-  }
+  } @else if ($query-value == null) {
+    $settings-default: get-settings-parameter($settings-id, "default");
 
-  $value: $query;
-  $multiplier: find-in-settings($settings-id, "multiplier");
-  $data: tools.find-in-map($settings-value, $query);
-
-  @if ($data == null) {
-    @if ($query-is-invalid-css-value) {
-      @if (must-warn("wtk__get__defaults-to-invalid-css-value")) {
-        @warn "Value defaulted to query, an invalid CSS value.";
-      }
+    @if ($settings-default != null) {
+      @return $settings-default;
     } @else {
-      @if (must-warn("wtk__get__defaults-to-query")) {
-        @warn "Value defaulted to query.";
-      }
-    }
-  } @else {
-    @if (find-in-settings($settings-id, "no-css-vars-compiled")) {
-      $value: map.get($data, "value");
-    } @else {
-      $var-name: find-in-settings($settings-id, "name");
-      $key-separator: find-in-settings($settings-id, "key-separator");
-      $main-key: map.get($data, "main-key");
-      $value: var(--#{$var-name}#{$key-separator}#{$main-key});
+      @error "No default value found for #{$settings-id}.";
     }
   }
 
-  @if ($multiplier != null) {
-    $value: calc($value * $multiplier);
+  $output-value: $query-value;
+  $search-result: tools.find-in-map($settings-value, $query-value);
+
+  @if ($search-result == null) {
+    @if (tools.is-css-var($query-value) == false) {
+      $settings-allow: get-settings-parameter($settings-id, "allow");
+
+      @if ($settings-allow == null) {
+        @error "Value not found. External values not allowed for #{$settings-id}.";
+      } @else {
+        $allow-query-value-as-fallback: false;
+
+        @each $type in $settings-allow {
+          @if (tools.is-of-type($query-value, $type)) {
+            $allow-query-value-as-fallback: true;
+          }
+        }
+
+        @if ($allow-query-value-as-fallback == false) {
+          @error "Value not found. External value type not allowed for #{$settings-id}.";
+        }
+      }
+    }
+  } @else if ($search-result != null) {
+    @if (get-settings-parameter($settings-id, "do-not-compile-css-vars")) {
+      $output-value: map.get($search-result, "value");
+    } @else {
+      $css-var-name: get-settings-parameter($settings-id, "name");
+      $key-separator: get-settings-parameter($settings-id, "key-separator");
+      $main-key: map.get($search-result, "main-key");
+      $output-value: var(--#{$css-var-name}#{$key-separator}#{$main-key});
+    }
   }
 
-  @return $value;
-}
+  $settings-multiplier: get-settings-parameter($settings-id, "multiplier");
 
-@function must-warn($warning-id) {
-  @return map.get(config.$system, $warning-id);
+  @if ($settings-multiplier != null) {
+    $output-value: calc($output-value * $settings-multiplier);
+  }
+
+  @return $output-value;
 }

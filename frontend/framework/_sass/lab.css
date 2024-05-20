@@ -1,0 +1,53 @@
+:root {
+  --color-twitch: #6441a4;
+  --color-twitch--text: var(--color-text-light);
+}
+
+.box {
+  background-color: color-mix(in srgb, color-mix(in srgb, #6441a4 45%), transparent 50%);
+  background-color: color-mix(in srgb, color-mix(in srgb, var(--color-twitch) 45%), transparent 50%);
+}
+
+body {
+  box-shadow: var(--shadow-offset-x) 0.125rem calc(0.25rem + var(--user-xp)) calc(0rem * var(--user-hp)) color-mix(in srgb, var(--color-shadow), transparent 60%), var(--shadow-offset-x) 0.4375rem calc(0.8125rem + var(--user-xp)) calc(-0.1875rem * var(--user-hp)) color-mix(in srgb, var(--color-shadow), transparent 70%), var(--shadow-offset-x) -0.1875rem calc(0rem + var(--user-xp)) calc(0rem * var(--user-hp)) inset color-mix(in srgb, var(--color-shadow), transparent 80%);
+  --color-background: var(--color-main);
+  --color-text: var(--color-main--text);
+  background-color: var(--color-main);
+  color: var(--color-main--text);
+  font-family: var(--font-family-pop);
+  font-size: calc(var(--font-size-xl) * var(--global-font-size-multiplier, 1));
+  font-weight: var(--font-weight-xl);
+  line-height: calc(var(--line-height-lg) * var(--global-line-height-multiplier, 1) * var(--miopia-multiplier));
+}
+
+.shadow-color-main {
+  --color-shadow: var(--color-main);
+}
+
+.outline-color-main {
+  --color-outline: var(--color-main);
+  outline-color: var(--color-main);
+}
+
+.border-color-main {
+  --color-border: var(--color-main);
+  border-color: var(--color-main);
+}
+
+.background-color-main {
+  --color-background: var(--color-main);
+  --color-text: var(--color-main--text);
+  background-color: var(--color-main);
+  color: var(--color-main--text);
+}
+
+.text-color-main {
+  --color-text: var(--color-main);
+  color: var(--color-main);
+}
+
+.shadow-color-twitch {
+  --color-shadow: var(--color-twitch);
+}
+
+/*# sourceMappingURL=lab.css.map */

@@ -1,36 +1,41 @@
-@use "../_config/settings";
+@use "../_config";
 @use "../modules/tools.scss";
 @use "../wtk.scss";
 @use "sass:map";
 
 :root {
-  @each $settings-id, $settings in settings.$settings {
-    $settings-value: map.get($settings, "value");
-    $var-name: wtk.find-in-settings($settings-id, "name");
-    $key-separator: wtk.find-in-settings($settings-id, "key-separator");
-    $no-css-vars-compiled: wtk.find-in-settings(
-      $settings-id,
-      "no-css-vars-compiled"
-    );
+  @each $settings-id, $settings-map in config.$settings {
+    @if (
+      wtk.get-settings-parameter($settings-id, "do-not-compile-css-vars") ==
+        false
+    ) {
+      $settings-value: map.get($settings-map, "value");
+      $css-var-name: wtk.get-settings-parameter($settings-id, "name");
+      $key-separator: wtk.get-settings-parameter($settings-id, "key-separator");
 
-    @if ($no-css-vars-compiled == false) {
       @include tools.set-variables-from-settings(
-        $var-name,
+        $css-var-name,
         $settings-value,
         $key-separator
       );
     }
 
-    $multiplier: wtk.find-in-settings($settings-id, "multiplier");
+    $settings-multiplier: wtk.get-settings-parameter(
+      $settings-id,
+      "multiplier"
+    );
 
-    @if ($multiplier != null) {
-      @if (tools.is-css-var($multiplier)) {
-        $var-name: tools.extract-var-name($multiplier);
-        $var-fallback: tools.extract-var-fallback($multiplier);
+    @if ($settings-multiplier != null) {
+      @if (tools.is-css-var($settings-multiplier)) {
+        $css-var-name: tools.extract-css-var-name($settings-multiplier);
+        $css-var-fallback: tools.extract-css-var-fallback-value(
+          $settings-multiplier,
+          1
+        );
 
-        --#{$var-name}: #{$var-fallback};
+        --#{$css-var-name}: #{$css-var-fallback};
       } @else {
-        --#{$settings-id}-multiplier: #{$multiplier};
+        --#{$settings-id}-multiplier: #{$settings-multiplier};
       }
     }
   }

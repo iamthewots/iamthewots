@@ -1,4 +1,5 @@
 $presets: (
+  "backdrop-filters": (),
   "box-shadow": (
     "3d": (
       (
@@ -8,7 +9,7 @@ $presets: (
         "spread": 0rem,
         "inset": false,
         "alpha": 0.4,
-        "lightness-adjust": 0%,
+        "shade": 0%,
       ),
       (
         "offset-x": 0rem,
@@ -17,7 +18,7 @@ $presets: (
         "spread": -0.1875rem,
         "inset": false,
         "alpha": 0.3,
-        "lightness-adjust": 0%,
+        "shade": 0%,
       ),
       (
         "offset-x": 0rem,
@@ -26,7 +27,7 @@ $presets: (
         "spread": 0rem,
         "inset": true,
         "alpha": 0.2,
-        "lightness-adjust": 0%,
+        "shade": 0%,
       ),
     ),
     "base": (
@@ -37,7 +38,7 @@ $presets: (
         "spread": 0rem,
         "inset": false,
         "alpha": 0.2,
-        "lightness-adjust": 0%,
+        "shade": 0%,
       ),
     ),
     "groovy": (
@@ -48,7 +49,7 @@ $presets: (
         "spread": 0rem,
         "inset": false,
         "alpha": 0.4,
-        "lightness-adjust": 0%,
+        "shade": 0%,
       ),
       (
         "offset-x": -0.625rem,
@@ -57,7 +58,7 @@ $presets: (
         "spread": 0rem,
         "inset": false,
         "alpha": 0.3,
-        "lightness-adjust": 15%,
+        "shade": 15%,
       ),
       (
         "offset-x": -1.25rem,
@@ -66,7 +67,7 @@ $presets: (
         "spread": 0rem,
         "inset": false,
         "alpha": 0.05,
-        "lightness-adjust": 30%,
+        "shade": 30%,
       ),
     ),
     "inset": (
@@ -77,7 +78,7 @@ $presets: (
         "spread": -0.75rem,
         "inset": true,
         "alpha": 0.25,
-        "lightness-adjust": 0%,
+        "shade": 0%,
       ),
       (
         "offset-x": 0rem,
@@ -86,7 +87,7 @@ $presets: (
         "spread": -1.125rem,
         "inset": true,
         "alpha": 0.3,
-        "lightness-adjust": 0%,
+        "shade": 0%,
       ),
     ),
     "strong": (
@@ -97,7 +98,7 @@ $presets: (
         "spread": 0rem,
         "inset": false,
         "alpha": 0.25,
-        "lightness-adjust": 0%,
+        "shade": 0%,
       ),
       (
         "offset-x": 0rem,
@@ -106,7 +107,7 @@ $presets: (
         "spread": 0rem,
         "inset": false,
         "alpha": 0.12,
-        "lightness-adjust": 0%,
+        "shade": 0%,
       ),
       (
         "offset-x": 0rem,
@@ -115,7 +116,7 @@ $presets: (
         "spread": 0rem,
         "inset": false,
         "alpha": 0.12,
-        "lightness-adjust": 0%,
+        "shade": 0%,
       ),
       (
         "offset-x": 0rem,
@@ -124,7 +125,7 @@ $presets: (
         "spread": 0rem,
         "inset": false,
         "alpha": 0.17,
-        "lightness-adjust": 0%,
+        "shade": 0%,
       ),
       (
         "offset-x": 0rem,
@@ -133,11 +134,10 @@ $presets: (
         "spread": 0rem,
         "inset": false,
         "alpha": 0.09,
-        "lightness-adjust": 0%,
+        "shade": 0%,
       ),
     ),
   ),
-  "layouts": (),
   "typography": (
     "title": (
       "font-family": "pop",

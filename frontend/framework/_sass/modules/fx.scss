@@ -1,0 +1,80 @@
+@use "../modules/theme.scss";
+@use "../modules/tools.scss";
+@use "../wtk.scss";
+@use "sass:list";
+@use "sass:map";
+@use "sass:meta";
+
+@mixin set-backdrop-filter($preset-name) {
+}
+
+@mixin set-box-shadow(
+  $preset-name,
+  $color-value: "shadow",
+  $options-map: null
+) {
+  $preset-value: wtk.find-presets("box-shadow", $preset-name);
+  $output-box-shadow: ();
+
+  @each $box-shadow-settings in $preset-value {
+    $box-shadow: ();
+    $box-shadow-settings: tools.upgrade-settings(
+      $box-shadow-settings,
+      $options-map,
+      "inset",
+      "shade"
+    );
+
+    @each $key, $value in $box-shadow-settings {
+      @if ($key == "inset") {
+        @if ($value) {
+          $value: inset;
+        } @else {
+          $value: null;
+        }
+      }
+
+      @if ($key != "shade" and $key != "alpha") {
+        $box-shadow: list.append($box-shadow, $value);
+      }
+    }
+
+    $box-shadow: list.append(
+      $box-shadow,
+      theme.get-color(
+        $color-value,
+        map.get($box-shadow-settings, "shade"),
+        map.get($box-shadow-settings, "alpha")
+      )
+    );
+    $output-box-shadow: list.append(
+      $output-box-shadow,
+      $box-shadow,
+      $separator: "comma"
+    );
+  }
+
+  box-shadow: $output-box-shadow;
+}
+
+@mixin set-typography($preset-name, $options-map: null) {
+  $preset-value: wtk.find-presets("typography", $preset-name);
+  $typography-settings: ();
+
+  @each $key, $value in $preset-value {
+    $typography-settings: map.set(
+      $typography-settings,
+      $key,
+      wtk.get($key, $value)
+    );
+  }
+
+  $typography-settings: tools.upgrade-settings(
+    $typography-settings,
+    $options-map
+  );
+
+  @each $property, $value in $typography-settings {
+    #{$property}: $value;
+  }
+}
