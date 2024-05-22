@@ -2,28 +2,28 @@
 @use "../wtk.scss";
 @use "sass:map";
 
-@each $property in "animation", "transition" {
+@each $property-name in animation, transition {
   @each $keyset in map.keys(wtk.find-settings("duration", true)) {
     $value: wtk.get("duration", $keyset);
 
     @include tools.extend-selector-with-keyset(
-      ".#{$property}-duration",
+      ".#{$property-name}-duration",
       $keyset
     ) {
-      --#{$property}-duration: #{$value};
+      --#{$property-name}-duration: #{$value};
     }
   }
 }
 
-@each $property in "distance", "scale-delta" {
-  @each $keyset in map.keys(wtk.find-settings($property, true)) {
-    $value: wtk.get($property, $keyset);
+@each $settings-id in "distance", "scale-delta" {
+  @each $keyset in map.keys(wtk.find-settings($settings-id, true)) {
+    $value: wtk.get($settings-id, $keyset);
 
     @include tools.extend-selector-with-keyset(
-      ".animation-#{$property}",
+      ".animation-#{$settings-id}",
       $keyset
     ) {
-      --animation-#{$property}: #{$value};
+      --animation-#{$settings-id}: #{$value};
     }
   }
 }

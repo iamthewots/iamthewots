@@ -107,6 +107,14 @@
 @function is-of-type($input-value, $type-to-match) {
   $input-value-type: meta.type-of($input-value);
 
+  @if ($type-to-match == color-mix) {
+    @if (meta.type-of($input-value) != string) {
+      @return false;
+    } @else {
+      @return string.index($input-value, "color-mix(") == 1;
+    }
+  }
+
   @if ($type-to-match == size) {
     @if ($input-value-type != number) {
       @return false;
@@ -116,7 +124,9 @@
     $size-units: (cm, mm, Q, in, pc, pt, px, rem, em, vh, vw, "%");
 
     @return list.index($size-units, $input-value-unit) != null;
-  } @else if ($type-to-match == time) {
+  }
+
+  @if ($type-to-match == time) {
     @if ($input-value-type != number) {
       @return false;
     }
@@ -125,11 +135,13 @@
     $time-units: (ms, s);
 
     @return list.index($time-units, $input-value-unit) != null;
-  } @else if ($type-to-match == unitless) {
-    @return $input-value-type == number and math.is-unitless($input-value);
-  } @else {
-    @return $input-value-type == $type-to-match;
   }
+
+  @if ($type-to-match == unitless) {
+    @return $input-value-type == number and math.is-unitless($input-value);
+  }
+
+  @return $input-value-type == $type-to-match;
 }
 
 @function remove-whitespaces($input-string) {

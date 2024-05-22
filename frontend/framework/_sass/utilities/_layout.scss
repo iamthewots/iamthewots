@@ -1,90 +1,66 @@
 @use "../modules/tools.scss";
 @use "../wtk.scss";
+@use "sass:list";
 @use "sass:map";
-
-$positioning-map: (
-  "x": (
-    "left": (
-      "flex": flex-start,
-      "grid": start,
-    ),
-    "right": (
-      "flex": flex-end,
-      "grid": end,
-    ),
-    "center": (
-      "flex": center,
-      "grid": center,
-    ),
-  ),
-  "y": (
-    "top": (
-      "flex": flex-start,
-      "grid": start,
-    ),
-    "bottom": (
-      "flex": flex-end,
-      "grid": end,
-    ),
-    "center": (
-      "flex": center,
-      "grid": center,
-    ),
-  ),
-);
 
 .position-relative {
   position: relative;
 }
 
-.set-centered-content {
-  place-items: center;
-  grid-template-columns: minmax(0, 1fr);
-  display: grid;
-}
+$positioning-map: (
+  "x": (
+    "left": flex-start start,
+    "right": flex-end end,
+    "center": center center,
+  ),
+  "y": (
+    "top": flex-start start,
+    "bottom": flex-end end,
+    "center": center center,
+  ),
+);
 
-.set-centered-position {
-  margin-left: auto;
-  margin-right: auto;
-}
+@each $display in block, flex, grid, inline-block, inline-flex, inline-grid {
+  .#{$display} {
+    display: $display;
+  }
 
-@each $display-value in flex, grid {
-  @each $y-key, $y-value in map.get($positioning-map, "y") {
-    @each $x-key, $x-value in map.get($positioning-map, "x") {
-      .#{$display-value}-#{$y-key}-#{$x-key} {
-        align-items: map.get($y-value, $display-value);
+  @if ($display == flex or $display == grid) {
+    @each $align-key, $align-value in map.get($positioning-map, "y") {
+      @each $justify-key, $justify-value in map.get($positioning-map, "x") {
+        .#{$display}-#{$align-key}-#{$justify-key} {
+          @if ($display == flex) {
+            align-items: list.nth($align-value, 1);
+            justify-content: list.nth($justify-value, 1);
+          } @else {
+            align-items: list.nth($align-value, 2);
+            justify-items: list.nth($justify-value, 2);
+          }
 
-        @if ($display-value == "flex") {
-          justify-content: map.get($x-value, $display-value);
-        } @else {
-          justify-items: map.get($x-value, $display-value);
+          display: $display;
         }
-
-        display: $display-value;
       }
     }
   }
 }
 
-.flex {
-  display: flex;
+.flex-grow {
+  @for $i from 1 through 4 {
+    --flex-grow: #{$i};
 
-  @for $i from 1 through 3 {
-    &-grow-#{$i} {
-      --flex-grow: #{$i};
-
-      flex-grow: $i;
-    }
-  }
-
-  @each $value in wrap, nowrap, wrap-reverse {
-    &-#{$value} {
-      flex-wrap: $value;
-    }
+    flex-grow: $i;
   }
 }
 
-.set-flex-layout {
+@each $flex-wrap in wrap, nowrap, wrap-reverse {
+  .flex-#{$flex-wrap} {
+    --flex-wrap: #{$flex-wrap};
+
+    flex-wrap: $flex-wrap;
+  }
+}
+
+.flex-custom-layout {
   --align-items: flex-start;
   --justify-content: flex-start;
   --layout-main-width: auto;
@@ -94,6 +70,7 @@ $positioning-map: (
   align-items: var(--align-items);
   justify-content: var(--justify-content);
   flex-wrap: var(--flex-wrap);
+  display: flex;
 
   & > * {
     flex-basis: var(--layout-main-width);
@@ -102,25 +79,35 @@ $positioning-map: (
   }
 }
 
-.grid {
-  display: grid;
+.flex-group-layout {
+  --layout-main-width: 0;
 
-  @each $value in column, dense, row {
-    &-flow-#{$value} {
-      --grid-auto-flow: #{$value};
+  flex-wrap: wrap;
+  display: flex;
 
-      grid-auto-flow: $value;
-    }
-  }
-
-  @each $value in auto-fill, auto-fit {
-    &-#{$value} {
-      --repeat-function: #{$value};
-    }
+  & > * {
+    min-width: fit-content;
+    flex-grow: 1;
+    flex-shrink: 0;
+    flex-basis: var(--layout-main-width);
   }
 }
 
-.set-content-grid-layout {
+@each $grid-auto-flow in column, dense, row {
+  .grid-auto-flow-#{$grid-auto-flow} {
+    --grid-auto-flow: #{$grid-auto-flow};
+
+    grid-auto-flow: $grid-auto-flow;
+  }
+}
+
+@each $grid-repeat-function in auto-fill, auto-fit {
+  .grid-repeat-function-#{$grid-repeat-function} {
+    --grid-repeat-function: #{$grid-repeat-function};
+  }
+}
+
+.grid-content-layout {
   --gutter-width: calc(#{wtk.get("width", "main-content")} * 0.15);
   --layout-main-width: #{wtk.get("width", "main-content")};
 
@@ -136,29 +123,41 @@ $positioning-map: (
     grid-column: 3/4;
   }
 
-  $column-extensions: (
-    "gutters": 2/5,
-    "left-gutter": 2/4,
-    "right-gutter": 2/4,
-    "full-width": 1/6,
-    "left": 1/4,
-    "right": 3/6,
+  $grid-column-map: (
+    "gutters": "2/5",
+    "left-gutter": "2/4",
+    "right-gutter": "2/4",
+    "full-width": "1/6",
+    "left": "1/4",
+    "right": "3/6",
   );
 
-  @each $key, $value in $column-extensions {
-    ._extend-to-#{$key} {
-      grid-column: $value;
+  @each $grid-column-key, $grid-column-value in $grid-column-map {
+    & > ._extend-to-#{$grid-column-key} {
+      grid-column: #{$grid-column-value};
     }
   }
 }
 
-.set-sandwich-grid-layout {
+.grid-rabbit-layout {
+  --justify-content: center;
+  grid-template-columns: auto minmax(0, 1fr);
+  display: grid;
+
+  & > *:nth-child(2) {
+    justify-content: var(--justify-content);
+    flex-direction: column;
+    display: flex;
+  }
+}
+
+.grid-sandwich-layout {
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr) auto;
   display: grid;
 }
 
-.set-staggered-grid-layout {
+.grid-staggered-layout {
   --layout-main-width: calc(#{wtk.get("width", "main-content")} * 0.6);
   --layout-main-height: auto;
   --justify-self-odd: start;
@@ -182,19 +181,26 @@ $positioning-map: (
   }
 }
 
-@each $axis in "x", "y" {
-  @each $keyset in map.keys(wtk.find-settings("spacing", true)) {
-    $value: wtk.get("spacing", $keyset);
+.center-content {
+  place-items: center;
+  display: grid;
+}
 
-    @include tools.extend-selector-with-keyset(
-      ".set-spreading-#{$axis}",
-      $keyset
-    ) {
+.centered-content {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@each $axis in "x", "y" {
+  @each $keyset, $value in wtk.find-settings("spacing", true) {
+    $margin: wtk.get("spacing", $keyset);
+
+    @include tools.extend-selector-with-keyset(".spread-#{$axis}", $keyset) {
       & > *:not(:last-child) {
         @if ($axis == "x") {
-          margin-right: $value;
+          margin-right: $margin;
         } @else {
-          margin-bottom: $value;
+          margin-bottom: $margin;
         }
       }
     }

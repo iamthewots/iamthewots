@@ -1,0 +1,10 @@
+@use "@_sass/modules/theme.scss";
+@use "@_sass/main.scss";
+@use "@_sass/wtk.scss";
+
+.theme-main {
+  @include theme.add-color("main", #fff);
+  @include theme.add-color("shadow", #001b94);
+  @include theme.add-color("outline", #00a859);
+  @include theme.add-color("border", #f2f2f2);
+}

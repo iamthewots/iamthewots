@@ -4,52 +4,50 @@
 @use "sass:meta";
 
 @function find-settings($settings-id, $return-value-only: false) {
-  $settings-map: map.get(config.$settings, $settings-id);
+  $settings: map.get(config.$settings, $settings-id);
 
-  @if ($settings-map == null) {
+  @if ($settings == null) {
     @error "No settings found with the id #{$settings-id}.";
   }
 
   @if ($return-value-only) {
-    @return map.get($settings-map, "value");
+    @return map.get($settings, "value");
   } @else {
-    @return $settings-map;
+    @return $settings;
   }
 }
 
 @function find-presets($presets-id, $query-value: null) {
-  $presets-map: map.get(config.$presets, $presets-id);
+  $presets: map.get(config.$presets, $presets-id);
 
-  @if ($presets-map == null) {
+  @if ($presets == null) {
     @error "No presets found with the id #{$presets-id}.";
+  } @else if ($query-value == null) {
+    @return $presets;
   }
 
-  @if ($query-value == null) {
-    @return $presets-map;
-  }
+  $preset-value: map.get($presets, $query-value);
 
-  $preset-map: map.get($presets-map, $query-value);
-
-  @if ($preset-map != null) {
-    @return $preset-map;
+  @if ($preset-value != null) {
+    @return $preset-value;
   } @else {
     @error "No preset found in #{$presets-id} for #{$query-value}.";
   }
 }
 
-@function get-settings-parameter($settings-id, $query-value) {
-  $settings-map: find-settings($settings-id);
-  $output-value: map.get($settings-map, $query-value);
+@function get-settings-parameter($settings-id, $parameter-key) {
+  $settings: find-settings($settings-id);
+  $output-value: map.get($settings, $parameter-key);
 
   @if ($output-value != null) {
     @return $output-value;
   }
 
-  @if ($query-value == "do-not-compile-css-vars") {
+  @if ($parameter-key == "do-not-compile-css-vars") {
     @return false;
-  } @else if ($query-value == "key-separator") {
+  } @else if ($parameter-key == "key-separator") {
     @return "-";
-  } @else if ($query-value == "name") {
+  } @else if ($parameter-key == "name") {
     @return $settings-id;
   }
 
@@ -57,8 +55,8 @@
 }
 
 @function get($settings-id, $query-value: null) {
-  $settings-map: find-settings($settings-id);
-  $settings-value: map.get($settings-map, "value");
+  $settings: find-settings($settings-id);
+  $settings-value: map.get($settings, "value");
 
   @if (meta.type-of($settings-value) != map) {
     @return $settings-value;

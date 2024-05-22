@@ -49,14 +49,14 @@ $optimal-contrast-range: (4.5, 7);
 }
 
 @function get-luminance($input-color) {
-  $input-color-channels: (
+  $color-channels: (
     "red": color.red($input-color),
     "green": color.green($input-color),
     "blue": color.blue($input-color),
   );
   $luminance: 0;
 
-  @each $channel-name, $channel-value in $input-color-channels {
+  @each $channel-name, $channel-value in $color-channels {
     $channel-value: math.div($channel-value, 255);
 
     @if ($channel-value < 0.03928) {
