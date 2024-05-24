@@ -44,6 +44,12 @@ $positioning-map: (
   }
 }
 
+@each $flex-direction in column, column-reverse {
+  .flex-direction-#{$flex-direction} {
+    flex-direction: column;
+  }
+}
+
 .flex-grow {
   @for $i from 1 through 4 {
     --flex-grow: #{$i};
@@ -79,17 +85,36 @@ $positioning-map: (
   }
 }
 
-.flex-group-layout {
-  --layout-main-width: 0;
-
-  flex-wrap: wrap;
-  display: flex;
+.flex-showcase-layout {
+  --layout-main-width: #{wtk.get("width", "md")};
 
   & > * {
-    min-width: fit-content;
+    display: flex;
+
+    &:nth-child(odd) {
+      flex-wrap: wrap;
+    }
+
+    &:nth-child(even) {
+      flex-wrap: wrap-reverse;
+    }
+
+    & > * {
+      flex-grow: 1;
+      flex-basis: var(--layout-main-width);
+    }
+  }
+}
+
+.flex-rabbit-layout {
+  --justify-content: center;
+  display: flex;
+
+  & > *:nth-child(2) {
+    justify-content: var(--justify-content);
+    flex-direction: column;
     flex-grow: 1;
-    flex-shrink: 0;
-    flex-basis: var(--layout-main-width);
+    display: flex;
   }
 }
 
@@ -114,7 +139,7 @@ $positioning-map: (
   grid-template-columns:
     minmax(0, 1fr)
     minmax(0, var(--gutter-width))
-    minmax(100%, var(--layout-main-width))
+    min(100%, var(--layout-main-width))
     minmax(0, var(--gutter-width))
     minmax(0, 1fr);
   display: grid;
@@ -139,22 +164,12 @@ $positioning-map: (
   }
 }
 
-.grid-rabbit-layout {
-  --justify-content: center;
-  grid-template-columns: auto minmax(0, 1fr);
-  display: grid;
-
-  & > *:nth-child(2) {
-    justify-content: var(--justify-content);
-    flex-direction: column;
-    display: flex;
-  }
-}
-
 .grid-sandwich-layout {
+  justify-items: center;
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr) auto;
   display: grid;
+  width: fit-content;
 }
 
 .grid-staggered-layout {

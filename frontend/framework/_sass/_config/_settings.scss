@@ -105,7 +105,7 @@ $settings: (
   "border": (
     "default": var(--border-width) var(--border-style) var(--color-border),
     "value": (
-      "radius": max(5px, 0.3125rem),
+      "radius": max(7.5px, 0.3125rem),
       "style": solid,
       "width": max(1.5px, 0.0938rem),
     ),
@@ -172,9 +172,9 @@ $settings: (
       "xs": 0.65rem,
       "sm": 0.8rem,
       "md": 1rem,
-      "lg": 2rem,
-      "xl": 3rem,
-      "hero": 4rem,
+      "lg": min(2rem, 8vw),
+      "xl": min(3rem, 10vw),
+      "hero": min(4rem, 12vw),
     ),
   ),
   "font-weight": (
@@ -207,7 +207,13 @@ $settings: (
     "value": hsl(0, 0%, 10%),
   ),
   "color-lightener": (
-    "value": hsl(0, 0%, 10%),
+    "value": hsl(0, 0%, 90%),
+  ),
+  "color-text-dark": (
+    "value": hsl(0, 0%, 5%),
+  ),
+  "color-text-light": (
+    "value": hsl(0, 0%, 95%),
   ),
   "color-shade": (
     "default": 0%,
@@ -234,9 +240,9 @@ $settings: (
   ),
   "responsive-html-font-size": (
     "value": (
-      "base": max(14px, 0.875em + 0.125vw),
-      "portrait": max(15px, 0.9375em + 0.25vw),
-      "ultrawide": max(13px, 0.8125em + 0.0625vw),
+      "base": max(15px, 0.9375em + 0.1vw),
+      "portrait": max(16px, 1em + 0.15vw),
+      "ultrawide": max(14px, 0.875em + 0.075vw),
     ),
   ),
 );

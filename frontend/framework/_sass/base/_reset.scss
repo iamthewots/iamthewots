@@ -22,6 +22,10 @@ p {
   text-wrap: pretty;
 }
 
+small {
+  font-size: wtk.get("font-size", "sm");
+}
+
 ol,
 ul,
 dl {
@@ -60,7 +64,7 @@ html {
 }
 
 body {
-  font-family: wtk.get("font-family", "base"), sans-serif;
+  font-family: wtk.get("font-family", "base");
   font-size: wtk.get("font-size", "md");
   line-height: wtk.get("line-height", "md");
   word-break: break-word;

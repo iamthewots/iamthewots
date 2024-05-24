@@ -10,7 +10,7 @@
   }
 }
 
-$border-styles: (
+$border-radius-styles: (
   "circle": 100%,
   "round": 100vh,
   "rounded": wtk.get("border", "radius"),
@@ -22,20 +22,28 @@ $border-styles: (
 
   border: $border;
 
+  &-none {
+    border: none;
+  }
+
   @each $coordinate in "left", "right", "top", "bottom" {
     &-#{$coordinate} {
       border-#{$coordinate}: $border;
     }
   }
 
-  @each $key, $value in $border-styles {
+  @each $key, $value in $border-radius-styles {
     &-#{$key} {
-      border: $value;
+      border-radius: $value;
     }
   }
 }
 
 @each $property in margin, padding, gap {
+  .#{$property}-0 {
+    #{$property}: 0;
+  }
+
   @each $keyset, $value in wtk.find-settings("spacing", true) {
     $value: wtk.get("spacing", $keyset);
 
