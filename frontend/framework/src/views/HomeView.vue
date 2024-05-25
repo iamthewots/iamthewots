@@ -31,6 +31,7 @@ window.addEventListener("resize", () => {
         >
       </p>
     </section>
+
     <div
       id="flex-rabbit-layout"
       class="box centered-content flex-rabbit-layout box-shadow-groovy gap-md"
@@ -48,6 +49,7 @@ window.addEventListener("resize", () => {
         </div>
       </div>
     </div>
+
     <div id="grid-staggered-layout" class="grid-staggered-layout gap-y-md">
       <div class="box box-shadow-groovy">
         <h3 class="text-color-accent-2">grid-staggered-layout</h3>
@@ -58,9 +60,10 @@ window.addEventListener("resize", () => {
         <p>grid-staggered-layout</p>
       </div>
     </div>
+
     <div
       id="grid-content-layout"
-      class="_extend-to-full-width grid-content-layout gap-y-md"
+      class="_extend-to-gutters grid-content-layout layout-main-width-text-box gap-y-md"
     >
       <div class="box">
         <h3 class="text-color-accent-2">grid-content-layout</h3>
@@ -72,16 +75,29 @@ window.addEventListener("resize", () => {
       <div class="_extend-to-left box">_extend-to-left</div>
       <div class="_extend-to-right box">_extend-to-right</div>
     </div>
+
     <div
       id="grid-sandwich-layout"
-      class="box centered-content grid-sandwich-layout box-shadow-groovy gap-sm"
+      class="centered-content grid-sandwich-layout box-shadow-groovy background-color-main"
     >
-      <h3 class="text-color-accent-2">grid-sandwich-layout</h3>
-      <img src="https://loremflickr.com/300/300/dog" alt="" />
-      <div>
+      <h3 class="padding-sm text-color-accent-2">grid-sandwich-layout</h3>
+      <img src="https://loremflickr.com/300/240/sexy,asian" alt="" />
+      <div class="padding-sm">
         <p>by Leonardo Scarfò</p>
         <i>semi-responsive, fixed-layout, single-column</i>
       </div>
     </div>
+
+    <section id="highlight" class="box">
+      <div class="border-rounded padding-main highlight">
+        <h3 class="text-color-accent-2">Highlight engine</h3>
+        <div class="border-rounded padding-main highlight">
+          <p>made by Leonardo Scarfò</p>
+          <div class="border-rounded padding-main highlight">
+            <i>responsive, 3 levels deep</i>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 </template>

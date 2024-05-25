@@ -1,21 +1,8 @@
 @use "@_sass/modules/theme.scss";
 @use "@_sass/main.scss";
 @use "@_sass/wtk.scss";
+@use "./themes.scss";
 
-.theme-main {
-  --font-family-base: "Exo 2", sans-serif;
-  --font-family-pop: "Atkinson Hyperlegible", serif;
-
-  @include theme.add-color("main", hsl(98, 39%, 88%));
-  @include theme.add-color("body", hsl(98, 29%, 78%));
-  @include theme.add-color("accent-1", hsl(11, 83%, 46%));
-  @include theme.add-color("accent-2", hsl(263, 70%, 62%));
-  @include theme.add-color("shadow", #3c473c);
-  @include theme.add-color("outline", #0081a8);
-  @include theme.add-color("border", #0f3014);
-
-  @include theme.set-color-property("background", "body");
-}
-
+@include theme.use-color-classes("main");
 @include theme.use-color-classes("accent-1");
 @include theme.use-color-classes("accent-2");

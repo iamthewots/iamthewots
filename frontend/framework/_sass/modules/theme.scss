@@ -11,6 +11,18 @@
 $color-space: wtk.get("color-space");
 $color-properties: "shadow", "outline", "border", "background", "text";
 $reserved-color-names: "darkener", "lightener", "text-dark", "text-light";
+$default-color-options: (
+  "text": (
+    var(--color-text-light),
+    var(--color-text-dark),
+  ),
+  "darkener": var(--color-darkener),
+  "lightener": var(--color-lightener),
+  "highlighter": (
+    var(--color-lightener),
+    var(--color-darkener),
+  ),
+);
 
 @function change-color-alpha($color-value, $color-alpha: 1) {
   @if (meta.type-of($color-alpha) == string) {
@@ -104,6 +116,53 @@ $reserved-color-names: "darkener", "lightener", "text-dark", "text-light";
   @return string.to-lower-case(tools.remove-whitespaces($input-string));
 }
 
+@function is-valid-color-source($input-value) {
+  @return meta.type-of($input-value) == color or meta.type-of($input-value) ==
+    string;
+}
+
+@function validate-color-options($main-color-value, $input-value) {
+  $color-options: ();
+
+  @if (is-valid-color-source($input-value)) {
+    $color-options: (
+      "text": validate-color-value($input-value),
+    );
+  } @else if (meta.type-of($input-value) == map) {
+    $color-options: $input-value;
+  }
+
+  @each $key, $default-value in $default-color-options {
+    $value: map.get($color-options, $key);
+
+    @if (is-valid-color-source($value)) {
+      $value: validate-color-value($value);
+    } @else {
+      @if (meta.type-of($main-color-value) == color) {
+        @if (list.length($default-value) == 1) {
+          $value: $default-value;
+        } @else {
+          $dark-option: list.nth($default-value, 1);
+          $light-option: list.nth($default-value, 2);
+
+          @if (chroma.is-color-dark($main-color-value)) {
+            $value: $dark-option;
+          } @else {
+            $value: $light-option;
+          }
+        }
+      } @else {
+        $main-color-name: extract-color-name($main-color-value);
+        $value: var(--color-#{$main-color-name}--#{$key});
+      }
+    }
+
+    $color-options: map.set($color-options, $key, $value);
+  }
+
+  @return $color-options;
+}
+
 @function validate-color-value($input-value) {
   @if (meta.type-of($input-value) == color) {
     @return $input-value;
@@ -116,43 +175,15 @@ $reserved-color-names: "darkener", "lightener", "text-dark", "text-light";
   }
 }
 
-@function validate-color-value-text(
-  $main-color-value,
-  $text-color-value: null
-) {
-  @if (meta.type-of($text-color-value) == string) {
-    $text-color-name: extract-color-name($text-color-value);
-    $text-color-value: var(--color-#{$text-color-name});
-  } @else if (meta.type-of($text-color-value) != color) {
-    @if (is-css-var-a-theme-color($main-color-value)) {
-      $main-color-name: extract-color-name($main-color-value);
-      $text-color-value: var(--color-#{$main-color-name}--text);
-    } @else {
-      @if (chroma.is-color-dark($main-color-value)) {
-        $text-color-value: var(--color-text-light);
-      } @else {
-        $text-color-value: var(--color-text-dark);
-      }
-    }
-  } @else {
-    $text-color-value: currentColor;
-  }
-
-  @return $text-color-value;
-}
-
 @mixin add-color(
   $color-name,
-  $main-color-value,
-  $text-color-value: null,
+  $color-value,
+  $color-options: (),
   $override-reserved-color: false
 ) {
   $color-name: validate-color-name($color-name);
-  $main-color-value: validate-color-value($main-color-value);
-  $text-color-value: validate-color-value-text(
-    $main-color-value,
-    $text-color-value
-  );
+  $color-value: validate-color-value($color-value);
+  $color-options: validate-color-options($color-value, $color-options);
 
   @if (
     list.index($reserved-color-names, $color-name) !=
@@ -163,8 +194,15 @@ $reserved-color-names: "darkener", "lightener", "text-dark", "text-light";
     @error "#{$color-name} is a reserved color name.";
   }
 
-  --color-#{$color-name}: #{$main-color-value};
-  --color-#{$color-name}--text: #{$text-color-value};
+  --color-#{$color-name}: #{$color-value};
+
+  @each $key, $value in $color-options {
+    --color-#{$color-name}--#{$key}: #{$value};
+  }
+}
+
+@mixin clone-color($color-value, $new-color-name) {
+  @include add-color($new-color-name, $color-value, null, true);
 }
 
 @mixin set-color-property($color-property, $color-value) {
@@ -174,33 +212,26 @@ $reserved-color-names: "darkener", "lightener", "text-dark", "text-light";
 
   $color-value: validate-color-value($color-value);
 
-  --color-#{$color-property}: #{$color-value};
+  @include clone-color($color-value, $color-property);
 
   @if ($color-property == "background") {
-    $color-value-text: validate-color-value-text($color-value);
-
-    --color-text: #{$color-value-text};
-
-    background-color: $color-value;
-    color: $color-value-text;
+    background-color: var(--color-background);
+    color: var(--color-background--text);
   } @else if ($color-property == "text") {
-    color: $color-value;
+    color: var(--color-text);
   } @else if ($color-property != "shadow") {
-    #{$color-property}-color: $color-value;
+    #{$color-property}-color: var(--color-#{$color-property});
   }
 }
 
-@mixin use-color-classes($color-name, $input-properties...) {
-  @each $color-property in $color-properties {
-    $color-property-is-requested: list.length($input-properties) ==
-      0 or
-      list.index($input-properties, $color-property) !=
-      null;
+@mixin use-color-classes($color-name, $requested-color-properties...) {
+  @if (list.length($requested-color-properties) == 0) {
+    $requested-color-properties: $color-properties;
+  }
 
-    @if ($color-property-is-requested) {
-      .#{$color-property}-color-#{$color-name} {
-        @include set-color-property($color-property, $color-name);
-      }
+  @each $color-property in $requested-color-properties {
+    .#{$color-property}-color-#{$color-name} {
+      @include set-color-property($color-property, $color-name);
     }
   }
 }

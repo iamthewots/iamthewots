@@ -25,7 +25,11 @@
     $shade: wtk.get("color-shade", "highlight-#{$i}");
 
     #{$selector} {
-      background-color: theme.get-color("background", $shade);
+      background-color: color-mix(
+        in srgb,
+        var(--color-background),
+        var(--color-background--highlighter) $shade
+      );
     }
 
     $selector: "#{$selector} > .highlight:hover";
