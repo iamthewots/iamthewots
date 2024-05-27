@@ -35,11 +35,11 @@ $settings: (
     "default": var(--duration-md),
     "multiplier": var(--duration-multiplier, 1),
     "value": (
-      ("xs", "faster"): 0.1,
-      ("sm", "fast"): 0.2,
-      ("md", "normal"): 0.4,
-      ("lg", "slow"): 0.8,
-      ("xl", "slower"): 1.6,
+      ("xs", "faster"): 100ms,
+      ("sm", "fast"): 200ms,
+      ("md", "normal"): 400ms,
+      ("lg", "slow"): 800ms,
+      ("xl", "slower"): 1600ms,
     ),
   ),
   "distance": (

@@ -99,5 +99,18 @@ window.addEventListener("resize", () => {
         </div>
       </div>
     </section>
+
+    <section id="components" class="box">
+      <h3 class="text-is-title text-color-accent-1">Components test area</h3>
+      <BaseHoverBox
+        class="box center-content centered-content aspect-ratio-square max-width-md"
+      >
+        <div
+          class="aspect-ratio-square width-xs background-color-accent-1 text-align-center | base-hover-box__item--parallax-effect"
+        >
+          Effect
+        </div>
+      </BaseHoverBox>
+    </section>
   </main>
 </template>

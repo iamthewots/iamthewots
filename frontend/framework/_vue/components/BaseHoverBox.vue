@@ -6,6 +6,13 @@ export interface BaseHoverBoxProps {
   resetOnPointerLeave?: boolean;
 }
 
+export interface BaseHoverBoxEmits {
+  (e: "wtk:base-hover-box:hover-start"): void;
+  (e: "wtk:base-hover-box:hover-end"): void;
+  (e: "wtk:base-hover-box:pointer-enter", value: PointerData): void;
+  (e: "wtk:base-hover-box:pointer-leave", value: PointerData): void;
+}
+
 export interface BaseHoverBox {
   pointersMap: Map<number, PointerData>;
   updateCssVariables: (index: number, x: number, y: number) => void;
@@ -17,7 +24,10 @@ interface PointerData {
   y: number;
 }
 
-const props = defineProps<BaseHoverBoxProps>();
+const props = withDefaults(defineProps<BaseHoverBoxProps>(), {
+  resetOnPointerLeave: true,
+});
+const emit = defineEmits<BaseHoverBoxEmits>();
 const hoverBoxElement = ref<HTMLElement | null>(null);
 const pointersMap = new Map<number, PointerData>();
 
@@ -41,11 +51,14 @@ function updateCssVariables(index: number, x: number, y: number) {
   }
 
   const cssVarPrefix = `--pointer-${index}`;
-  const cssVarsValues = {
+  const cssVarsValues: { [key: string]: string } = {
     x: x.toString(),
-    y: x.toString(),
+    y: y.toString(),
     angle: Math.atan2(y, x).toString(),
-    distance: Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)).toString(),
+    distance: Math.max(
+      Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)) - 0.4142,
+      0
+    ).toString(),
   };
 
   for (const key in cssVarsValues) {
@@ -55,6 +68,11 @@ function updateCssVariables(index: number, x: number, y: number) {
 }
 
 function addPointer(e: PointerEvent) {
+  const pointerData = { index: pointersMap.size, x: 0, y: 0 };
+  pointersMap.set(e.pointerId, pointerData);
+}
+
+function handlePointerEnter(e: PointerEvent) {
   if (
     pointersMap.has(e.pointerId) ||
     (pointersMap.size > 0 && props.multiplePointers === false)
@@ -62,11 +80,9 @@ function addPointer(e: PointerEvent) {
     return;
   }
 
-  const pointerData = { index: pointersMap.size, x: 0, y: 0 };
-  pointersMap.set(e.pointerId, pointerData);
-}
+  // emit pointer-enter
+  // emit hover-start
 
-function handlePointerEnter(e: PointerEvent) {
   addPointer(e);
 }
 
@@ -89,6 +105,12 @@ function handlePointerLeave(e: PointerEvent) {
     pointersMap.clear();
   } else {
     pointersMap.delete(e.pointerId);
+  }
+
+  // emit pointer-leave
+
+  if (pointersMap.size === 0) {
+    // emit hover-end
   }
 
   if (props.resetOnPointerLeave) {
@@ -114,42 +136,5 @@ defineExpose({ updateCssVariables });
 <style lang="scss">
 .base-hover-box {
   touch-action: none;
-}
-
-@keyframes base-hover-box-3d-effect {
-  from {
-    rotate: 0 0;
-  }
-  to {
-    $pointer-x: var(--base-hover-box-pointer-1-x);
-    $pointer-y: var(--base-hover-box-pointer-1-y);
-    $rotate-x: var(--rotate-x, 25deg);
-    $rotate-y: var(--rotate-y, 25deg);
-
-    rotate: calc($pointer-y * $rotate-x * -1);
-    rotate: calc($pointer-x * $rotate-y);
-  }
-}
-
-@keyframes base-hover-box-parallax-effect {
-  from {
-    rotate: 0 0;
-    scale: 1;
-    translate: 0 0;
-  }
-  to {
-    $pointer-x: var(--base-hover-box-pointer-1-x);
-    $pointer-y: var(--base-hover-box-pointer-1-y);
-    $pointer-distance: var(--base-hover-box-pointer-1-distance);
-    $rotate-x: var(--rotate-x, 10deg);
-    $rotate-y: var(--rotate-y, 10deg);
-    $scale: var(--scale, 0.9);
-    $translate-x: var(--translate-x, 2.5rem);
-    $translate-y: var(--translate-y, 2.5rem);
-
-    rotate: calc($pointer-y * $rotate-x * -1);
-    rotate: calc($pointer-x * $rotate-y);
-    scale: calc($scale + $pointer-distance * (1 - $scale));
-  }
 }
 </style>
