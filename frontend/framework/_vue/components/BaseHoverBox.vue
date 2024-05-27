@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 
 export interface BaseHoverBoxProps {
   multiplePointers?: boolean;
@@ -29,7 +29,15 @@ const props = withDefaults(defineProps<BaseHoverBoxProps>(), {
 });
 const emit = defineEmits<BaseHoverBoxEmits>();
 const hoverBoxElement = ref<HTMLElement | null>(null);
+const hoverBoxIsActive = ref(false);
 const pointersMap = new Map<number, PointerData>();
+
+const hoverBoxElementClassList = computed(() => {
+  return {
+    "base-hover-box": true,
+    [`base-hover-box--${hoverBoxIsActive.value ? "active" : "inactive"}`]: true,
+  };
+});
 
 function updatePointerData(e: PointerEvent) {
   const pointerData = pointersMap.get(e.pointerId);
@@ -70,6 +78,8 @@ function updateCssVariables(index: number, x: number, y: number) {
 function addPointer(e: PointerEvent) {
   const pointerData = { index: pointersMap.size, x: 0, y: 0 };
   pointersMap.set(e.pointerId, pointerData);
+
+  return pointerData;
 }
 
 function handlePointerEnter(e: PointerEvent) {
@@ -80,10 +90,14 @@ function handlePointerEnter(e: PointerEvent) {
     return;
   }
 
-  // emit pointer-enter
-  // emit hover-start
+  hoverBoxIsActive.value = true;
 
-  addPointer(e);
+  if (pointersMap.size === 0) {
+    emit("wtk:base-hover-box:hover-start");
+  }
+
+  const pointerData = addPointer(e);
+  emit("wtk:base-hover-box:pointer-enter", pointerData);
 }
 
 function handlePointerMove(e: PointerEvent) {
@@ -107,10 +121,11 @@ function handlePointerLeave(e: PointerEvent) {
     pointersMap.delete(e.pointerId);
   }
 
-  // emit pointer-leave
+  emit("wtk:base-hover-box:pointer-leave", pointerData);
 
   if (pointersMap.size === 0) {
-    // emit hover-end
+    emit("wtk:base-hover-box:hover-end");
+    hoverBoxIsActive.value = false;
   }
 
   if (props.resetOnPointerLeave) {
@@ -123,7 +138,7 @@ defineExpose({ updateCssVariables });
 
 <template>
   <div
-    class="base-hover-box"
+    :class="hoverBoxElementClassList"
     @pointerenter="handlePointerEnter"
     @pointermove="handlePointerMove"
     @pointerleave="handlePointerLeave"
@@ -136,5 +151,28 @@ defineExpose({ updateCssVariables });
 <style lang="scss">
 .base-hover-box {
   touch-action: none;
+}
+
+$transform-3d-effect: rotateX(
+    calc(var(--pointer-0-y) * var(--rotate-x, 25deg) * -1)
+  )
+  rotateY(calc(var(--pointer-0-x) * var(--rotate-y, 25deg)));
+
+@keyframes base-hover-box-3d-effect-on {
+  from {
+    transform: none;
+  }
+  to {
+    transform: $transform-3d-effect;
+  }
+}
+
+@keyframes base-hover-box-3d-effect-off {
+  from {
+    transform: $transform-3d-effect;
+  }
+  to {
+    transform: rotate(0deg, 0deg);
+  }
 }
 </style>

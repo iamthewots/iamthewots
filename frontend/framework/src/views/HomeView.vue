@@ -106,7 +106,7 @@ window.addEventListener("resize", () => {
         class="box center-content centered-content aspect-ratio-square max-width-md"
       >
         <div
-          class="aspect-ratio-square width-xs background-color-accent-1 text-align-center | base-hover-box__item--parallax-effect"
+          class="aspect-ratio-square width-xs background-color-accent-1 text-align-center | base-hover-box__item"
         >
           Effect
         </div>
@@ -114,3 +114,15 @@ window.addEventListener("resize", () => {
     </section>
   </main>
 </template>
+
+<style lang="scss">
+.base-hover-box {
+  &--active .base-hover-box__item {
+    animation: base-hover-box-3d-effect-on 1500ms forwards;
+  }
+
+  &--inactive .base-hover-box__item {
+    animation: base-hover-box-3d-effect-off 1500ms both;
+  }
+}
+</style>
