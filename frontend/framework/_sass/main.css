@@ -10,11 +10,11 @@
   --opacity-lg: 0.8;
   --opacity-xl: 1;
   --opacity-overlay: 0.95;
-  --duration-xs: 0.1;
-  --duration-sm: 0.2;
-  --duration-md: 0.4;
-  --duration-lg: 0.8;
-  --duration-xl: 1.6;
+  --duration-xs: 100ms;
+  --duration-sm: 200ms;
+  --duration-md: 400ms;
+  --duration-lg: 800ms;
+  --duration-xl: 1600ms;
   --duration-multiplier: 1;
   --distance-xs: min(1rem, 5%);
   --distance-sm: min(2rem, 10%);
@@ -1983,9 +1983,16 @@ body {
   box-shadow: 0rem 3.375rem 3.4375rem 0rem color-mix(in srgb, var(--color-shadow), transparent 75%), 0rem -0.75rem 1.875rem 0rem color-mix(in srgb, var(--color-shadow), transparent 88%), 0rem 0.25rem 0.375rem 0rem color-mix(in srgb, var(--color-shadow), transparent 88%), 0rem 0.75rem 0.8125rem 0rem color-mix(in srgb, var(--color-shadow), transparent 83%), 0rem -0.1875rem 0.3125rem 0rem color-mix(in srgb, var(--color-shadow), transparent 91%);
 }
 
-.highlight {
-  --highlight-shade: calc(0% + 10%);
-  background-color: color-mix(in srgb, var(--color-background), var(--color-background--highlighter) var(--highlight-shade));
+@media (pointer: fine) {
+  .highlight:hover {
+    background-color: color-mix(in srgb, var(--color-background), var(--color-background--highlighter) 10%);
+  }
+  .highlight:hover > .highlight:hover {
+    background-color: color-mix(in srgb, var(--color-background), var(--color-background--highlighter) 20%);
+  }
+  .highlight:hover > .highlight:hover > .highlight:hover {
+    background-color: color-mix(in srgb, var(--color-background), var(--color-background--highlighter) 30%);
+  }
 }
 
 /*# sourceMappingURL=main.css.map */

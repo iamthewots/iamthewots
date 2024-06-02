@@ -9,6 +9,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "@_lib": fileURLToPath(new URL("./_lib", import.meta.url)),
       "@_sass": fileURLToPath(new URL("./_sass", import.meta.url)),
       "@_vue": fileURLToPath(new URL("./_vue", import.meta.url)),
     },

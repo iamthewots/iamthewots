@@ -99,6 +99,12 @@ $border-radius-styles: (
   $settings: wtk.find-settings($property, true);
   $settings: map.set($settings, "100", 100%);
 
+  @if ($property == width) {
+    $settings: map.set($settings, "screen", 100vw);
+  } @else {
+    $settings: map.set($settings, "screen", max(100vh, 100%));
+  }
+
   @each $keyset, $value in wtk.find-settings($property, true) {
     $value: wtk.get($property, $keyset);
 
@@ -123,4 +129,9 @@ $border-radius-styles: (
 .fit {
   width: 100%;
   height: 100%;
+
+  &-screen {
+    width: 100vw;
+    height: 100vh;
+  }
 }

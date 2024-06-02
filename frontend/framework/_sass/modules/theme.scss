@@ -201,6 +201,26 @@ $default-color-options: (
   }
 }
 
+@mixin add-color-scheme($color-base-name, $color-values-map) {
+  $color-base-name: validate-color-name($color-base-name);
+
+  @each $color-property in $color-properties {
+    $color-name: "#{$color-base-name}-#{$color-property}";
+    $input-value: map.get($color-values-map, $color-property);
+    $color-value: $color-property;
+    $color-options: ();
+
+    @if (meta.type-of($color-value) == map) {
+      $color-value: map.get($input-value, "color-value");
+      $color-options: map.get($input-value, "color-options");
+    } @else if (is-valid-color-source($input-value)) {
+      $color-value: $input-value;
+    }
+
+    @include add-color($color-name, $color-value, $color-options, true);
+  }
+}
+
 @mixin clone-color($color-value, $new-color-name) {
   @include add-color($new-color-name, $color-value, null, true);
 }
@@ -221,6 +241,15 @@ $default-color-options: (
     color: var(--color-text);
   } @else if ($color-property != "shadow") {
     #{$color-property}-color: var(--color-#{$color-property});
+  }
+}
+
+@mixin set-color-scheme($color-name) {
+  $color-name: validate-color-name($color-name);
+
+  @each $color-property in $color-properties {
+    $property-color-name: "#{$color-name}-#{$color-property}";
+    @include set-color-property($color-property, $property-color-name);
   }
 }
 

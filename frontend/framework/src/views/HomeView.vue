@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { type BaseHoverBox } from "@_vue/components/BaseHoverBox.vue";
+import type { BaseInput } from "@_vue/components/BaseInput.vue";
 import { ref } from "vue";
 
 // font-size
@@ -9,6 +11,35 @@ window.addEventListener("resize", () => {
   const bodyComputedStyle = window.getComputedStyle(document.body);
   currentFontSizeInPx.value = bodyComputedStyle.fontSize;
 });
+
+// hover-box
+const baseHoverBoxComponent = ref<BaseHoverBox>();
+
+function logHoverBoxData() {
+  if (baseHoverBoxComponent.value) {
+    const hoverBoxData = baseHoverBoxComponent.value.getHoverBoxData();
+    console.log(hoverBoxData);
+  }
+}
+
+window.addEventListener("keydown", (e: KeyboardEvent) => {
+  if (e.key === "Enter") {
+    logHoverBoxData();
+  }
+});
+
+// input
+
+const baseInputComponent = ref<BaseInput>();
+const baseInputModelValue = ref("");
+
+function testInputMethod() {
+  baseInputComponent.value?.saveInputValue("test");
+}
+
+function handleSaveInputValueEvent(e: Event) {
+  console.log(e);
+}
 </script>
 
 <template>
@@ -100,29 +131,68 @@ window.addEventListener("resize", () => {
       </div>
     </section>
 
-    <section id="components" class="box">
+    <section id="components" class="box position-relative spread-y-md">
       <h3 class="text-is-title text-color-accent-1">Components test area</h3>
       <BaseHoverBox
         class="box center-content centered-content aspect-ratio-square max-width-md"
+        ref="baseHoverBoxComponent"
       >
         <div
-          class="aspect-ratio-square width-xs background-color-accent-1 text-align-center | base-hover-box__item"
+          class="aspect-ratio-square width-xs background-color-accent-1 text-align-center | hover-box-test-item"
         >
           Effect
         </div>
       </BaseHoverBox>
+
+      <div>
+        <BaseInput
+          placeholder="Base input"
+          storageId="homeViewInput"
+          @base-input:save-input-value="handleSaveInputValueEvent"
+          v-model="baseInputModelValue"
+          ref="baseInputComponent"
+        ></BaseInput>
+        <p>{{ baseInputModelValue }}</p>
+        <button @click="testInputMethod">Test input method</button>
+      </div>
+
+      <div>
+        <BaseModal closeOnClickOutside>
+          <template #activator="modal">
+            <button @click="modal.open">Open modal</button>
+            <button @click="modal.close">Close modal</button>
+          </template>
+          <template #default>
+            <div class="box | modal-test-item">
+              Hello my dearest friend, this is a modal.
+            </div>
+          </template>
+        </BaseModal>
+
+        <BaseDrawer closeOnClickOutside>
+          <template #activator="drawer">
+            <button @click="drawer.open">Open drawer</button>
+          </template>
+          <template #default>
+            <div class="box fit-screen">Hello my dearest friend, I am a drawer!</div>
+          </template>
+        </BaseDrawer>
+      </div>
     </section>
   </main>
 </template>
 
 <style lang="scss">
-.base-hover-box {
-  &--active .base-hover-box__item {
-    animation: base-hover-box-3d-effect-on 1500ms forwards;
+.hover-box-test-item {
+  .base-hover-box--active & {
+    transition: translate 250ms ease;
+    translate: calc(var(--pointer-0-x) * var(--hover-box-x-multiplier) * -1)
+      calc(var(--pointer-0-y) * var(--hover-box-y-multiplier) * -1);
   }
 
-  &--inactive .base-hover-box__item {
-    animation: base-hover-box-3d-effect-off 1500ms both;
+  .base-hover-box--inactive & {
+    transition: translate 1000ms ease-out;
+    translate: 0 0;
   }
 }
 </style>

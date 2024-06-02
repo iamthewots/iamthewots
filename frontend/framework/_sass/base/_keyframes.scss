@@ -31,10 +31,10 @@
   }
 
   $from-translate-map: (
-    "left": 0 calc($base-distance * -1),
-    "right": 0 $base-distance,
-    "top": calc($base-distance * -1) 0,
-    "bottom": $base-distance 0,
+    "left": calc($base-distance * -1) 0,
+    "right": $base-distance 0,
+    "top": 0 calc($base-distance * -1),
+    "bottom": 0 $base-distance,
   );
 
   @each $coordinate, $from-translate in $from-translate-map {

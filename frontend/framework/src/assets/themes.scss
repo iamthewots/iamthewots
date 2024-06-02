@@ -7,10 +7,19 @@
   @include theme.add-color("main", hsl(98, 39%, 88%));
   @include theme.add-color("body", hsl(98, 29%, 78%));
   @include theme.add-color("accent-1", hsl(11, 83%, 46%));
-  @include theme.add-color("accent-2", #6940ac);
-  @include theme.add-color("shadow", #3c473c);
-  @include theme.add-color("outline", #0081a8);
-  @include theme.add-color("border", #2a492f);
+  @include theme.add-color("accent-2", hsl(263, 46%, 46%));
+  @include theme.add-color("overlay", hsl(140, 8%, 36%));
+  @include theme.add-color("shadow", hsl(120, 8%, 26%));
+  @include theme.add-color("outline", hsl(194, 100%, 33%));
+  @include theme.add-color("border", hsl(130, 27%, 23%));
+  @include theme.add-color-scheme(
+    "input",
+    (
+      "outline": hsl(186, 85%, 50%),
+      "background": hsl(98, 39%, 78%),
+      "text": hsl(128, 13%, 23%),
+    )
+  );
 
   @include theme.set-color-property("background", "body");
 }
