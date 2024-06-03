@@ -162,6 +162,10 @@ function handlePointerLeaveEvent(e: PointerEvent) {
   }
 }
 
+function handlePointerCancelEvent(e: PointerEvent) {
+  alert("Cancel event!");
+}
+
 function handleResizeEventFromWindow() {
   if (hoverBoxElement.value === null) {
     return;
@@ -177,7 +181,7 @@ function handleResizeEventFromWindow() {
 
   let key: keyof typeof propertiesData;
   for (key in propertiesData) {
-    const propertyName = `hover-box-${key}`;
+    const propertyName = `--hover-box-${key}`;
     const propertyValue = propertiesData[key];
     hoverBoxElement.value.style.setProperty(propertyName, propertyValue);
   }
@@ -203,7 +207,9 @@ defineExpose({ getHoverBoxData });
     @pointerleave="handlePointerLeaveEvent"
     v-bind="$attrs"
     ref="hoverBoxElement"
-  ></div>
+  >
+    <slot></slot>
+  </div>
 </template>
 
 <style lang="scss">

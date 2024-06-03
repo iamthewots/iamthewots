@@ -4,13 +4,21 @@ import {
   type DialogToolsEmits,
   type DialogToolsProps,
 } from "@_vue/composables/use-dialog-tools";
+import type { Ref } from "vue";
 
 export interface BaseModalProps extends DialogToolsProps {
-  wrapperElementTransition?: string;
-  contentElementTransition?: string;
+  wrapperElementTransitionName?: string;
+  contentElementTransitionName?: string;
 }
 
 export interface BaseModalEmits extends DialogToolsEmits<"base-dialog"> {}
+
+export interface BaseModal {
+  wrapperElement: Ref<HTMLElement | null>;
+  contentElement: Ref<HTMLElement | null>;
+  open: () => void;
+  close: () => void;
+}
 
 defineOptions({
   name: "BaseModal",
@@ -18,8 +26,8 @@ defineOptions({
 });
 
 const props = withDefaults(defineProps<BaseModalProps>(), {
-  wrapperElementTransition: "base-modal__wrapper",
-  contentElementTransition: "base-modal__content",
+  wrapperElementTransitionName: "base-modal",
+  contentElementTransitionName: "base-modal__content",
 });
 const emits = defineEmits<BaseModalEmits>();
 const {
@@ -47,19 +55,19 @@ defineExpose({ wrapperElement, contentElement, open, close });
   <slot name="activator" v-bind="slotProps"></slot>
   <Teleport to="body">
     <Transition
-      :name="wrapperElementTransition"
+      :name="wrapperElementTransitionName"
       mode="out-in"
       @after-enter="handleAfterEnterFromWrapperElement"
       @after-leave="handleAfterLeaveFromWrapperElement"
     >
       <div
-        class="base-modal__wrapper"
+        class="base-modal"
         v-bind="$attrs"
         v-if="showWrapperElement"
         ref="wrapperElement"
       >
         <Transition
-          :name="contentElementTransition"
+          :name="contentElementTransitionName"
           mode="out-in"
           @after-enter="handleAfterEnterFromContentElement"
           @after-leave="handleAfterLeaveFromContentElement"
@@ -82,7 +90,15 @@ defineExpose({ wrapperElement, contentElement, open, close });
 @use "@_sass/wtk.scss";
 
 .base-modal {
-  &__wrapper,
+  position: fixed;
+  inset: 0;
+  z-index: wtk.get("z-index", "xl");
+  overscroll-behavior: contain;
+  padding: wtk.get("spacing", "click-gap");
+  backdrop-filter: blur(4px);
+  background-color: theme.get-color("overlay", $color-alpha: "overlay");
+
+  &,
   &__content {
     place-items: center;
     grid-template-columns: minmax(0, 1fr);
@@ -90,39 +106,35 @@ defineExpose({ wrapperElement, contentElement, open, close });
     display: grid;
   }
 
-  &__wrapper {
-    position: fixed;
-    inset: 0;
-    z-index: wtk.get("z-index", "xl");
-    padding: wtk.get("spacing", "click-gap");
-    backdrop-filter: blur(4px);
-    background-color: theme.get-color("overlay", $color-alpha: "overlay");
+  &__content,
+  &__content > * {
+    max-width: 100%;
+    max-height: 100%;
+  }
+}
 
-    &-enter-active {
-      animation: fade-in wtk.get("duration", "md") ease-out;
-    }
+.base-modal {
+  $duration: wtk.get("duration");
 
-    &-leave-active {
-      animation: fade-out wtk.get("duration", "md") ease-out;
-    }
+  &-enter-active {
+    animation: fade-in $duration ease-out;
   }
 
-  &__content {
-    &,
-    & > * {
-      max-width: 100%;
-      max-height: 100%;
-    }
+  &-leave-active {
+    animation: fade-out $duration ease-out;
+  }
+}
 
-    &-enter-active {
-      animation: slide-from-bottom wtk.get("duration", "md") ease-out,
-        fade-in wtk.get("duration", "md") ease-out;
-    }
+.base-modal__content {
+  $duration: wtk.get("duration");
 
-    &-leave-active {
-      animation: slide-from-bottom wtk.get("duration", "md") ease-out reverse,
-        fade-out wtk.get("duration", "md") ease-out;
-    }
+  &-enter-active {
+    animation: slide-from-bottom $duration ease-out, fade-in $duration ease-out;
+  }
+
+  &-leave-active {
+    animation: slide-from-bottom $duration ease-out reverse,
+      fade-out $duration ease-out;
   }
 }
 </style>

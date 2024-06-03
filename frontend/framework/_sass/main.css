@@ -16,11 +16,11 @@
   --duration-lg: 800ms;
   --duration-xl: 1600ms;
   --duration-multiplier: 1;
-  --distance-xs: min(1rem, 5%);
-  --distance-sm: min(2rem, 10%);
-  --distance-md: min(4em, 20%);
-  --distance-lg: min(8rem, 40%);
-  --distance-xl: min(16rem, 80%);
+  --distance-xs: min(2rem, 10%);
+  --distance-sm: min(4rem, 20%);
+  --distance-md: min(8rem, 40%);
+  --distance-lg: min(16rem, 80%);
+  --distance-xl: min(32rem, 160%);
   --distance-multiplier: 1;
   --scale-delta-xs: 0.05;
   --scale-delta-sm: 0.1;
@@ -52,7 +52,7 @@
   --spacing-md: min(1.6rem, 6.4vw);
   --spacing-lg: min(3.2rem, 12.8vw);
   --spacing-xl: min(6.4rem, 25.6vw);
-  --spacing-click: max(50px, 2.5vw);
+  --spacing-click-gap: max(50px, 2.5vw);
   --spacing-main: clamp(12px, 2.4vw, 1.6rem);
   --global-spacing-multiplier: 1;
   --width-xs: 8rem;
@@ -207,7 +207,7 @@ body {
 }
 @keyframes draw-from-left {
   from {
-    translate: 0 -100%;
+    translate: -100% 0;
   }
   to {
     translate: 0 0;
@@ -215,7 +215,7 @@ body {
 }
 @keyframes draw-from-right {
   from {
-    translate: 0 100%;
+    translate: 100% 0;
   }
   to {
     translate: 0 0;
@@ -223,7 +223,7 @@ body {
 }
 @keyframes draw-from-top {
   from {
-    translate: -100% 0;
+    translate: 0 -100%;
   }
   to {
     translate: 0 0;
@@ -231,7 +231,7 @@ body {
 }
 @keyframes draw-from-bottom {
   from {
-    translate: 100% 0;
+    translate: 0 100%;
   }
   to {
     translate: 0 0;
@@ -239,7 +239,7 @@ body {
 }
 @keyframes slide-from-left {
   from {
-    translate: 0 calc(var(--animation-distance, var(--distance-md)) * -1);
+    translate: calc(var(--animation-distance, var(--distance-md)) * -1) 0;
   }
   to {
     translate: 0 0;
@@ -247,7 +247,7 @@ body {
 }
 @keyframes slide-from-right {
   from {
-    translate: 0 var(--animation-distance, var(--distance-md));
+    translate: var(--animation-distance, var(--distance-md)) 0;
   }
   to {
     translate: 0 0;
@@ -255,7 +255,7 @@ body {
 }
 @keyframes slide-from-top {
   from {
-    translate: calc(var(--animation-distance, var(--distance-md)) * -1) 0;
+    translate: 0 calc(var(--animation-distance, var(--distance-md)) * -1);
   }
   to {
     translate: 0 0;
@@ -263,7 +263,7 @@ body {
 }
 @keyframes slide-from-bottom {
   from {
-    translate: var(--animation-distance, var(--distance-md)) 0;
+    translate: 0 var(--animation-distance, var(--distance-md));
   }
   to {
     translate: 0 0;
@@ -912,8 +912,8 @@ body {
   margin-right: calc(var(--spacing-xl) * var(--global-spacing-multiplier, 1));
 }
 
-.spread-x-click > *:not(:last-child) {
-  margin-right: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
+.spread-x-click-gap > *:not(:last-child) {
+  margin-right: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
 }
 
 .spread-x-main > *:not(:last-child) {
@@ -940,8 +940,8 @@ body {
   margin-bottom: calc(var(--spacing-xl) * var(--global-spacing-multiplier, 1));
 }
 
-.spread-y-click > *:not(:last-child) {
-  margin-bottom: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
+.spread-y-click-gap > *:not(:last-child) {
+  margin-bottom: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
 }
 
 .spread-y-main > *:not(:last-child) {
@@ -1188,37 +1188,37 @@ body {
   margin-bottom: calc(var(--spacing-xl) * var(--global-spacing-multiplier, 1));
 }
 
-.margin-click {
-  margin-left: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
-  margin-right: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
-  margin-top: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
-  margin-bottom: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
+.margin-click-gap {
+  margin-left: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
+  margin-right: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
+  margin-top: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
+  margin-bottom: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
 }
 
-.margin-x-click {
-  margin-left: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
-  margin-right: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
+.margin-x-click-gap {
+  margin-left: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
+  margin-right: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
 }
 
-.margin-y-click {
-  margin-top: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
-  margin-bottom: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
+.margin-y-click-gap {
+  margin-top: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
+  margin-bottom: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
 }
 
-.margin-left-click {
-  margin-left: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
+.margin-left-click-gap {
+  margin-left: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
 }
 
-.margin-right-click {
-  margin-right: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
+.margin-right-click-gap {
+  margin-right: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
 }
 
-.margin-top-click {
-  margin-top: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
+.margin-top-click-gap {
+  margin-top: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
 }
 
-.margin-bottom-click {
-  margin-bottom: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
+.margin-bottom-click-gap {
+  margin-bottom: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
 }
 
 .margin-main {
@@ -1423,37 +1423,37 @@ body {
   padding-bottom: calc(var(--spacing-xl) * var(--global-spacing-multiplier, 1));
 }
 
-.padding-click {
-  padding-left: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
-  padding-right: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
-  padding-top: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
-  padding-bottom: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
+.padding-click-gap {
+  padding-left: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
+  padding-right: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
+  padding-top: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
+  padding-bottom: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
 }
 
-.padding-x-click {
-  padding-left: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
-  padding-right: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
+.padding-x-click-gap {
+  padding-left: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
+  padding-right: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
 }
 
-.padding-y-click {
-  padding-top: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
-  padding-bottom: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
+.padding-y-click-gap {
+  padding-top: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
+  padding-bottom: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
 }
 
-.padding-left-click {
-  padding-left: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
+.padding-left-click-gap {
+  padding-left: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
 }
 
-.padding-right-click {
-  padding-right: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
+.padding-right-click-gap {
+  padding-right: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
 }
 
-.padding-top-click {
-  padding-top: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
+.padding-top-click-gap {
+  padding-top: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
 }
 
-.padding-bottom-click {
-  padding-bottom: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
+.padding-bottom-click-gap {
+  padding-bottom: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
 }
 
 .padding-main {
@@ -1558,17 +1558,17 @@ body {
   row-gap: calc(var(--spacing-xl) * var(--global-spacing-multiplier, 1));
 }
 
-.gap-click {
-  column-gap: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
-  row-gap: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
+.gap-click-gap {
+  column-gap: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
+  row-gap: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
 }
 
-.gap-x-click {
-  column-gap: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
+.gap-x-click-gap {
+  column-gap: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
 }
 
-.gap-y-click {
-  row-gap: calc(var(--spacing-click) * var(--global-spacing-multiplier, 1));
+.gap-y-click-gap {
+  row-gap: calc(var(--spacing-click-gap) * var(--global-spacing-multiplier, 1));
 }
 
 .gap-main {
@@ -1582,6 +1582,14 @@ body {
 
 .gap-y-main {
   row-gap: calc(var(--spacing-main) * var(--global-spacing-multiplier, 1));
+}
+
+.width-100 {
+  width: 100%;
+}
+
+.width-screen {
+  width: 100vw;
 }
 
 .width-xs {
@@ -1714,6 +1722,14 @@ body {
   --layout-main-width: var(--width-text-box);
 }
 
+.height-100 {
+  height: 100%;
+}
+
+.height-screen {
+  height: max(100vh, 100%);
+}
+
 .height-xs {
   height: var(--height-xs);
 }
@@ -1834,6 +1850,10 @@ body {
 .fit {
   width: 100%;
   height: 100%;
+}
+.fit-screen {
+  width: 100vw;
+  height: 100vh;
 }
 
 .font-family-base {

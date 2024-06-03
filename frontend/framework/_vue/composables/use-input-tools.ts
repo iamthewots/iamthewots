@@ -8,7 +8,6 @@ type InputToolsElement =
   | HTMLTextAreaElement;
 
 interface SaveData {
-  key: string;
   value: string;
   timestamp: number;
 }
@@ -83,7 +82,6 @@ export function useInputTools(settings: InputToolsSettings): InputTools {
     }
 
     const saveData: SaveData = {
-      key: rawKey,
       value: inputElement.value.value,
       timestamp: Date.now(),
     };

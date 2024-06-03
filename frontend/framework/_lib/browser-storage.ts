@@ -61,9 +61,10 @@ export class BrowserStorage<T = any> {
     const keys = this.getKeys();
     keys.forEach((key) => {
       const value = this.storageApi.getItem(key);
+      const rawKey = this.parseKey(key);
 
       if (value !== null) {
-        outputObject[key] = JSON.parse(value);
+        outputObject[rawKey] = JSON.parse(value);
       }
     });
 
@@ -88,6 +89,10 @@ export class BrowserStorage<T = any> {
 
   private formatKey(rawKey: string) {
     return `BS@${this.storageId}#${rawKey}`;
+  }
+
+  private parseKey(key: string) {
+    return key.slice(`BS@${this.storageId}#`.length);
   }
 
   static isStorageEnabled(storageType: BrowserStorageType) {

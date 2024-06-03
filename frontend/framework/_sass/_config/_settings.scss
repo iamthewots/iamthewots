@@ -127,6 +127,9 @@ $settings: (
     ),
   ),
   "width": (
+    "allow": (
+      size,
+    ),
     "value": (
       "xs": 8rem,
       "sm": 16rem,
@@ -141,6 +144,9 @@ $settings: (
     ),
   ),
   "height": (
+    "allow": (
+      size,
+    ),
     "value": (
       "xs": 8rem,
       "sm": 16rem,
