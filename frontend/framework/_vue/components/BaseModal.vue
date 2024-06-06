@@ -114,27 +114,28 @@ defineExpose({ wrapperElement, contentElement, open, close });
 }
 
 .base-modal {
-  $duration: wtk.get("duration");
+  --animation-duration: #{wtk.get("duration")};
 
   &-enter-active {
-    animation: fade-in $duration ease-out;
+    animation: fade-in var(--animation-duration) ease-out;
   }
 
   &-leave-active {
-    animation: fade-out $duration ease-out;
+    animation: fade-out var(--animation-duration) ease-out;
   }
 }
 
 .base-modal__content {
-  $duration: wtk.get("duration");
+  --animation-duration: #{wtk.get("duration")};
 
   &-enter-active {
-    animation: slide-from-bottom $duration ease-out, fade-in $duration ease-out;
+    animation: slide-from-bottom var(--animation-duration) ease-out,
+      fade-in var(--animation-duration) ease-out;
   }
 
   &-leave-active {
-    animation: slide-from-bottom $duration ease-out reverse,
-      fade-out $duration ease-out;
+    animation: slide-from-bottom var(--animation-duration) ease-out reverse,
+      fade-out var(--animation-duration) ease-out;
   }
 }
 </style>

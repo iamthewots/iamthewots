@@ -48,6 +48,10 @@ function testInputMethod() {
 function handleSaveInputValueEvent(e: Event) {
   console.log(e);
 }
+
+// counter
+
+const counterTestValue = ref(200);
 </script>
 
 <template>
@@ -235,6 +239,40 @@ function handleSaveInputValueEvent(e: Event) {
             </div>
           </template>
         </BaseDrawer>
+      </div>
+      <div>
+        <BaseCard
+          class="aspect-ratio-gaming-card width-md"
+          turnDirection="up-left"
+        >
+          <template #frontFace>
+            <div class="box center-content fit">
+              <span>Hi, I am in the front!</span>
+            </div>
+          </template>
+          <template #backFace>
+            <div class="box center-content fit">
+              <span>Hi, I'm in the back!</span>
+            </div>
+          </template>
+        </BaseCard>
+      </div>
+      <div>
+        <code
+          ><BaseCounter
+            :countTo="counterTestValue"
+            :countFrom="15"
+            :duration="4000"
+          >
+          </BaseCounter
+        ></code>
+        <p>
+          <button @click="counterTestValue = 111">111</button>
+          <button @click="counterTestValue = 222">222</button>
+          <button @click="counterTestValue = 333">333</button>
+          <button @click="counterTestValue = 444">444</button>
+          <button @click="counterTestValue = 999.99">999.99</button>
+        </p>
       </div>
     </section>
   </main>

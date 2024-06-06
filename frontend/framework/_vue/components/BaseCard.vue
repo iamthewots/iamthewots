@@ -17,7 +17,6 @@ export interface BaseCardProps {
 export interface BaseCardEmits {
   (e: "base-card:turn-to-front"): void;
   (e: "base-card:turn-to-back"): void;
-  (e: "base-card:turn", payload: CardFace): void;
   (e: "base-card:turn-start", payload: CardFace): void;
   (e: "base-card:turn-end", payload: CardFace): void;
 }
@@ -39,11 +38,11 @@ const cardElement = ref<HTMLElement | null>(null);
 const currentCardFace = ref<CardFace>("front");
 let transitionIsActive = false;
 
-const cardContentElementClassList = computed(() => {
+const cardElementClassList = computed(() => {
   return {
-    "base-card__content": true,
-    [`base-card__content--direction-${props.turnDirection}`]: true,
-    [`base-card__content--turn-${currentCardFace.value}`]: true,
+    "base-card": true,
+    [`base-card--turn-direction-${props.turnDirection}`]: true,
+    "base-card--turn-back": currentCardFace.value === "back",
   };
 });
 
@@ -76,7 +75,7 @@ function handleClickEvent() {
 }
 
 function handleTransitionEndEvent() {
-  emits("base-card:turn", currentCardFace.value);
+  transitionIsActive = false;
   emits("base-card:turn-end", currentCardFace.value);
 
   if (currentCardFace.value === "front") {
@@ -92,18 +91,18 @@ defineExpose({ turnFront, turnBack, turn });
 
 <template>
   <div
-    class="base-card"
+    :class="cardElementClassList"
     @click="handleClickEvent"
     @transitionend="handleTransitionEndEvent"
     v-bind="$attrs"
     ref="cardElement"
   >
-    <div :class="cardContentElementClassList">
-      <div class="base-card__face base-card__front-face">
-        <slot name="frontFace" v-bind="slotProps"></slot>
-      </div>
+    <div class="base-card__content">
       <div class="base-card__face base-card__back-face">
         <slot name="backFace" v-bind="slotProps"></slot>
+      </div>
+      <div class="base-card__face base-card__front-face">
+        <slot name="frontFace" v-bind="slotProps"></slot>
       </div>
     </div>
   </div>
@@ -113,7 +112,7 @@ defineExpose({ turnFront, turnBack, turn });
 @use "@_sass/wtk.scss";
 
 .base-card {
-  --transition-duration: #{wtk.get("duration")};
+  --transition-duration: #{wtk.get("duration", "lg")};
 
   display: inline-block;
   perspective: 100rem;
@@ -135,11 +134,6 @@ defineExpose({ turnFront, turnBack, turn });
     width: 100%;
     height: 100%;
   }
-
-  &__content--turn-back,
-  &__back-face {
-    transform: var(--transform);
-  }
 }
 
 $card-rotations: (
@@ -153,8 +147,15 @@ $card-rotations: (
   "down-right": rotate3d(-1, 1, 0, -180deg),
 );
 
+.base-card {
+  &--turn-back &__content,
+  &__back-face {
+    transform: var(--transform);
+  }
+}
+
 @each $direction, $transform in $card-rotations {
-  .base-card__content--turn-direction-#{$direction} {
+  .base-card--turn-direction-#{$direction} {
     --transform: #{$transform};
   }
 }

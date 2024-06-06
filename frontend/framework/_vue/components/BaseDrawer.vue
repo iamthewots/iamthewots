@@ -109,7 +109,7 @@ defineExpose({ wrapperElement, contentElement, open, close });
   position: absolute;
   inset: 0;
   overscroll-behavior: contain;
-  
+
   &--is-fullscreen {
     position: fixed;
     backdrop-filter: blur(4px);
@@ -159,26 +159,27 @@ $draw-from-settings: (
 }
 
 .base-drawer {
-  $duration: wtk.get("duration");
+  --animation-duration: #{wtk.get("duration")};
 
   &-enter-active {
-    animation: fade-in $duration ease-out;
+    animation: fade-in var(--animation-duration) ease-out;
   }
 
   &-leave-active {
-    animation: fade-out $duration ease-out;
+    animation: fade-out var(--animation-duration) ease-out;
   }
 }
 
 .base-drawer__content {
-  $duration: wtk.get("duration");
+  --animation-duration: #{wtk.get("duration")};
 
   &-enter-active {
-    animation: var(--content-animation-name) $duration ease-out;
+    animation: var(--content-animation-name) var(--animation-duration) ease-out;
   }
 
   &-leave-active {
-    animation: var(--content-animation-name) $duration ease-out reverse;
+    animation: var(--content-animation-name) var(--animation-duration) ease-out
+      reverse;
   }
 }
 </style>
