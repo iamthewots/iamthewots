@@ -1,67 +1,87 @@
 <script setup lang="ts">
-import type { ClassToggles } from "@_vue/composables/use-class-tools";
 import {
   computed,
   onMounted,
   ref,
   watch,
-  type ComputedRef,
-  type Ref,
+  type ComponentObjectPropsOptions,
 } from "vue";
 
 export interface BaseCounterProps {
   value: number;
-  startValue?: number;
-  counterStep?: number;
-  counterSpeed?: number;
-  counterFPS?: number;
-  classToggles?: BaseCounterClassToggles;
+  countFrom?: number;
+  countBy?: number;
+  countIn?: number;
+  updatesPerSecond?: number;
   fixedDecimals?: number;
 }
 
-export type BaseCounterClassToggles = ClassToggles<{
-  counter: Ref<number>;
-  counterGoal: ComputedRef<number>;
-}>;
-
 export interface BaseCounterEmits {
-  (e: "base-counter:counter-start", payload: number): void;
-  (e: "base-counter:counter-stop", payload: number): void;
-  (e: "base-counter:counter-end", payload: number): void;
+  (e: "base-counter:counter-start", currentValue: number): void;
+  (e: "base-counter:counter-stop", currentValue: number): void;
+  (e: "base-counter:counter-end", currentValue: number): void;
 }
 
-export interface BaseCounter {}
+defineOptions({
+  name: "BaseCounter",
+  inheritAttrs: false,
+});
 
-const props = withDefaults(defineProps<BaseCounterProps>({
-  counterStep: {}
-}), {
-  startValue: 0,
-  counterStep: 0,
-  counterSpeed: 1000,
-  counterFPS: 30,
-  fixedDecimals: 0,
+const props = defineProps({
+  value: {
+    type: Number,
+    required: true,
+  },
+  countFrom: {
+    type: Number,
+    default: 0,
+  },
+  countBy: {
+    type: Number,
+    validator: (value: number) => value > 0,
+  },
+  countIn: {
+    type: Number,
+    default: 1000,
+    validator: (value: number) => value > 0,
+  },
+  updatesPerSecond: {
+    type: Number,
+    default: 30,
+    validator: (value: number) => value >= 1 && value < 120,
+  },
+  fixedDecimals: {
+    type: Number,
+    default: 0,
+    validator: (value: number) => value > 0,
+  },
 });
 const emits = defineEmits<BaseCounterEmits>();
-const counter = ref(props.startValue);
+const counter = ref(props.countFrom);
 const counterGoal = computed(() => props.value);
-let counterIntervalId: number | undefined;
+let counterIntervalId: number;
 
 function startCounter() {
   if (counter.value === counterGoal.value) {
     return;
-  }
-
-  if (counterIntervalId !== undefined) {
+  } else if (counterIntervalId !== undefined) {
     stopCounter();
   }
 
-  const counterFps = getCounterFps();
-  const counterStep = getCounterStep(counterFps);
+  const counterGap = counterGoal.value - counter.value;
+  let counterStep = Math.sign(counterGap);
+
+  if (props.countBy !== undefined) {
+    counterStep *= props.countBy;
+  } else {
+    counterStep *=
+      Math.abs(counterGap) / (props.countIn / props.updatesPerSecond);
+  }
 
   emits("base-counter:counter-start", counter.value);
   counterIntervalId = window.setInterval(() => {
     updateCounter(counterStep);
-  }, 1000 / counterFps);
+  }, 1000 / props.updatesPerSecond);
 }
 
 function stopCounter() {
@@ -69,25 +89,28 @@ function stopCounter() {
   emits("base-counter:counter-stop", counter.value);
 }
 
-function updateCounter(counterStep: number) {}
+function updateCounter(counterStep: number) {
+  counter.value += counterStep;
+  const counterGoalReached =
+    (counterStep < 0 && counter.value <= counterGoal.value) ||
+    (counterStep > 0 && counter.value >= counterGoal.value);
 
-function getCounterFps() {
-  return typeof props.counterFPS === "number" && props.counterFPS > 0
-    ? getCounterFps
-    : 30;
+  if (counterGoalReached) {
+    window.clearInterval(counterIntervalId);
+    counter.value = counterGoal.value;
+    emits("base-counter:counter-end", counter.value);
+  }
 }
-
-function getCounterStep(counterFps: number) {}
 
 watch(counterGoal, () => startCounter());
 onMounted(() => startCounter());
 
 const slotProps = { counter, counterGoal };
-defineExpose({ counter, counterGoal, startCounter, stopCounter });
+defineExpose({ counter, counterGoal, stopCounter, startCounter });
 </script>
 
 <template>
-  <span class="wrapperElementClassList"
-    ><slot v-bind="slotProps">{{ counter.toFixed(fixedDecimals) }}</slot></span
-  >
+  <span class="base-counter" v-bind="$attrs">
+    <slot v-bind="slotProps">{{ counter.toFixed(fixedDecimals) }}</slot>
+  </span>
 </template>

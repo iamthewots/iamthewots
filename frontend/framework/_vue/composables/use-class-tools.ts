@@ -1,17 +1,17 @@
 import { computed } from "vue";
 
-export interface ClassToggles<T> {
-  [className: string]: (data: T) => boolean;
+export interface ClassToggles<D> {
+  [className: string]: (evaluationData: D) => boolean;
 }
 
-export function useClassTools<T>(data: T, classToggles: ClassToggles<T> = {}) {
+export function useClassTools<D>(evaluationData: D, classToggles: ClassToggles<D> = {}) {
   const classNames = computed(() => {
     const activeClassNames: string[] = [];
     const inactiveClassNames: string[] = [];
     for (const className in classToggles) {
-      const toggle = classToggles[className];
+      const toggleFunction = classToggles[className];
 
-      if (toggle(data)) {
+      if (toggleFunction(evaluationData)) {
         activeClassNames.push(className);
       } else {
         inactiveClassNames.push(className);
