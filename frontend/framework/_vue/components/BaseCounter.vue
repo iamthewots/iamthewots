@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { ClassToggles } from "@_vue/composables/use-class-tools";
 import {
   computed,
   onMounted,
@@ -9,71 +10,84 @@ import {
 } from "vue";
 
 export interface BaseCounterProps {
-  countTo: number;
-  countFrom?: number;
-  duration?: number;
-  decimals?: number;
-  updatesPerSecond?: number;
+  value: number;
+  startValue?: number;
+  counterStep?: number;
+  counterSpeed?: number;
+  counterFPS?: number;
+  classToggles?: BaseCounterClassToggles;
+  fixedDecimals?: number;
 }
+
+export type BaseCounterClassToggles = ClassToggles<{
+  counter: Ref<number>;
+  counterGoal: ComputedRef<number>;
+}>;
 
 export interface BaseCounterEmits {
   (e: "base-counter:counter-start", payload: number): void;
+  (e: "base-counter:counter-stop", payload: number): void;
   (e: "base-counter:counter-end", payload: number): void;
 }
 
-export interface BaseCounter {
-  counter: Ref<number>;
-  counterGoal: ComputedRef<number>;
-}
+export interface BaseCounter {}
 
-const props = withDefaults(defineProps<BaseCounterProps>(), {
-  countFrom: 0,
-  duration: 1000,
-  decimals: 0,
-  updatesPerSecond: 30,
+const props = withDefaults(defineProps<BaseCounterProps>({
+  counterStep: {}
+}), {
+  startValue: 0,
+  counterStep: 0,
+  counterSpeed: 1000,
+  counterFPS: 30,
+  fixedDecimals: 0,
 });
 const emits = defineEmits<BaseCounterEmits>();
-const counter = ref(props.countFrom);
-const counterGoal = computed(() => props.countTo);
-let counterIntervalId: number;
+const counter = ref(props.startValue);
+const counterGoal = computed(() => props.value);
+let counterIntervalId: number | undefined;
 
 function startCounter() {
   if (counter.value === counterGoal.value) {
     return;
   }
 
-  window.clearInterval(counterIntervalId);
+  if (counterIntervalId !== undefined) {
+    stopCounter();
+  }
+
+  const counterFps = getCounterFps();
+  const counterStep = getCounterStep(counterFps);
+
   emits("base-counter:counter-start", counter.value);
-  const goalDelta = counterGoal.value - counter.value;
-  const delta =
-    Math.sign(goalDelta) *
-    (Math.abs(goalDelta) / (props.duration / props.updatesPerSecond));
-
-  console.log(delta);
   counterIntervalId = window.setInterval(() => {
-    counter.value += delta;
-
-    if (
-      (delta < 0 && counter.value <= counterGoal.value) ||
-      (delta > 0 && counter.value >= counterGoal.value)
-    ) {
-      window.clearInterval(counterIntervalId);
-      counter.value = counterGoal.value;
-      emits("base-counter:counter-end", counter.value);
-    }
-  }, 1000 / props.updatesPerSecond);
+    updateCounter(counterStep);
+  }, 1000 / counterFps);
 }
 
-watch(counterGoal, () => startCounter());
+function stopCounter() {
+  window.clearInterval(counterIntervalId);
+  emits("base-counter:counter-stop", counter.value);
+}
 
+function updateCounter(counterStep: number) {}
+
+function getCounterFps() {
+  return typeof props.counterFPS === "number" && props.counterFPS > 0
+    ? getCounterFps
+    : 30;
+}
+
+function getCounterStep(counterFps: number) {}
+
+watch(counterGoal, () => startCounter());
 onMounted(() => startCounter());
 
 const slotProps = { counter, counterGoal };
-defineExpose({ counter, counterGoal });
+defineExpose({ counter, counterGoal, startCounter, stopCounter });
 </script>
 
 <template>
-  <span class="base-counter"
-    ><slot>{{ counter.toFixed(decimals) }}</slot></span
+  <span class="wrapperElementClassList"
+    ><slot v-bind="slotProps">{{ counter.toFixed(fixedDecimals) }}</slot></span
   >
 </template>

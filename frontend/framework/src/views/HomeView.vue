@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import type { BaseCounterClassToggler } from "@_vue/components/BaseCounter.vue";
 import { type BaseHoverBox } from "@_vue/components/BaseHoverBox.vue";
 import type { BaseInput } from "@_vue/components/BaseInput.vue";
-import { ref } from "vue";
+import { ref, type ComputedRef, type Ref } from "vue";
 
 // font-size
 const fontSizes = "xs,sm,md,lg,xl,hero".split(",");
@@ -52,6 +53,12 @@ function handleSaveInputValueEvent(e: Event) {
 // counter
 
 const counterTestValue = ref(200);
+const counterClassToggler: BaseCounterClassToggler = {
+  "counter-is-low": (data) => data.counter.value < 200,
+  "counter-is-mid": (data) =>
+    data.counter.value >= 200 && data.counter.value < 400,
+  "counter-is-high": (data) => data.counter.value >= 400,
+};
 </script>
 
 <template>
@@ -262,7 +269,8 @@ const counterTestValue = ref(200);
           ><BaseCounter
             :countTo="counterTestValue"
             :countFrom="15"
-            :duration="4000"
+            :duration="1500"
+            :classToggler="counterClassToggler"
           >
           </BaseCounter
         ></code>
@@ -308,6 +316,24 @@ const counterTestValue = ref(200);
   }
   to {
     translate: 0 0;
+  }
+}
+
+.counter-is {
+  &-low {
+    color: red;
+  }
+
+  &-mid {
+    color: blue;
+  }
+
+  &-high {
+    color: green;
+  }
+
+  &-correct {
+    color: pink;
   }
 }
 </style>
