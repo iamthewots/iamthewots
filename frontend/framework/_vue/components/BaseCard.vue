@@ -1,48 +1,50 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, type PropType } from "vue";
 
-export interface BaseCardProps {
-  turnOn?: "click" | "manual";
-  turnDirection?:
-    | "left"
-    | "right"
-    | "up"
-    | "down"
-    | "up-left"
-    | "up-right"
-    | "down-left"
-    | "down-right";
-}
+const CARD_FACE_VALUES = ["front", "back"] as const;
+const TURN_ON_VALUES = ["click", "manual"] as const;
+const TURN_DIRECTION_VALUES = [
+  "left",
+  "right",
+  "up",
+  "down",
+  "up-left",
+  "up-right",
+  "down-left",
+  "down-right",
+] as const;
 
-export interface BaseCardEmits {
-  (e: "base-card:turn-to-front"): void;
-  (e: "base-card:turn-to-back"): void;
-  (e: "base-card:turn-start", payload: CardFace): void;
-  (e: "base-card:turn-end", payload: CardFace): void;
-}
+type CardFace = (typeof CARD_FACE_VALUES)[number];
+type TurnOn = (typeof TURN_ON_VALUES)[number];
+type TurnDirection = (typeof TURN_DIRECTION_VALUES)[number];
 
-export interface BaseCard {
-  turnFront: () => void;
-  turnBack: () => void;
-  turn: () => void;
-}
-
-type CardFace = "front" | "back";
-
-const props = withDefaults(defineProps<BaseCardProps>(), {
-  turnOn: "click",
-  turnDirection: "right",
+const props = defineProps({
+  turnOn: {
+    type: String as PropType<TurnOn>,
+    default: "click",
+    validator: (value: TurnOn) => TURN_ON_VALUES.indexOf(value) !== -1,
+  },
+  turnDirection: {
+    type: String as PropType<TurnDirection>,
+    default: "right",
+    validator: (value: TurnDirection) =>
+      TURN_DIRECTION_VALUES.indexOf(value) !== -1,
+  },
 });
-const emits = defineEmits<BaseCardEmits>();
+const emits = defineEmits({
+  "base-card:turn-to-front": null,
+  "base-card:turn-to-back": null,
+  "base-card:turn-start": (cardFace: CardFace) => true,
+  "base-card:turn-end": (cardFace: CardFace) => true,
+});
 const cardElement = ref<HTMLElement | null>(null);
 const currentCardFace = ref<CardFace>("front");
 let transitionIsActive = false;
-
 const cardElementClassList = computed(() => {
   return {
     "base-card": true,
-    [`base-card--turn-direction-${props.turnDirection}`]: true,
     "base-card--turn-back": currentCardFace.value === "back",
+    [`base-card--turn-direction-${props.turnDirection}`]: true,
   };
 });
 

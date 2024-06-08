@@ -6,8 +6,12 @@ import {
 } from "@_vue/composables/use-dialog-tools";
 import { computed, type Ref } from "vue";
 
+const DRAW_FROM = ["left", "right", "top", "bottom"] as const;
+
+type DrawFrom = (typeof DRAW_FROM)[number];
+
 export interface BaseDrawerProps extends DialogToolsProps {
-  drawFrom?: "left" | "right" | "top" | "bottom";
+  drawFrom?: DrawFrom;
   isFullscreen?: boolean;
   wrapperElementTransitionName?: string;
   contentElementTransitionName?: string;

@@ -4,7 +4,6 @@ import {
   onMounted,
   ref,
   watch,
-  type ComponentObjectPropsOptions,
 } from "vue";
 
 export interface BaseCounterProps {
