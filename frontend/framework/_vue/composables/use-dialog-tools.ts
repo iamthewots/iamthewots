@@ -1,17 +1,6 @@
 import type { VueEmits } from "@_vue/types";
 import { onBeforeUnmount, onMounted, ref, type Ref } from "vue";
 
-export interface DialogToolsProps {
-  closeOnClickOutside?: boolean;
-}
-
-export interface DialogToolsEmits<P extends string> {
-  (e: `${P}open-start`): void;
-  (e: `${P}open-end`): void;
-  (e: `${P}close-start`): void;
-  (e: `${P}close-end`): void;
-}
-
 export interface DialogToolsSettings {
   closeOnClickOutside: boolean;
   emits: VueEmits;
@@ -29,6 +18,23 @@ export interface DialogTools {
   handleAfterEnterFromContentElement: () => void;
   handleAfterLeaveFromContentElement: () => void;
   handleAfterLeaveFromWrapperElement: () => void;
+}
+
+export function useDialogToolsProps() {
+  return {
+    closeOnClickOutside: {
+      type: Boolean,
+    },
+  };
+}
+
+export function useDialogToolsEmits(prefix: string) {
+  return {
+    [`${prefix}open-start`]: null,
+    [`${prefix}open-end`]: null,
+    [`${prefix}close-start`]: null,
+    [`${prefix}close-end`]: null,
+  };
 }
 
 export function useDialogTools(settings: DialogToolsSettings): DialogTools {

@@ -18,6 +18,23 @@ type CardFace = (typeof CARD_FACE_VALUES)[number];
 type TurnOn = (typeof TURN_ON_VALUES)[number];
 type TurnDirection = (typeof TURN_DIRECTION_VALUES)[number];
 
+export interface BaseCardSlotProps {
+  turnFront: () => void;
+  turnBack: () => void;
+  turn: (cardFace?: CardFace) => void;
+}
+
+export interface BaseCard {
+  turnFront: () => void;
+  turnBack: () => void;
+  turn: (cardFace?: CardFace) => void;
+}
+
+defineOptions({
+  name: "BaseCard",
+  inheritAttrs: false,
+});
+
 const props = defineProps({
   turnOn: {
     type: String as PropType<TurnOn>,
@@ -31,12 +48,14 @@ const props = defineProps({
       TURN_DIRECTION_VALUES.indexOf(value) !== -1,
   },
 });
+
 const emits = defineEmits({
   "base-card:turn-to-front": null,
   "base-card:turn-to-back": null,
   "base-card:turn-start": (cardFace: CardFace) => true,
   "base-card:turn-end": (cardFace: CardFace) => true,
 });
+
 const cardElement = ref<HTMLElement | null>(null);
 const currentCardFace = ref<CardFace>("front");
 let transitionIsActive = false;
