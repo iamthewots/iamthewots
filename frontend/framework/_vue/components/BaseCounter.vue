@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import {
+  useClassTools,
+  type ClassSwitchers,
+} from "@_vue/composables/use-class-tools";
+import {
   computed,
   onBeforeUnmount,
   onMounted,
@@ -14,8 +18,9 @@ export interface BaseCounterProps {
   counterStart?: number;
   counterSpeed?: number;
   counterDuration?: number;
-  counterMethod: CounterMethod;
+  counterMethod?: CounterMethod;
   fixedDecimals?: number;
+  classSwitchers?: ClassSwitchers<BaseCounterClassSwitchersData>;
 }
 
 export interface BaseCounterEmits {
@@ -36,6 +41,11 @@ export interface BaseCounter {
 
 type CounterMethod = (typeof counterMethods)[number];
 
+export interface BaseCounterClassSwitchersData {
+  counter: Ref<number>;
+  counterGoal: ComputedRef<number>;
+}
+
 defineOptions({
   name: "BaseCounter",
   inheritAttrs: false,
@@ -52,6 +62,19 @@ const emits = defineEmits<BaseCounterEmits>();
 const counter = ref(props.counterStart);
 const counterGoal = computed(() => props.value);
 let counterIntervalId: number;
+const { classLists } = useClassTools<BaseCounterClassSwitchersData>(
+  {
+    counter,
+    counterGoal,
+  },
+  props.classSwitchers
+);
+const counterElementClassList = computed(() => {
+  return {
+    "base-counter": true,
+    ...classLists.value.activeClassList,
+  };
+});
 
 function startCounter() {
   if (counter.value === counterGoal.value) {
@@ -123,7 +146,7 @@ defineExpose<BaseCounter>({ counter, counterGoal });
 </script>
 
 <template>
-  <span class="base-counter" v-bind="$attrs">
+  <span :class="counterElementClassList" v-bind="$attrs">
     <slot v-bind="slotProps">{{ counter.toFixed(fixedDecimals) }}</slot>
   </span>
 </template>

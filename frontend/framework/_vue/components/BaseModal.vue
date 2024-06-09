@@ -54,7 +54,7 @@ const {
   handleAfterLeaveEventFromContentElement,
   handleAfterLeaveEventFromWrapperElement,
 } = useDialogTools({
-  closeOnClickOutside: !!props.closeOnClickOutside,
+  closeOnClickOutside: props.closeOnClickOutside,
   emits,
   emitsPrefix: "base-modal:",
 });

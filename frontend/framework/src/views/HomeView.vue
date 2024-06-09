@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import type { BaseCounterClassToggler } from "@_vue/components/BaseCounter.vue";
 import { type BaseHoverBox } from "@_vue/components/BaseHoverBox.vue";
 import type { BaseInput } from "@_vue/components/BaseInput.vue";
-import { ref, type ComputedRef, type Ref } from "vue";
+import { ref } from "vue";
 
 // font-size
 const fontSizes = "xs,sm,md,lg,xl,hero".split(",");
@@ -35,7 +34,7 @@ const baseInputComponent = ref<BaseInput>();
 const baseInputModelValue = ref("");
 
 function saveInputValue() {
-  baseInputComponent.value?.saveInputValue(`save${Math.random() * 100}`);
+  baseInputComponent.value?.saveValue(`save${Math.random() * 100}`);
 }
 
 function testInputMethod() {
@@ -53,12 +52,6 @@ function handleSaveInputValueEvent(e: Event) {
 // counter
 
 const counterTestValue = ref(200);
-const counterClassToggler: BaseCounterClassToggler = {
-  "counter-is-low": (data) => data.counter.value < 200,
-  "counter-is-mid": (data) =>
-    data.counter.value >= 200 && data.counter.value < 400,
-  "counter-is-high": (data) => data.counter.value >= 400,
-};
 </script>
 
 <template>
@@ -267,10 +260,9 @@ const counterClassToggler: BaseCounterClassToggler = {
       <div>
         <code
           ><BaseCounter
-            :countTo="counterTestValue"
-            :countFrom="15"
-            :duration="1500"
-            :classToggler="counterClassToggler"
+            :value="counterTestValue"
+            :counterStart="15"
+            :counterDuration="1500"
           >
           </BaseCounter
         ></code>

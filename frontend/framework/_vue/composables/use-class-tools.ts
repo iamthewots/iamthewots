@@ -1,25 +1,41 @@
-import { computed } from "vue";
+import { computed, type ComputedRef } from "vue";
 
-export interface ClassToggles<D> {
-  [className: string]: (evaluationData: D) => boolean;
+export interface ClassTools {
+  classLists: ComputedRef<{
+    activeClassList: string[];
+    inactiveClassList: string[];
+  }>;
 }
 
-export function useClassTools<D>(evaluationData: D, classToggles: ClassToggles<D> = {}) {
-  const classNames = computed(() => {
-    const activeClassNames: string[] = [];
-    const inactiveClassNames: string[] = [];
-    for (const className in classToggles) {
-      const toggleFunction = classToggles[className];
+export interface ClassSwitchers<D extends Object> {
+  [key: string]: (evaluationData: D) => boolean;
+}
 
-      if (toggleFunction(evaluationData)) {
-        activeClassNames.push(className);
-      } else {
-        inactiveClassNames.push(className);
+export function useClassTools<D extends Object>(
+  evaluationData: D,
+  classSwitchers: ClassSwitchers<D> = {}
+) {
+  const classLists = computed(() => {
+    const activeClassList: string[] = [];
+    const inactiveClassList: string[] = [];
+
+    for (const key in classSwitchers) {
+      const className = key;
+      const isClassNameActive = classSwitchers[key];
+
+      if (typeof isClassNameActive === "function") {
+        if (isClassNameActive(evaluationData)) {
+          activeClassList.push(className);
+        } else {
+          inactiveClassList.push(className);
+        }
       }
     }
 
-    return { activeClassNames, inactiveClassNames };
+    return { activeClassList, inactiveClassList };
   });
 
-  return { classNames };
+  return {
+    classLists,
+  };
 }

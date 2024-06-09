@@ -1,5 +1,5 @@
 import type { VueEmits } from "@_vue/types";
-import { onBeforeUnmount, onMounted, ref, type Ref } from "vue";
+import { onBeforeUnmount, onMounted, ref, watch, type Ref } from "vue";
 
 export interface DialogToolsProps {
   closeOnClickOutside: boolean;
@@ -10,6 +10,7 @@ export interface DialogToolsEmits<P extends string> {
   (e: `${P}open-end`): void;
   (e: `${P}close-start`): void;
   (e: `${P}close-end`): void;
+  (e: `${P}click-outside`): void;
 }
 
 export interface DialogToolsSettings {
@@ -76,7 +77,7 @@ export function useDialogTools(settings: DialogToolsSettings): DialogTools {
   }
 
   function handleClickEventFromWindow(e: Event) {
-    const { closeOnClickOutside } = settings;
+    const { emits, emitsPrefix, closeOnClickOutside } = settings;
 
     if (
       showWrapperElement.value === false ||
@@ -86,15 +87,29 @@ export function useDialogTools(settings: DialogToolsSettings): DialogTools {
       contentElement.value === e.target ||
       contentElement.value.contains(e.target)
     ) {
+      console.log(
+        closeOnClickOutside,
+        showWrapperElement.value,
+        wrapperElement.value,
+        contentElement.value,
+        e.target
+      );
       return;
     }
+
+    emits(`${emitsPrefix}click-outside`);
 
     if (closeOnClickOutside) {
       close();
     }
   }
 
+  watch(contentElement, () => {
+    console.log(`change: ${contentElement.value}`);
+  });
+
   onMounted(() => window.addEventListener("click", handleClickEventFromWindow));
+
   onBeforeUnmount(() =>
     window.removeEventListener("click", handleClickEventFromWindow)
   );
