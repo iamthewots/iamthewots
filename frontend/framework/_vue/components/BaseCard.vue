@@ -1,9 +1,42 @@
 <script setup lang="ts">
-import { computed, ref, type PropType } from "vue";
+import { computed, ref, type Ref } from "vue";
 
-const CARD_FACE_VALUES = ["front", "back"] as const;
-const TURN_ON_VALUES = ["click", "manual"] as const;
-const TURN_DIRECTION_VALUES = [
+export interface BaseCardProps {
+  turnMethod?: TurnMethod;
+  turnDirection?: TurnDirection;
+}
+
+export interface BaseCardEmits {
+  (e: "base-card:turn-start", from: CardFace): void;
+  (e: "base-card:turn-end", to: CardFace): void;
+  (e: "base-card:turn-front"): void;
+  (e: "base-card:turn-back"): void;
+}
+
+export interface BaseCardSlot {
+  turn: (cardFace: CardFace) => void;
+  turnFront: () => void;
+  turnBack: () => void;
+}
+
+export interface BaseCard {
+  cardElement: Ref<HTMLElement | null>;
+  turn: (cardFace: CardFace) => void;
+  turnFront: () => void;
+  turnBack: () => void;
+}
+
+type CardFace = "front" | "back";
+type TurnMethod = (typeof turnMethods)[number];
+type TurnDirection = (typeof turnDirections)[number];
+
+defineOptions({
+  name: "BaseCard",
+  inheritAttrs: false,
+});
+
+const turnMethods = ["click", "manual"] as const;
+const turnDirections = [
   "left",
   "right",
   "up",
@@ -14,48 +47,11 @@ const TURN_DIRECTION_VALUES = [
   "down-right",
 ] as const;
 
-type CardFace = (typeof CARD_FACE_VALUES)[number];
-type TurnOn = (typeof TURN_ON_VALUES)[number];
-type TurnDirection = (typeof TURN_DIRECTION_VALUES)[number];
-
-export interface BaseCardSlotProps {
-  turnFront: () => void;
-  turnBack: () => void;
-  turn: (cardFace?: CardFace) => void;
-}
-
-export interface BaseCard {
-  turnFront: () => void;
-  turnBack: () => void;
-  turn: (cardFace?: CardFace) => void;
-}
-
-defineOptions({
-  name: "BaseCard",
-  inheritAttrs: false,
+const props = withDefaults(defineProps<BaseCardProps>(), {
+  turnMethod: "click",
+  turnDirection: "right",
 });
-
-const props = defineProps({
-  turnOn: {
-    type: String as PropType<TurnOn>,
-    default: "click",
-    validator: (value: TurnOn) => TURN_ON_VALUES.indexOf(value) !== -1,
-  },
-  turnDirection: {
-    type: String as PropType<TurnDirection>,
-    default: "right",
-    validator: (value: TurnDirection) =>
-      TURN_DIRECTION_VALUES.indexOf(value) !== -1,
-  },
-});
-
-const emits = defineEmits({
-  "base-card:turn-to-front": null,
-  "base-card:turn-to-back": null,
-  "base-card:turn-start": (cardFace: CardFace) => true,
-  "base-card:turn-end": (cardFace: CardFace) => true,
-});
-
+const emits = defineEmits<BaseCardEmits>();
 const cardElement = ref<HTMLElement | null>(null);
 const currentCardFace = ref<CardFace>("front");
 let transitionIsActive = false;
@@ -67,6 +63,18 @@ const cardElementClassList = computed(() => {
   };
 });
 
+function turn(cardFace?: CardFace) {
+  if (cardFace === currentCardFace.value || transitionIsActive) {
+    return;
+  } else if (cardFace === undefined) {
+    cardFace = currentCardFace.value === "front" ? "back" : "front";
+  }
+
+  emits("base-card:turn-start", currentCardFace.value);
+  transitionIsActive = true;
+  currentCardFace.value = cardFace;
+}
+
 function turnFront() {
   turn("front");
 }
@@ -75,22 +83,8 @@ function turnBack() {
   turn("back");
 }
 
-function turn(cardFace?: CardFace) {
-  if (cardFace === undefined) {
-    cardFace = currentCardFace.value === "front" ? "back" : "front";
-  }
-
-  if (transitionIsActive || currentCardFace.value === cardFace) {
-    return;
-  }
-
-  transitionIsActive = true;
-  currentCardFace.value = cardFace;
-  emits("base-card:turn-start", currentCardFace.value);
-}
-
 function handleClickEvent() {
-  if (props.turnOn === "click") {
+  if (props.turnMethod === "click") {
     turn();
   }
 }
@@ -100,14 +94,14 @@ function handleTransitionEndEvent() {
   emits("base-card:turn-end", currentCardFace.value);
 
   if (currentCardFace.value === "front") {
-    emits("base-card:turn-to-front");
+    emits("base-card:turn-front");
   } else {
-    emits("base-card:turn-to-back");
+    emits("base-card:turn-back");
   }
 }
 
-const slotProps = { turnFront, turnBack, turn };
-defineExpose({ turnFront, turnBack, turn });
+const slotProps: BaseCardSlot = { turn, turnFront, turnBack };
+defineExpose<BaseCard>({ cardElement, turn, turnFront, turnBack });
 </script>
 
 <template>
@@ -120,10 +114,10 @@ defineExpose({ turnFront, turnBack, turn });
   >
     <div class="base-card__content">
       <div class="base-card__face base-card__back-face">
-        <slot name="backFace" v-bind="slotProps"></slot>
+        <slot name="back-face" v-bind="slotProps"></slot>
       </div>
       <div class="base-card__face base-card__front-face">
-        <slot name="frontFace" v-bind="slotProps"></slot>
+        <slot name="front-face" v-bind="slotProps"></slot>
       </div>
     </div>
   </div>
@@ -143,7 +137,7 @@ defineExpose({ turnFront, turnBack, turn });
   &__content {
     position: relative;
     transform-style: preserve-3d;
-    transition: transform var(--transition-duration) ease;
+    transition: transform var(--transition-duration) ease-out;
     width: 100%;
     height: 100%;
   }
@@ -157,7 +151,7 @@ defineExpose({ turnFront, turnBack, turn });
   }
 }
 
-$card-rotations: (
+$transform-map: (
   "left": rotateY(-180deg),
   "right": rotateY(180deg),
   "up": rotateX(180deg),
@@ -173,11 +167,11 @@ $card-rotations: (
   &__back-face {
     transform: var(--transform);
   }
-}
 
-@each $direction, $transform in $card-rotations {
-  .base-card--turn-direction-#{$direction} {
-    --transform: #{$transform};
+  @each $direction, $transform in $transform-map {
+    &--turn-direction-#{$direction} {
+      --transform: #{$transform};
+    }
   }
 }
 </style>

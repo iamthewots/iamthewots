@@ -1,6 +1,39 @@
+import { BrowserStorage, type BrowserStorageType } from "@_lib/browser-storage";
 import type { VueEmits } from "@_vue/types";
 import type { Ref } from "vue";
-import { BrowserStorage, type BrowserStorageType } from "@_lib/browser-storage";
+
+export interface InputToolsProps {
+  storageId: string;
+  storageType: BrowserStorageType;
+  enableAutosave: boolean;
+  autosaveInterval: number;
+}
+
+export interface InputToolsEmits<P extends string> {
+  (e: `${P}clear-input-value`): void;
+  (e: `${P}save-input-value`, saveData: SaveData): void;
+  (e: `${P}autosave-input-value`, saveData: SaveData): void;
+  (e: `${P}restore-input-value`, saveData: SaveData): void;
+  (e: `${P}enable-autosave`, autosaveRawKey: string): void;
+  (e: `${P}disable-autosave`, autosaveRawKey: string): void;
+}
+
+export interface InputToolsSettings {
+  inputElement: Ref<InputToolsElement | null>;
+  emits: VueEmits;
+  emitsPrefix: string;
+  storageId?: string;
+  storageType?: BrowserStorageType;
+}
+
+export interface InputTools {
+  browserStorage: BrowserStorage<SaveData> | undefined;
+  clearValue: () => void;
+  saveValue: (rawKey: string) => void;
+  restoreValue: (rawKey: string) => void;
+  enableAutosave: (rawKey: string, autosaveInterval: number) => void;
+  disableAutosave: () => void;
+}
 
 type InputToolsElement =
   | HTMLInputElement
@@ -12,55 +45,27 @@ interface SaveData {
   timestamp: number;
 }
 
-export interface InputToolsProps {
-  storageId?: string;
-  storageType?: BrowserStorageType;
-  enableAutosave?: boolean;
-  autosaveInterval?: number;
-}
-
-export interface InputToolsEmits<P extends string> {
-  (e: `${P}clear-input-value`): void;
-  (e: `${P}save-input-value`, payload: SaveData): void;
-  (e: `${P}autosave-input-value`, payload: SaveData): void;
-  (e: `${P}restore-input-value`, payload: SaveData): void;
-  (e: `${P}enable-autosave`, payload: string): void;
-  (e: `${P}disable-autosave`, payload: string): void;
-}
-
-export interface InputToolsSettings {
-  inputElement: Ref<InputToolsElement | null>;
-  emits: VueEmits;
-  emitsEventPrefix: string;
-  storageId: string;
-  storageType: BrowserStorageType;
-}
-
-export interface InputTools {
-  browserStorage: BrowserStorage | undefined;
-  clearInputValue: () => void;
-  saveInputValue: (rawKey: string) => SaveData | undefined;
-  restoreInputValue: (rawKey: string) => SaveData | undefined;
-  enableAutosave: (rawKey: string, autosaveInterval: number) => void;
-  disableAutosave: () => void;
-}
-
 export function useInputTools(settings: InputToolsSettings): InputTools {
   let browserStorage: BrowserStorage<SaveData> | undefined;
   let autosaveRawKey = "";
-  let autosaveIntervalId: number | undefined;
+  let autosaveIntervalId: number;
 
   try {
-    browserStorage = new BrowserStorage<SaveData>(
-      settings.storageId,
-      settings.storageType
-    );
+    const { storageId, storageType } = settings;
+
+    if (typeof storageId !== "string") {
+      throw new Error("missing_storage_id");
+    } else if (typeof storageType != "string") {
+      throw new Error("missing_storage_type");
+    }
+
+    browserStorage = new BrowserStorage<SaveData>(storageId, storageType);
   } catch (error) {
     console.log("Browser storage is not available.");
   }
 
-  function clearInputValue() {
-    const { inputElement, emits, emitsEventPrefix } = settings;
+  function clearValue() {
+    const { inputElement, emits, emitsPrefix } = settings;
 
     if (isInputElementAvailable(inputElement) === false) {
       return;
@@ -68,11 +73,11 @@ export function useInputTools(settings: InputToolsSettings): InputTools {
 
     inputElement.value.value = "";
     inputElement.value.dispatchEvent(new Event("input"));
-    emits(`${emitsEventPrefix}clear-input-value`);
+    emits(`${emitsPrefix}clear-value`);
   }
 
-  function saveInputValue(rawKey: string) {
-    const { inputElement, emits, emitsEventPrefix } = settings;
+  function saveValue(rawKey: string) {
+    const { inputElement, emits, emitsPrefix } = settings;
 
     if (
       isInputElementAvailable(inputElement) === false ||
@@ -86,17 +91,11 @@ export function useInputTools(settings: InputToolsSettings): InputTools {
       timestamp: Date.now(),
     };
     browserStorage.setItem(rawKey, saveData);
-    emits(`${emitsEventPrefix}save-input-value`, saveData);
-
-    if (rawKey === autosaveRawKey) {
-      emits(`${emitsEventPrefix}autosave-input-value`, saveData);
-    }
-
-    return saveData;
+    emits(`${emitsPrefix}save-value`, saveData);
   }
 
-  function restoreInputValue(rawKey: string) {
-    const { inputElement, emits, emitsEventPrefix } = settings;
+  function restoreValue(rawKey: string) {
+    const { inputElement, emits, emitsPrefix } = settings;
 
     if (
       isInputElementAvailable(inputElement) === false ||
@@ -112,9 +111,7 @@ export function useInputTools(settings: InputToolsSettings): InputTools {
     }
 
     inputElement.value.value = saveData.value;
-    emits(`${emitsEventPrefix}restore-input-value`, saveData);
-
-    return saveData;
+    emits(`${emitsPrefix}restore-value`, saveData);
   }
 
   function enableAutosave(rawKey: string, autosaveInterval: number) {
@@ -122,11 +119,11 @@ export function useInputTools(settings: InputToolsSettings): InputTools {
       return;
     }
 
-    const { emits, emitsEventPrefix } = settings;
+    const { emits, emitsPrefix } = settings;
     autosaveRawKey = rawKey;
-    emits(`${emitsEventPrefix}enable-autosave`, autosaveRawKey);
+    emits(`${emitsPrefix}enable-autosave`, autosaveRawKey);
     autosaveIntervalId = window.setInterval(() => {
-      saveInputValue(rawKey);
+      saveValue(rawKey);
     }, autosaveInterval);
   }
 
@@ -135,30 +132,30 @@ export function useInputTools(settings: InputToolsSettings): InputTools {
       return;
     }
 
-    const { emits, emitsEventPrefix } = settings;
+    const { emits, emitsPrefix } = settings;
     window.clearInterval(autosaveIntervalId);
-    emits(`${emitsEventPrefix}disable-autosave`, autosaveRawKey);
+    emits(`${emitsPrefix}disable-autosave`, autosaveRawKey);
     autosaveRawKey = "";
+  }
+
+  function isInputElementAvailable(
+    inputElement: Ref<InputToolsElement | null>
+  ): inputElement is Ref<InputToolsElement> {
+    return inputElement.value !== null;
+  }
+
+  function isBrowserStorageAvailable(
+    browserStorage: BrowserStorage<SaveData> | undefined
+  ): browserStorage is BrowserStorage {
+    return browserStorage !== undefined;
   }
 
   return {
     browserStorage,
-    clearInputValue,
-    saveInputValue,
-    restoreInputValue,
+    clearValue,
+    saveValue,
+    restoreValue,
     enableAutosave,
     disableAutosave,
   };
-}
-
-function isInputElementAvailable(
-  inputElement: Ref<InputToolsElement | null>
-): inputElement is Ref<InputToolsElement> {
-  return inputElement.value !== null;
-}
-
-function isBrowserStorageAvailable(
-  storage: BrowserStorage<SaveData> | undefined
-): storage is BrowserStorage<SaveData> {
-  return storage !== undefined;
 }

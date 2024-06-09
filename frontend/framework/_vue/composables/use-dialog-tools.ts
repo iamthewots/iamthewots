@@ -1,10 +1,21 @@
 import type { VueEmits } from "@_vue/types";
 import { onBeforeUnmount, onMounted, ref, type Ref } from "vue";
 
+export interface DialogToolsProps {
+  closeOnClickOutside: boolean;
+}
+
+export interface DialogToolsEmits<P extends string> {
+  (e: `${P}open-start`): void;
+  (e: `${P}open-end`): void;
+  (e: `${P}close-start`): void;
+  (e: `${P}close-end`): void;
+}
+
 export interface DialogToolsSettings {
   closeOnClickOutside: boolean;
   emits: VueEmits;
-  emitsEventPrefix: string;
+  emitsPrefix: string;
 }
 
 export interface DialogTools {
@@ -13,28 +24,11 @@ export interface DialogTools {
   showWrapperElement: Ref<boolean>;
   showContentElement: Ref<boolean>;
   open: () => void;
+  handleAfterEnterEventFromWrapperElement: () => void;
+  handleAfterEnterEventFromContentElement: () => void;
   close: () => void;
-  handleAfterEnterFromWrapperElement: () => void;
-  handleAfterEnterFromContentElement: () => void;
-  handleAfterLeaveFromContentElement: () => void;
-  handleAfterLeaveFromWrapperElement: () => void;
-}
-
-export function useDialogToolsProps() {
-  return {
-    closeOnClickOutside: {
-      type: Boolean,
-    },
-  };
-}
-
-export function useDialogToolsEmits(prefix: string) {
-  return {
-    [`${prefix}open-start`]: null,
-    [`${prefix}open-end`]: null,
-    [`${prefix}close-start`]: null,
-    [`${prefix}close-end`]: null,
-  };
+  handleAfterLeaveEventFromWrapperElement: () => void;
+  handleAfterLeaveEventFromContentElement: () => void;
 }
 
 export function useDialogTools(settings: DialogToolsSettings): DialogTools {
@@ -48,9 +42,18 @@ export function useDialogTools(settings: DialogToolsSettings): DialogTools {
       return;
     }
 
-    const { emits, emitsEventPrefix } = settings;
+    const { emits, emitsPrefix } = settings;
     showWrapperElement.value = true;
-    emits(`${emitsEventPrefix}open-start`);
+    emits(`${emitsPrefix}open-start`);
+  }
+
+  function handleAfterEnterEventFromWrapperElement() {
+    showContentElement.value = true;
+  }
+
+  function handleAfterEnterEventFromContentElement() {
+    const { emits, emitsPrefix } = settings;
+    emits(`${emitsPrefix}open-end`);
   }
 
   function close() {
@@ -58,27 +61,18 @@ export function useDialogTools(settings: DialogToolsSettings): DialogTools {
       return;
     }
 
-    const { emits, emitsEventPrefix } = settings;
-    showContentElement.value = false;
-    emits(`${emitsEventPrefix}close-start`);
-  }
-
-  function handleAfterEnterFromWrapperElement() {
+    const { emits, emitsPrefix } = settings;
     showContentElement.value = true;
+    emits(`${emitsPrefix}close-start`);
   }
 
-  function handleAfterEnterFromContentElement() {
-    const { emits, emitsEventPrefix } = settings;
-    emits(`${emitsEventPrefix}open-end`);
+  function handleAfterLeaveEventFromContentElement() {
+    showWrapperElement.value = true;
   }
 
-  function handleAfterLeaveFromContentElement() {
-    showWrapperElement.value = false;
-  }
-
-  function handleAfterLeaveFromWrapperElement() {
-    const { emits, emitsEventPrefix } = settings;
-    emits(`${emitsEventPrefix}close-end`);
+  function handleAfterLeaveEventFromWrapperElement() {
+    const { emits, emitsPrefix } = settings;
+    emits(`${emitsPrefix}close-end`);
   }
 
   function handleClickEventFromWindow(e: Event) {
@@ -88,28 +82,22 @@ export function useDialogTools(settings: DialogToolsSettings): DialogTools {
       showWrapperElement.value === false ||
       wrapperElement.value === null ||
       contentElement.value === null ||
-      e.target instanceof Element === false
-    ) {
-      return;
-    }
-
-    if (
+      e.target instanceof Element === false ||
       contentElement.value === e.target ||
       contentElement.value.contains(e.target)
     ) {
       return;
-    } else if (closeOnClickOutside === true) {
+    }
+
+    if (closeOnClickOutside) {
       close();
     }
   }
 
-  onMounted(() => {
-    window.addEventListener("click", handleClickEventFromWindow);
-  });
-
-  onBeforeUnmount(() => {
-    window.removeEventListener("click", handleClickEventFromWindow);
-  });
+  onMounted(() => window.addEventListener("click", handleClickEventFromWindow));
+  onBeforeUnmount(() =>
+    window.removeEventListener("click", handleClickEventFromWindow)
+  );
 
   return {
     wrapperElement,
@@ -117,10 +105,10 @@ export function useDialogTools(settings: DialogToolsSettings): DialogTools {
     showWrapperElement,
     showContentElement,
     open,
+    handleAfterEnterEventFromWrapperElement,
+    handleAfterEnterEventFromContentElement,
     close,
-    handleAfterEnterFromWrapperElement,
-    handleAfterEnterFromContentElement,
-    handleAfterLeaveFromContentElement,
-    handleAfterLeaveFromWrapperElement,
+    handleAfterLeaveEventFromWrapperElement,
+    handleAfterLeaveEventFromContentElement,
   };
 }

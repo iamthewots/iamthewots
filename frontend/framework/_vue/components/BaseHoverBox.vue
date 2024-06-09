@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, type Ref } from "vue";
 
 export interface BaseHoverBoxProps {
   resetOnLeave?: boolean;
@@ -8,17 +8,15 @@ export interface BaseHoverBoxProps {
 export interface BaseHoverBoxEmits {
   (e: "base-hover-box:hover-start"): void;
   (e: "base-hover-box:hover-end"): void;
-  (e: "base-hover-box:pointer-enter", payload: PointerData): void;
-  (e: "base-hover-box:pointer-leave", payload: PointerData): void;
+  (e: "base-hover-box:pointer-enter", pointerData: PointerData): void;
+  (e: "base-hover-box:pointer-leave", pointerData: PointerData): void;
 }
 
 export interface BaseHoverBox {
-  getHoverBoxData: () => HoverBoxData | undefined;
-}
-
-interface HoverBoxData {
-  element: HTMLElement;
-  pointersDataArray: PointerData[];
+  hoverBoxElement: Ref<HTMLElement | null>;
+  getHoverBoxData: () =>
+    | { hoverBoxElement: HTMLElement; pointersDataArray: PointerData[] }
+    | undefined;
 }
 
 interface PointerData {
@@ -43,7 +41,6 @@ const emits = defineEmits<BaseHoverBoxEmits>();
 const hoverBoxElement = ref<HTMLElement | null>(null);
 const hoverBoxIsActive = ref(false);
 const pointersDataMap = new Map<number, PointerData>();
-
 const hoverBoxElementClassList = computed(() => {
   return {
     "base-hover-box": true,
@@ -59,16 +56,12 @@ function getHoverBoxData() {
 
   const pointersDataArray = Array.from(pointersDataMap)
     .map((keyAndValueArray) => {
-      const [_key, value] = keyAndValueArray;
-
-      return value;
+      return keyAndValueArray[1];
     })
-    .sort((a, b) => {
-      return a.index > b.index ? 1 : -1;
-    });
+    .sort((a, b) => (a.index > b.index ? 1 : -1));
 
   return {
-    element: hoverBoxElement.value,
+    hoverBoxElement: hoverBoxElement.value,
     pointersDataArray,
   };
 }
@@ -162,41 +155,15 @@ function handlePointerLeaveEvent(e: PointerEvent) {
   }
 }
 
-function handlePointerCancelEvent(e: PointerEvent) {
-  alert("Cancel event!");
-}
+function handleResizeEventFromWindow() {}
 
-function handleResizeEventFromWindow() {
-  if (hoverBoxElement.value === null) {
-    return;
-  }
+onMounted(() => window.addEventListener("resize", handleResizeEventFromWindow));
 
-  const { width, height } = hoverBoxElement.value.getBoundingClientRect();
-  const propertiesData = {
-    width: `${width}px`,
-    height: `${height}px`,
-    "x-multiplier": `${width / 2}px`,
-    "y-multiplier": `${height / 2}px`,
-  } as const;
+onBeforeUnmount(() =>
+  window.removeEventListener("resize", handleResizeEventFromWindow)
+);
 
-  let key: keyof typeof propertiesData;
-  for (key in propertiesData) {
-    const propertyName = `--hover-box-${key}`;
-    const propertyValue = propertiesData[key];
-    hoverBoxElement.value.style.setProperty(propertyName, propertyValue);
-  }
-}
-
-onMounted(() => {
-  window.addEventListener("resize", handleResizeEventFromWindow);
-  handleResizeEventFromWindow();
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener("resize", handleResizeEventFromWindow);
-});
-
-defineExpose({ getHoverBoxData });
+defineExpose({ hoverBoxElement, getHoverBoxData });
 </script>
 
 <template>
@@ -208,12 +175,20 @@ defineExpose({ getHoverBoxData });
     v-bind="$attrs"
     ref="hoverBoxElement"
   >
-    <slot></slot>
+    <div class="base-hover-box__content">
+      <slot></slot>
+    </div>
   </div>
 </template>
 
 <style lang="scss">
 .base-hover-box {
   touch-action: none;
+  position: relative;
+
+  &__content {
+    position: absolute;
+    inset: 0;
+  }
 }
 </style>

@@ -1,24 +1,44 @@
 <script setup lang="ts">
-import { useSplitAttrs } from "@_vue/composables/use-split-attrs";
+import type { BrowserStorage, BrowserStorageType } from "@_lib/browser-storage";
 import {
   useInputTools,
   type InputTools,
   type InputToolsEmits,
   type InputToolsProps,
-} from "../composables/use-input-tools";
+} from "@_vue/composables/use-input-tools";
+import { useSplitAttrs } from "@_vue/composables/use-split-attrs";
 import { onBeforeUnmount, onMounted, ref, type Ref } from "vue";
 
-export interface BaseInputProps extends InputToolsProps {
-  modelValue?: string;
+export interface BaseInputProps {
   enableVisibilityToggle?: boolean;
+  storageId?: InputToolsProps["storageId"];
+  storageType?: InputToolsProps["storageType"];
+  enableAutosave?: InputToolsProps["enableAutosave"];
+  autosaveInterval?: InputToolsProps["autosaveInterval"];
 }
 
-export interface BaseInputEmits extends InputToolsEmits<`base-input:`> {
-  (e: "update:modelValue", payload: string): void;
+export interface BaseInputEmits extends InputToolsEmits<"base-input:"> {
+  (e: "update:modelValue", value: string): void;
+  (e: "base-input:visibility-change", inputElementValueIsHidden: boolean): void;
 }
 
-export interface BaseInput extends InputTools {
-  inputElement: Ref<HTMLInputElement | null>;
+export interface BaseInputSlot {
+  toggleVisibility: () => void;
+  clearValue: InputTools["clearValue"];
+  saveValue: InputTools["saveValue"];
+  restoreValue: InputTools["restoreValue"];
+  enableAutosave: InputTools["enableAutosave"];
+  disableAutosave: InputTools["disableAutosave"];
+}
+
+export interface BaseInput {
+  toggleVisibility: () => void;
+  browserStorage: InputTools["browserStorage"];
+  clearValue: InputTools["clearValue"];
+  saveValue: InputTools["saveValue"];
+  restoreValue: InputTools["restoreValue"];
+  enableAutosave: InputTools["enableAutosave"];
+  disableAutosave: InputTools["disableAutosave"];
 }
 
 defineOptions({
@@ -35,25 +55,34 @@ const inputElementOriginalType = ref("text");
 const inputElementValueIsHidden = ref(false);
 const {
   browserStorage,
-  clearInputValue,
-  saveInputValue,
-  restoreInputValue,
+  clearValue,
+  saveValue,
+  restoreValue,
   enableAutosave,
   disableAutosave,
 } = useInputTools({
   inputElement,
   emits,
-  emitsEventPrefix: "base-input:",
-  storageId: props.storageId || "",
-  storageType: props.storageType || "local",
+  emitsPrefix: "base-input:",
+  storageId: props.storageId,
+  storageType: props.storageType,
 });
 const { nonStyleAttrs, styleAttrs } = useSplitAttrs();
 
+function toggleVisibility() {
+  if (props.enableVisibilityToggle === false || inputElement.value === null) {
+    return;
+  }
+
+  inputElement.value.type = inputElementValueIsHidden.value
+    ? inputElementOriginalType.value
+    : "password";
+  inputElementValueIsHidden.value = !inputElementValueIsHidden.value;
+  emits("base-input:visibility-change", inputElementValueIsHidden.value);
+}
+
 function handleInputEvent(e: Event) {
-  emits(
-    "update:modelValue",
-    inputElement.value !== null ? inputElement.value.value : ""
-  );
+  emits("update:modelValue", (e.target as HTMLInputElement).value);
 }
 
 onMounted(() => {
@@ -63,29 +92,23 @@ onMounted(() => {
 
   inputElementOriginalType.value = inputElement.value.type;
   inputElementValueIsHidden.value = inputElement.value.type === "password";
-
-  if (props.enableAutosave) {
-    enableAutosave("_autosave", props.autosaveInterval);
-  }
 });
 
-onBeforeUnmount(() => {
-  disableAutosave();
-});
+onBeforeUnmount(() => disableAutosave());
 
 const slotProps = {
-  clearInputValue,
-  saveInputValue,
-  restoreInputValue,
+  clearValue,
+  saveValue,
+  restoreValue,
   enableAutosave,
   disableAutosave,
 };
 defineExpose({
   inputElement,
   browserStorage,
-  clearInputValue,
-  saveInputValue,
-  restoreInputValue,
+  clearValue,
+  saveValue,
+  restoreValue,
   enableAutosave,
   disableAutosave,
 });
@@ -93,22 +116,20 @@ defineExpose({
 
 <template>
   <div class="base-input" v-bind="styleAttrs">
-    <div class="base-input__section div base-input__prepend-section">
-      <slot name="prepend" v-bind="slotProps"></slot>
+    <div class="base-input__section base-input__prepend-section">
+      <slot name="prepend-section" v-bind="slotProps"></slot>
     </div>
-    <div class="base-input__input-wrapper">
-      <input
-        type="text"
-        @input="handleInputEvent"
-        v-bind="nonStyleAttrs"
-        ref="inputElement"
-      />
-      <div class="base-input__section base-input__actions-section">
-        <slot name="actions" v-bind="slotProps"></slot>
-      </div>
+    <input
+      type="text"
+      @input="handleInputEvent"
+      v-bind="nonStyleAttrs"
+      ref="inputElement"
+    />
+    <div class="base-input__section base-input__actions-section">
+      <slot name="actions-section" v-bind="slotProps"></slot>
     </div>
-    <div class="base-input__section div base-input__append-section">
-      <slot name="append" v-bind="slotProps"></slot>
+    <div class="base-input__section base-input__append-section">
+      <slot name="append-section" v-bind="slotProps"></slot>
     </div>
   </div>
 </template>
@@ -119,7 +140,7 @@ defineExpose({
 
 .base-input {
   @include theme.set-color-scheme("input");
-  
+
   align-items: center;
   display: flex;
   border: wtk.get("border");

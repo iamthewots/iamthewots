@@ -6,15 +6,25 @@ import {
   ref,
   watch,
   type ComputedRef,
-  type PropType,
   type Ref,
 } from "vue";
 
-const COUNTER_METHODS_VALUES = ["auto", "manual"] as const;
+export interface BaseCounterProps {
+  value: number;
+  counterStart?: number;
+  counterSpeed?: number;
+  counterDuration?: number;
+  counterMethod: CounterMethod;
+  fixedDecimals?: number;
+}
 
-type CounterMethod = (typeof COUNTER_METHODS_VALUES)[number];
+export interface BaseCounterEmits {
+  (e: "base-counter:counter-start", counter: number): void;
+  (e: "base-counter:counter-stop", counter: number): void;
+  (e: "base-counter:counter-end", counter: number): void;
+}
 
-export interface BaseCounterSlotProps {
+export interface BaseCounterSlot {
   counter: Ref<number>;
   counterGoal: ComputedRef<number>;
 }
@@ -22,130 +32,98 @@ export interface BaseCounterSlotProps {
 export interface BaseCounter {
   counter: Ref<number>;
   counterGoal: ComputedRef<number>;
-  startCounter: () => void;
-  stopCounter: () => void;
 }
+
+type CounterMethod = (typeof counterMethods)[number];
 
 defineOptions({
   name: "BaseCounter",
   inheritAttrs: false,
 });
 
-const props = defineProps({
-  value: {
-    type: Number,
-    required: true,
-  },
-  decimals: {
-    type: Number,
-    default: 0,
-    validator: (value: number) => value > 0,
-  },
-  countFrom: {
-    type: Number,
-    default: 0,
-  },
-  countBy: {
-    type: Number,
-    validator: (value: number) => value > 0,
-  },
-  countIn: {
-    type: Number,
-    default: 1000,
-    validator: (value: number) => value > 0,
-  },
-  countsPerSecond: {
-    type: Number,
-    default: 30,
-    validator: (value: number) => value > 0,
-  },
-  counterMethod: {
-    type: String as PropType<CounterMethod>,
-    default: "auto",
-    validator: (value: CounterMethod) =>
-      COUNTER_METHODS_VALUES.indexOf(value) !== -1,
-  },
+const counterMethods = ["manual", "auto", "resume"] as const;
+const props = withDefaults(defineProps<BaseCounterProps>(), {
+  counterStart: 0,
+  duration: 1000,
+  decimals: 0,
+  method: "auto",
 });
-
-const emits = defineEmits({
-  "base-counter:counter-start": (counter: number) => true,
-  "base-counter:counter-stop": (counter: number) => true,
-  "base-counter:counter-end": (counter: number) => true,
-});
-
-const counter = ref(props.countFrom);
+const emits = defineEmits<BaseCounterEmits>();
+const counter = ref(props.counterStart);
 const counterGoal = computed(() => props.value);
 let counterIntervalId: number;
 
-function updateCounter(countBy: number) {
-  if (countBy === 0) {
+function startCounter() {
+  if (counter.value === counterGoal.value) {
+    return;
+  } else if (counterIntervalId !== undefined) {
+    stopCounter();
+  }
+
+  const counterSpeed = getCounterSpeed();
+  emits("base-counter:counter-start", counter.value);
+  counterIntervalId = window.setInterval(() => {
+    updateCounter(counterSpeed);
+  }, 1000 / 30);
+}
+
+function stopCounter() {
+  if (counterIntervalId === undefined) {
     return;
   }
 
-  counter.value += countBy;
+  window.clearInterval(counterIntervalId);
+  emits("base-counter:counter-stop", counter.value);
+}
 
-  if (
-    (countBy < 0 && counter.value <= counterGoal.value) ||
-    (countBy > 0 && counter.value >= counterGoal.value)
-  ) {
+function updateCounter(counterSpeed: number) {
+  counter.value += counterSpeed;
+  const goalReached =
+    (counterSpeed < 0 && counter.value <= counterGoal.value) ||
+    (counterSpeed > 0 && counter.value >= counterGoal.value);
+
+  if (goalReached) {
     window.clearInterval(counterIntervalId);
     counter.value = counterGoal.value;
     emits("base-counter:counter-end", counter.value);
   }
 }
 
-function startCounter() {
-  if (counter.value === counterGoal.value) {
-    return;
-  }
-
-  if (counterIntervalId !== undefined) {
-    stopCounter();
-  }
-
+function getCounterSpeed() {
   const counterGap = counterGoal.value - counter.value;
-  let countBy = Math.sign(counterGap);
+  let counterSpeed = Math.sign(counterGap);
 
-  if (props.countBy !== undefined) {
-    countBy *= props.countBy;
-  } else {
-    countBy *= Math.abs(counterGap) / (props.countIn / props.countsPerSecond);
+  if (typeof props.counterSpeed === "number" && props.counterSpeed > 0) {
+    return counterSpeed * props.counterSpeed;
+  } else if (typeof props.duration === "number" && props.duration > 0) {
+    return counterSpeed * (Math.abs(counterGap) / (props.duration / 30));
   }
 
-  emits("base-counter:counter-start", counter.value);
-  counterIntervalId = window.setInterval(() => {
-    updateCounter(countBy);
-  }, 1000 / props.countsPerSecond);
-}
-
-function stopCounter() {
-  if (counterIntervalId !== undefined) {
-    emits("base-counter:counter-stop", counter.value);
-  }
-
-  window.clearInterval(counterIntervalId);
+  return counterSpeed;
 }
 
 watch(counterGoal, () => {
-  if (props.counterMethod === "auto") {
+  if (props.method === "auto" || props.method === "resume") {
     startCounter();
   }
 });
 
 onMounted(() => {
-  if (props.counterMethod === "auto") {
+  if (props.method === "auto") {
     startCounter();
   }
 });
 
-onBeforeUnmount(() => stopCounter());
+onBeforeUnmount(() => {
+  stopCounter();
+});
 
-const slotProps = { counter, counterGoal };
-defineExpose({ counter, counterGoal, startCounter, stopCounter });
+const slotProps: BaseCounterSlot = { counter, counterGoal };
+defineExpose<BaseCounter>({ counter, counterGoal });
 </script>
 
 <template>
   <span class="base-counter" v-bind="$attrs">
-    <slot v-bind="slotProps">{{ counter.toFixed(decimals) }}</slot>
+    <slot v-bind="slotProps">{{ counter.toFixed(fixedDecimals) }}</slot>
   </span>
 </template>

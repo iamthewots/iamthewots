@@ -1,31 +1,43 @@
 <script setup lang="ts">
 import {
   useDialogTools,
+  type DialogTools,
   type DialogToolsEmits,
-  type DialogToolsProps,
 } from "@_vue/composables/use-dialog-tools";
-import type { Ref } from "vue";
+import { computed, type Ref } from "vue";
 
-export interface BaseModalProps extends DialogToolsProps {
+export interface BaseModalProps {
+  closeOnClickOutside?: boolean;
+  drawFrom?: DrawDirection;
+  fullscreen?: boolean;
   wrapperElementTransitionName?: string;
   contentElementTransitionName?: string;
 }
 
-export interface BaseModalEmits extends DialogToolsEmits<"base-dialog"> {}
+export interface BaseModalEmits extends DialogToolsEmits<"base-modal:"> {}
 
-export interface BaseModal {
-  wrapperElement: Ref<HTMLElement | null>;
-  contentElement: Ref<HTMLElement | null>;
-  open: () => void;
-  close: () => void;
+export interface BaseModalSlot {
+  open: DialogTools["open"];
+  close: DialogTools["close"];
 }
+
+export interface Basemodal {
+  wrapperElement: DialogTools["wrapperElement"];
+  contentElement: DialogTools["contentElement"];
+  open: DialogTools["open"];
+  close: DialogTools["close"];
+}
+
+type DrawDirection = (typeof drawDirections)[number];
 
 defineOptions({
   name: "BaseModal",
   inheritAttrs: false,
 });
 
+const drawDirections = ["left", "right", "top", "bottom"] as const;
 const props = withDefaults(defineProps<BaseModalProps>(), {
+  drawFrom: "left",
   wrapperElementTransitionName: "base-modal",
   contentElementTransitionName: "base-modal__content",
 });
@@ -36,15 +48,15 @@ const {
   showWrapperElement,
   showContentElement,
   open,
+  handleAfterEnterEventFromWrapperElement,
+  handleAfterEnterEventFromContentElement,
   close,
-  handleAfterEnterFromWrapperElement,
-  handleAfterEnterFromContentElement,
-  handleAfterLeaveFromContentElement,
-  handleAfterLeaveFromWrapperElement,
+  handleAfterLeaveEventFromContentElement,
+  handleAfterLeaveEventFromWrapperElement,
 } = useDialogTools({
-  closeOnClickOutside: props.closeOnClickOutside,
+  closeOnClickOutside: !!props.closeOnClickOutside,
   emits,
-  emitsEventPrefix: "base-modal:",
+  emitsPrefix: "base-modal:",
 });
 
 const slotProps = { open, close };
@@ -56,9 +68,8 @@ defineExpose({ wrapperElement, contentElement, open, close });
   <Teleport to="body">
     <Transition
       :name="wrapperElementTransitionName"
-      mode="out-in"
-      @after-enter="handleAfterEnterFromWrapperElement"
-      @after-leave="handleAfterLeaveFromWrapperElement"
+      @after-enter="handleAfterEnterEventFromWrapperElement"
+      @after-leave="handleAfterLeaveEventFromWrapperElement"
     >
       <div
         class="base-modal"
@@ -68,9 +79,8 @@ defineExpose({ wrapperElement, contentElement, open, close });
       >
         <Transition
           :name="contentElementTransitionName"
-          mode="out-in"
-          @after-enter="handleAfterEnterFromContentElement"
-          @after-leave="handleAfterLeaveFromContentElement"
+          @after-enter="handleAfterEnterEventFromContentElement"
+          @after-leave="handleAfterLeaveEventFromContentElement"
         >
           <div
             class="base-modal__content"

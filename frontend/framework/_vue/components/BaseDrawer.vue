@@ -1,36 +1,41 @@
 <script setup lang="ts">
 import {
   useDialogTools,
+  type DialogTools,
   type DialogToolsEmits,
-  type DialogToolsProps,
 } from "@_vue/composables/use-dialog-tools";
-import { computed, type Ref } from "vue";
+import { computed } from "vue";
 
-const DRAW_FROM = ["left", "right", "top", "bottom"] as const;
-
-type DrawFrom = (typeof DRAW_FROM)[number];
-
-export interface BaseDrawerProps extends DialogToolsProps {
-  drawFrom?: DrawFrom;
+export interface BaseDrawerProps {
+  closeOnClickOutside?: boolean;
+  drawFrom?: DrawDirection;
   isFullscreen?: boolean;
   wrapperElementTransitionName?: string;
   contentElementTransitionName?: string;
 }
 
-export interface BaseDrawerEmits extends DialogToolsEmits<"base-drawer"> {}
+export interface BaseDrawerEmits extends DialogToolsEmits<"base-drawer:"> {}
+
+export interface BaseDrawerSlot {
+  open: DialogTools["open"];
+  close: DialogTools["close"];
+}
 
 export interface BaseDrawer {
-  wrapperElement: Ref<HTMLElement | null>;
-  contentElement: Ref<HTMLElement | null>;
-  open: () => void;
-  close: () => void;
+  wrapperElement: DialogTools["wrapperElement"];
+  contentElement: DialogTools["contentElement"];
+  open: DialogTools["open"];
+  close: DialogTools["close"];
 }
+
+type DrawDirection = (typeof drawDirections)[number];
 
 defineOptions({
   name: "BaseDrawer",
   inheritAttrs: false,
 });
 
+const drawDirections = ["left", "right", "top", "bottom"] as const;
 const props = withDefaults(defineProps<BaseDrawerProps>(), {
   drawFrom: "left",
   wrapperElementTransitionName: "base-drawer",
@@ -43,41 +48,38 @@ const {
   showWrapperElement,
   showContentElement,
   open,
+  handleAfterEnterEventFromWrapperElement,
+  handleAfterEnterEventFromContentElement,
   close,
-  handleAfterEnterFromWrapperElement,
-  handleAfterEnterFromContentElement,
-  handleAfterLeaveFromContentElement,
-  handleAfterLeaveFromWrapperElement,
+  handleAfterLeaveEventFromContentElement,
+  handleAfterLeaveEventFromWrapperElement,
 } = useDialogTools({
-  closeOnClickOutside: props.closeOnClickOutside,
+  closeOnClickOutside: !!props.closeOnClickOutside,
   emits,
-  emitsEventPrefix: "base-drawer:",
+  emitsPrefix: "base-drawer:",
 });
-
 const wrapperElementClassList = computed(() => {
   return {
     "base-drawer": true,
+    "base-drawer--fullscreen": props.isFullscreen,
     [`base-drawer--draw-from-${props.drawFrom}`]: true,
-    "base-drawer--is-fullscreen": props.isFullscreen,
   };
 });
-
-const wrapperElementParsedTransitionName = computed(() => {
+const parsedWrapperElementTransitionName = computed(() => {
   return props.isFullscreen ? props.wrapperElementTransitionName : "";
 });
 
-const slotProps = { open, close };
-defineExpose({ wrapperElement, contentElement, open, close });
+const slotProps: BaseDrawerSlot = { open, close };
+defineExpose<BaseDrawer>({ wrapperElement, contentElement, open, close });
 </script>
 
 <template>
   <slot name="activator" v-bind="slotProps"></slot>
-  <Teleport to="body" :disabled="!isFullscreen">
+  <Teleport to="body" :disabled="isFullscreen">
     <Transition
-      :name="wrapperElementParsedTransitionName"
-      mode="out-in"
-      @after-enter="handleAfterEnterFromWrapperElement"
-      @after-leave="handleAfterLeaveFromWrapperElement"
+      :name="parsedWrapperElementTransitionName"
+      @after-enter="handleAfterEnterEventFromWrapperElement"
+      @after-leave="handleAfterLeaveEventFromWrapperElement"
     >
       <div
         :class="wrapperElementClassList"
@@ -87,9 +89,8 @@ defineExpose({ wrapperElement, contentElement, open, close });
       >
         <Transition
           :name="contentElementTransitionName"
-          mode="out-in"
-          @after-enter="handleAfterEnterFromContentElement"
-          @after-leave="handleAfterLeaveFromContentElement"
+          @after-enter="handleAfterEnterEventFromContentElement"
+          @after-leave="handleAfterLeaveEventFromContentElement"
         >
           <div
             class="base-drawer__content"
@@ -114,7 +115,7 @@ defineExpose({ wrapperElement, contentElement, open, close });
   inset: 0;
   overscroll-behavior: contain;
 
-  &--is-fullscreen {
+  &--fullscreen {
     position: fixed;
     backdrop-filter: blur(4px);
     background-color: theme.get-color("overlay", $color-alpha: "overlay");
@@ -154,11 +155,14 @@ $draw-from-settings: (
 );
 
 @each $coordinate, $settings in $draw-from-settings {
+  $padding-property: map.get($settings, "padding-property");
+  $padding: wtk.get("spacing", "click-gap");
+
   .base-drawer--draw-from-#{$coordinate} {
-    --content-animation-name: draw-from-#{$coordinate};
+    --base-drawer-content-animation-name: draw-from-#{$coordinate};
 
     place-items: map.get($settings, "place-items");
-    #{map.get($settings, "padding-property")}: wtk.get("spacing", "click-gap");
+    #{$padding-property}: $padding;
   }
 }
 
