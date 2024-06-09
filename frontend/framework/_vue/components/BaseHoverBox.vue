@@ -113,15 +113,28 @@ function handlePointerEnterEvent(e: PointerEvent) {
   };
   pointersDataMap.set(e.pointerId, pointerData);
   emits("base-hover-box:pointer-enter", pointerData);
+  hoverBoxIsActive.value = true;
 
   if (pointersDataMap.size === 1) {
     emits("base-hover-box:hover-start");
-    hoverBoxIsActive.value = true;
   }
 }
 
 function handlePointerMoveEvent(e: PointerEvent) {
-  updatePointerData(e);
+  if (hoverBoxElement.value === null) {
+    return;
+  }
+
+  const { x, width, y, height } = hoverBoxElement.value.getBoundingClientRect();
+  const pointerIsInsideHoverBoxElement =
+    e.clientX >= x &&
+    e.clientX <= x + width &&
+    e.clientY >= y &&
+    e.clientY <= y + height;
+
+  if (pointerIsInsideHoverBoxElement) {
+    updatePointerData(e);
+  }
 }
 
 function handlePointerLeaveEvent(e: PointerEvent) {
@@ -155,9 +168,32 @@ function handlePointerLeaveEvent(e: PointerEvent) {
   }
 }
 
-function handleResizeEventFromWindow() {}
+function handleResizeEventFromWindow() {
+  if (hoverBoxElement.value === null) {
+    return;
+  }
 
-onMounted(() => window.addEventListener("resize", handleResizeEventFromWindow));
+  const { width, height } = hoverBoxElement.value.getBoundingClientRect();
+  const hoverBoxProps: { [key: string]: string } = {
+    width: `${width}px`,
+    height: `${height}px`,
+    "x-multiplier": `${width / 2}px`,
+    "y-multiplier": `${height / 2}px`,
+  };
+
+  for (const propertyName in hoverBoxProps) {
+    const propertyValue = hoverBoxProps[propertyName];
+    hoverBoxElement.value.style.setProperty(
+      `--hover-box-${propertyName}`,
+      propertyValue
+    );
+  }
+}
+
+onMounted(() => {
+  handleResizeEventFromWindow();
+  window.addEventListener("resize", handleResizeEventFromWindow);
+});
 
 onBeforeUnmount(() =>
   window.removeEventListener("resize", handleResizeEventFromWindow)
@@ -175,9 +211,7 @@ defineExpose({ hoverBoxElement, getHoverBoxData });
     v-bind="$attrs"
     ref="hoverBoxElement"
   >
-    <div class="base-hover-box__content">
-      <slot></slot>
-    </div>
+    <slot></slot>
   </div>
 </template>
 

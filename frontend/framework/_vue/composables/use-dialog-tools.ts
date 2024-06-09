@@ -63,12 +63,12 @@ export function useDialogTools(settings: DialogToolsSettings): DialogTools {
     }
 
     const { emits, emitsPrefix } = settings;
-    showContentElement.value = true;
+    showContentElement.value = false;
     emits(`${emitsPrefix}close-start`);
   }
 
   function handleAfterLeaveEventFromContentElement() {
-    showWrapperElement.value = true;
+    showWrapperElement.value = false;
   }
 
   function handleAfterLeaveEventFromWrapperElement() {
@@ -87,13 +87,6 @@ export function useDialogTools(settings: DialogToolsSettings): DialogTools {
       contentElement.value === e.target ||
       contentElement.value.contains(e.target)
     ) {
-      console.log(
-        closeOnClickOutside,
-        showWrapperElement.value,
-        wrapperElement.value,
-        contentElement.value,
-        e.target
-      );
       return;
     }
 
@@ -108,10 +101,12 @@ export function useDialogTools(settings: DialogToolsSettings): DialogTools {
     console.log(`change: ${contentElement.value}`);
   });
 
-  onMounted(() => window.addEventListener("click", handleClickEventFromWindow));
+  onMounted(() =>
+    document.body.addEventListener("click", handleClickEventFromWindow)
+  );
 
   onBeforeUnmount(() =>
-    window.removeEventListener("click", handleClickEventFromWindow)
+    document.body.removeEventListener("click", handleClickEventFromWindow)
   );
 
   return {

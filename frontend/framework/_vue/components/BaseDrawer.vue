@@ -182,12 +182,13 @@ $draw-from-settings: (
   --animation-duration: #{wtk.get("duration")};
 
   &-enter-active {
-    animation: var(--content-animation-name) var(--animation-duration) ease-out;
+    animation: var(--base-drawer-content-animation-name)
+      var(--animation-duration) ease-out;
   }
 
   &-leave-active {
-    animation: var(--content-animation-name) var(--animation-duration) ease-out
-      reverse;
+    animation: var(--base-drawer-content-animation-name)
+      var(--animation-duration) ease-out reverse;
   }
 }
 </style>

@@ -3,11 +3,11 @@ import {
   useDialogTools,
   type DialogTools,
   type DialogToolsEmits,
+  type DialogToolsProps,
 } from "@_vue/composables/use-dialog-tools";
-import { computed, type Ref } from "vue";
 
 export interface BaseModalProps {
-  closeOnClickOutside?: boolean;
+  closeOnClickOutside?: DialogToolsProps["closeOnClickOutside"];
   drawFrom?: DrawDirection;
   fullscreen?: boolean;
   wrapperElementTransitionName?: string;

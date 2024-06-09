@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { BaseCounterClassSwitchers } from "@_vue/components/BaseCounter.vue";
 import { type BaseHoverBox } from "@_vue/components/BaseHoverBox.vue";
 import type { BaseInput } from "@_vue/components/BaseInput.vue";
 import { ref } from "vue";
@@ -52,6 +53,12 @@ function handleSaveInputValueEvent(e: Event) {
 // counter
 
 const counterTestValue = ref(200);
+const counterClassSwitchers: BaseCounterClassSwitchers = {
+  "counter-is-low": (data) => data.counter.value <= 250,
+  "counter-is-mid": (data) => data.counter.value > 250,
+  "counter-is-high": (data) => data.counter.value > 500,
+  "counter-is-valid": (data) => data.counter.value === data.counterGoal.value,
+};
 </script>
 
 <template>
@@ -160,6 +167,7 @@ const counterTestValue = ref(200);
         <BaseInput
           placeholder="Base input"
           storageId="homeViewInput"
+          storageType="session"
           @base-input:save-input-value="handleSaveInputValueEvent"
           v-model="baseInputModelValue"
           ref="baseInputComponent"
@@ -243,7 +251,7 @@ const counterTestValue = ref(200);
       <div>
         <BaseCard
           class="aspect-ratio-gaming-card width-md"
-          turnDirection="up-left"
+          turnDirection="right"
         >
           <template #frontFace>
             <div class="box center-content fit">
@@ -263,6 +271,7 @@ const counterTestValue = ref(200);
             :value="counterTestValue"
             :counterStart="15"
             :counterDuration="1500"
+            :classSwitchers="counterClassSwitchers"
           >
           </BaseCounter
         ></code>
@@ -296,15 +305,15 @@ const counterTestValue = ref(200);
     translate: 0 0;
   }
   to {
-    translate: calc(var(--pointer-0-x) * var(--hover-box-x-multiplier) * -1)
-      calc(var(--pointer-0-y) * var(--hover-box-y-multiplier) * -1);
+    translate: calc(var(--pointer-0-x) * var(--hover-box-x-multiplier))
+      calc(var(--pointer-0-y) * var(--hover-box-y-multiplier));
   }
 }
 
 @keyframes hover-box-test-item-inactive {
   from {
-    translate: calc(var(--pointer-0-x) * var(--hover-box-x-multiplier) * -1)
-      calc(var(--pointer-0-y) * var(--hover-box-y-multiplier) * -1);
+    translate: calc(var(--pointer-0-x) * var(--hover-box-x-multiplier))
+      calc(var(--pointer-0-y) * var(--hover-box-y-multiplier));
   }
   to {
     translate: 0 0;
@@ -317,15 +326,15 @@ const counterTestValue = ref(200);
   }
 
   &-mid {
-    color: blue;
-  }
-
-  &-high {
     color: green;
   }
 
-  &-correct {
-    color: pink;
+  &-high {
+    font-weight: bold;
+  }
+
+  &-valid {
+    font-style: italic;
   }
 }
 </style>

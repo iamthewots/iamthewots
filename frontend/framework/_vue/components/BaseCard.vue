@@ -114,10 +114,10 @@ defineExpose<BaseCard>({ cardElement, turn, turnFront, turnBack });
   >
     <div class="base-card__content">
       <div class="base-card__face base-card__back-face">
-        <slot name="back-face" v-bind="slotProps"></slot>
+        <slot name="backFace" v-bind="slotProps"></slot>
       </div>
       <div class="base-card__face base-card__front-face">
-        <slot name="front-face" v-bind="slotProps"></slot>
+        <slot name="frontFace" v-bind="slotProps"></slot>
       </div>
     </div>
   </div>

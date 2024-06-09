@@ -20,7 +20,7 @@ export interface BaseCounterProps {
   counterDuration?: number;
   counterMethod?: CounterMethod;
   fixedDecimals?: number;
-  classSwitchers?: ClassSwitchers<BaseCounterClassSwitchersData>;
+  classSwitchers?: BaseCounterClassSwitchers;
 }
 
 export interface BaseCounterEmits {
@@ -41,6 +41,9 @@ export interface BaseCounter {
 
 type CounterMethod = (typeof counterMethods)[number];
 
+export type BaseCounterClassSwitchers =
+  ClassSwitchers<BaseCounterClassSwitchersData>;
+
 export interface BaseCounterClassSwitchersData {
   counter: Ref<number>;
   counterGoal: ComputedRef<number>;
@@ -54,9 +57,9 @@ defineOptions({
 const counterMethods = ["manual", "auto", "resume"] as const;
 const props = withDefaults(defineProps<BaseCounterProps>(), {
   counterStart: 0,
-  duration: 1000,
-  decimals: 0,
-  method: "auto",
+  counterDuration: 1000,
+  counterMethod: "auto",
+  fixedDecimals: 0,
 });
 const emits = defineEmits<BaseCounterEmits>();
 const counter = ref(props.counterStart);
@@ -70,10 +73,8 @@ const { classLists } = useClassTools<BaseCounterClassSwitchersData>(
   props.classSwitchers
 );
 const counterElementClassList = computed(() => {
-  return {
-    "base-counter": true,
-    ...classLists.value.activeClassList,
-  };
+  console.log(classLists.value);
+  return ["base-counter", ...classLists.value.activeClassList];
 });
 
 function startCounter() {
@@ -118,21 +119,24 @@ function getCounterSpeed() {
 
   if (typeof props.counterSpeed === "number" && props.counterSpeed > 0) {
     return counterSpeed * props.counterSpeed;
-  } else if (typeof props.duration === "number" && props.duration > 0) {
-    return counterSpeed * (Math.abs(counterGap) / (props.duration / 30));
+  } else if (
+    typeof props.counterDuration === "number" &&
+    props.counterDuration > 0
+  ) {
+    return counterSpeed * (Math.abs(counterGap) / (props.counterDuration / 30));
   }
 
   return counterSpeed;
 }
 
 watch(counterGoal, () => {
-  if (props.method === "auto" || props.method === "resume") {
+  if (props.counterMethod === "auto" || props.counterMethod === "resume") {
     startCounter();
   }
 });
 
 onMounted(() => {
-  if (props.method === "auto") {
+  if (props.counterMethod === "auto") {
     startCounter();
   }
 });
