@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { BrowserStorage, BrowserStorageType } from "@_lib/browser-storage";
 import {
   useInputTools,
   type InputTools,
@@ -15,6 +14,7 @@ export interface BaseInputProps {
   storageType?: InputToolsProps["storageType"];
   enableAutosave?: InputToolsProps["enableAutosave"];
   autosaveInterval?: InputToolsProps["autosaveInterval"];
+  autosaveKey?: InputToolsProps["autosaveKey"];
 }
 
 export interface BaseInputEmits extends InputToolsEmits<"base-input:"> {
@@ -48,6 +48,7 @@ defineOptions({
 
 const props = withDefaults(defineProps<BaseInputProps>(), {
   autosaveInterval: 2000,
+  autosaveKey: "_autosave",
 });
 const emits = defineEmits<BaseInputEmits>();
 const inputElement = ref<HTMLInputElement | null>(null);
@@ -97,6 +98,7 @@ onMounted(() => {
 onBeforeUnmount(() => disableAutosave());
 
 const slotProps = {
+  toggleVisibility,
   clearValue,
   saveValue,
   restoreValue,
@@ -106,6 +108,7 @@ const slotProps = {
 defineExpose({
   inputElement,
   browserStorage,
+  toggleVisibility,
   clearValue,
   saveValue,
   restoreValue,

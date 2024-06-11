@@ -19,6 +19,7 @@ export interface BaseCounterProps {
   counterSpeed?: number;
   counterDuration?: number;
   counterMethod?: CounterMethod;
+  counterFPS?: number;
   fixedDecimals?: number;
   classSwitchers?: BaseCounterClassSwitchers;
 }
@@ -59,6 +60,7 @@ const props = withDefaults(defineProps<BaseCounterProps>(), {
   counterStart: 0,
   counterDuration: 1000,
   counterMethod: "auto",
+  counterFPS: 30,
   fixedDecimals: 0,
 });
 const emits = defineEmits<BaseCounterEmits>();
@@ -73,7 +75,6 @@ const { classLists } = useClassTools<BaseCounterClassSwitchersData>(
   props.classSwitchers
 );
 const counterElementClassList = computed(() => {
-  console.log(classLists.value);
   return ["base-counter", ...classLists.value.activeClassList];
 });
 
@@ -88,7 +89,7 @@ function startCounter() {
   emits("base-counter:counter-start", counter.value);
   counterIntervalId = window.setInterval(() => {
     updateCounter(counterSpeed);
-  }, 1000 / 30);
+  }, 1000 / props.counterFPS);
 }
 
 function stopCounter() {
@@ -123,7 +124,10 @@ function getCounterSpeed() {
     typeof props.counterDuration === "number" &&
     props.counterDuration > 0
   ) {
-    return counterSpeed * (Math.abs(counterGap) / (props.counterDuration / 30));
+    return (
+      counterSpeed *
+      (Math.abs(counterGap) / (props.counterDuration / props.counterFPS))
+    );
   }
 
   return counterSpeed;

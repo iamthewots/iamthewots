@@ -121,20 +121,22 @@ function handlePointerEnterEvent(e: PointerEvent) {
 }
 
 function handlePointerMoveEvent(e: PointerEvent) {
-  if (hoverBoxElement.value === null) {
-    return;
-  }
+  // if (hoverBoxElement.value === null) {
+  //   return;
+  // }
 
-  const { x, width, y, height } = hoverBoxElement.value.getBoundingClientRect();
-  const pointerIsInsideHoverBoxElement =
-    e.clientX >= x &&
-    e.clientX <= x + width &&
-    e.clientY >= y &&
-    e.clientY <= y + height;
+  // const { x, width, y, height } = hoverBoxElement.value.getBoundingClientRect();
+  // const pointerIsInsideHoverBoxElement =
+  //   e.clientX >= x &&
+  //   e.clientX <= x + width &&
+  //   e.clientY >= y &&
+  //   e.clientY <= y + height;
 
-  if (pointerIsInsideHoverBoxElement) {
-    updatePointerData(e);
-  }
+  // if (pointerIsInsideHoverBoxElement) {
+  //   updatePointerData(e);
+  // }
+
+  updatePointerData(e);
 }
 
 function handlePointerLeaveEvent(e: PointerEvent) {
@@ -203,15 +205,14 @@ defineExpose({ hoverBoxElement, getHoverBoxData });
 </script>
 
 <template>
-  <div
-    :class="hoverBoxElementClassList"
-    @pointerenter="handlePointerEnterEvent"
-    @pointermove="handlePointerMoveEvent"
-    @pointerleave="handlePointerLeaveEvent"
-    v-bind="$attrs"
-    ref="hoverBoxElement"
-  >
+  <div :class="hoverBoxElementClassList" v-bind="$attrs" ref="hoverBoxElement">
     <slot></slot>
+    <div
+      class="base-hover-box__tracker"
+      @pointerenter="handlePointerEnterEvent"
+      @pointermove="handlePointerMoveEvent"
+      @pointerleave="handlePointerLeaveEvent"
+    ></div>
   </div>
 </template>
 
@@ -220,9 +221,10 @@ defineExpose({ hoverBoxElement, getHoverBoxData });
   touch-action: none;
   position: relative;
 
-  &__content {
+  &__tracker {
     position: absolute;
     inset: 0;
+    opacity: 0;
   }
 }
 </style>

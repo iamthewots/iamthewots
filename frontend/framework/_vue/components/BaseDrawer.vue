@@ -75,7 +75,7 @@ defineExpose<BaseDrawer>({ wrapperElement, contentElement, open, close });
 
 <template>
   <slot name="activator" v-bind="slotProps"></slot>
-  <Teleport to="body" :disabled="isFullscreen">
+  <Teleport to="body" :disabled="!isFullscreen">
     <Transition
       :name="parsedWrapperElementTransitionName"
       @after-enter="handleAfterEnterEventFromWrapperElement"
@@ -113,10 +113,12 @@ defineExpose<BaseDrawer>({ wrapperElement, contentElement, open, close });
 .base-drawer {
   position: absolute;
   inset: 0;
+  overflow: clip;
   overscroll-behavior: contain;
 
   &--fullscreen {
     position: fixed;
+    z-index: wtk.get("z-index", "xl");
     backdrop-filter: blur(4px);
     background-color: theme.get-color("overlay", $color-alpha: "overlay");
   }
@@ -167,28 +169,28 @@ $draw-from-settings: (
 }
 
 .base-drawer {
-  --animation-duration: #{wtk.get("duration")};
+  $animation-duration: #{wtk.get("duration")};
 
   &-enter-active {
-    animation: fade-in var(--animation-duration) ease-out;
+    animation: fade-in var(--animation-duration, $animation-duration) ease-out;
   }
 
   &-leave-active {
-    animation: fade-out var(--animation-duration) ease-out;
+    animation: fade-out var(--animation-duration, $animation-duration) ease-out;
   }
 }
 
 .base-drawer__content {
-  --animation-duration: #{wtk.get("duration")};
+  $animation-duration: #{wtk.get("duration")};
 
   &-enter-active {
     animation: var(--base-drawer-content-animation-name)
-      var(--animation-duration) ease-out;
+      var(--animation-duration, $animation-duration) ease-out;
   }
 
   &-leave-active {
     animation: var(--base-drawer-content-animation-name)
-      var(--animation-duration) ease-out reverse;
+      var(--animation-duration, $animation-duration) ease-out reverse;
   }
 }
 </style>

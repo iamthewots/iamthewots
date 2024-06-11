@@ -7,6 +7,7 @@ export interface InputToolsProps {
   storageType: BrowserStorageType;
   enableAutosave: boolean;
   autosaveInterval: number;
+  autosaveKey: string;
 }
 
 export interface InputToolsEmits<P extends string> {
@@ -105,6 +106,7 @@ export function useInputTools(settings: InputToolsSettings): InputTools {
     }
 
     const saveData = browserStorage.getItem(rawKey);
+    console.log(saveData);
 
     if (saveData === null) {
       return;

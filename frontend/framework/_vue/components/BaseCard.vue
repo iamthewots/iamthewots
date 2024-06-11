@@ -114,10 +114,10 @@ defineExpose<BaseCard>({ cardElement, turn, turnFront, turnBack });
   >
     <div class="base-card__content">
       <div class="base-card__face base-card__back-face">
-        <slot name="backFace" v-bind="slotProps"></slot>
+        <slot name="back-face" v-bind="slotProps"></slot>
       </div>
       <div class="base-card__face base-card__front-face">
-        <slot name="frontFace" v-bind="slotProps"></slot>
+        <slot name="front-face" v-bind="slotProps"></slot>
       </div>
     </div>
   </div>
@@ -127,7 +127,7 @@ defineExpose<BaseCard>({ cardElement, turn, turnFront, turnBack });
 @use "@_sass/wtk.scss";
 
 .base-card {
-  --transition-duration: #{wtk.get("duration", "lg")};
+  $transition-duration: #{wtk.get("duration", "lg")};
 
   display: inline-block;
   perspective: 100rem;
@@ -137,7 +137,8 @@ defineExpose<BaseCard>({ cardElement, turn, turnFront, turnBack });
   &__content {
     position: relative;
     transform-style: preserve-3d;
-    transition: transform var(--transition-duration) ease-out;
+    transition: transform var(--transition-duration, $transition-duration)
+      ease-out;
     width: 100%;
     height: 100%;
   }
