@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BaseCheckbox from "@_vue/components/BaseCheckbox.vue";
 import type { BaseCounterClassSwitchers } from "@_vue/components/BaseCounter.vue";
 import { type BaseHoverBox } from "@_vue/components/BaseHoverBox.vue";
 import type { BaseInput } from "@_vue/components/BaseInput.vue";
@@ -58,7 +59,7 @@ const checkboxValues = reactive({
   a: false,
   b: false,
   c: false,
-})
+});
 </script>
 
 <template>
@@ -244,8 +245,15 @@ const checkboxValues = reactive({
     <section>
       <div class="grid gap-y-sm">
         <p>{{ checkboxValues }}</p>
-        <BaseCheckbox v-model="checkboxValues.a">Share anonymous data</BaseCheckbox>
-        <BaseCheckbox v-model="checkboxValues.b">Allow cat petting</BaseCheckbox>
+        <BaseSwitch v-model="checkboxValues.a">Share anonymous data</BaseSwitch>
+        <BaseSwitch v-model="checkboxValues.b">Allow cat petting</BaseSwitch>
+        <BaseSwitch v-model="checkboxValues.c">Bark on command</BaseSwitch>
+        <BaseCheckbox v-model="checkboxValues.a"
+          >Share anonymous data</BaseCheckbox
+        >
+        <BaseCheckbox v-model="checkboxValues.b"
+          >Allow cat petting</BaseCheckbox
+        >
         <BaseCheckbox v-model="checkboxValues.c">Bark on command</BaseCheckbox>
       </div>
     </section>

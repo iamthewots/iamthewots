@@ -2,27 +2,28 @@
 import { useSplitAttrs } from "@_vue/composables/use-split-attrs";
 import { ref, type Ref } from "vue";
 
-export interface BaseCheckboxProps {
+export interface BaseSwitchProps {
   modelValue?: boolean;
+  checkboxType: "box" | "switch";
 }
 
-export interface BaseCheckboxEmits {
+export interface BaseSwitchEmits {
   (e: "update:modelValue", checked: boolean): void;
-  (e: "base-radio:selected"): void
-  (e: "base-radio:unselected"): void
+  (e: "base-switch:switch-on"): void;
+  (e: "base-switch:switch-off"): void;
 }
 
-export interface BaseCheckbox {
+export interface BaseSwitch {
   inputElement: Ref<HTMLInputElement | null>;
 }
 
 defineOptions({
-  name: "BaseCheckbox",
+  name: "BaseSwitch",
   inheritAttrs: false,
 });
 
-const props = defineProps<BaseCheckboxProps>();
-const emits = defineEmits<BaseCheckboxEmits>();
+const props = defineProps<BaseSwitchProps>();
+const emits = defineEmits<BaseSwitchEmits>();
 const inputElement = ref<HTMLInputElement | null>(null);
 const { nonStyleAttrs, styleAttrs } = useSplitAttrs();
 
@@ -31,9 +32,9 @@ function handleInputEvent(e: Event) {
   emits("update:modelValue", checked);
 
   if (checked) {
-    emits("base-radio:selected");
+    emits("base-switch:switch-on");
   } else {
-    emits("base-radio:unselected");
+    emits("base-switch:switch-off");
   }
 }
 
@@ -41,11 +42,11 @@ defineExpose({ inputElement });
 </script>
 
 <template>
-  <label class="base-checkbox" v-bind="styleAttrs">
-    <div class="base-checkbox__slider">
-      <div class="base-checkbox__handle"></div>
+  <label class="base-switch" v-bind="styleAttrs">
+    <div class="base-switch__slider">
+      <div class="base-switch__handle"></div>
     </div>
-    <div class="base-checkbox__label">
+    <div class="base-switch__label">
       <slot></slot>
     </div>
     <input
@@ -62,7 +63,7 @@ defineExpose({ inputElement });
 @use "@_sass/modules/theme.scss";
 @use "@_sass/wtk.scss";
 
-.base-checkbox {
+.base-switch {
   position: relative;
   align-items: center;
   grid-template-columns: auto minmax(0, 1fr);
@@ -74,15 +75,20 @@ defineExpose({ inputElement });
   &__slider {
     @include theme.set-color-scheme("input");
 
-    aspect-ratio: 1;
+    position: relative;
+    display: flex;
+    overflow: clip;
+    aspect-ratio: 2;
     border: wtk.get("border");
+    border-radius: 100rem;
     height: calc(wtk.get("height", "input") / 2);
     background-color: var(--color-input-inactive);
   }
 
   &__handle {
-    scale: 0;
-    transition: scale wtk.get("duration", "sm") ease-out;
+    position: absolute;
+    left: 0%;
+    transition: all 200ms ease-out;
     aspect-ratio: 1;
     border-radius: inherit;
     height: 100%;
@@ -97,13 +103,14 @@ defineExpose({ inputElement });
   }
 }
 
-.base-checkbox:has(input:checked) {
-  .base-checkbox__slider {
+.base-switch:has(input:checked) {
+  .base-switch__slider {
     background-color: var(--color-input-active);
   }
 
-  .base-checkbox__handle {
-    scale: 0.75;
+  .base-switch__handle {
+    left: 100%;
+    translate: -100% 0%;
   }
 }
 </style>
