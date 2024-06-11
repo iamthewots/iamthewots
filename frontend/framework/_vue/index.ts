@@ -6,6 +6,7 @@ import BaseDrawer from "./components/BaseDrawer.vue";
 import BaseHoverBox from "./components/BaseHoverBox.vue";
 import BaseInput from "./components/BaseInput.vue";
 import BaseModal from "./components/BaseModal.vue";
+import BaseRadio from "./components/BaseRadio.vue";
 import BaseSwitch from "./components/BaseSwitch.vue";
 import BaseTextArea from "./components/BaseTextArea.vue";
 
@@ -25,6 +26,7 @@ export default {
     vueApp.component(`${componentsPrefix}HoverBox`, BaseHoverBox);
     vueApp.component(`${componentsPrefix}Input`, BaseInput);
     vueApp.component(`${componentsPrefix}Modal`, BaseModal);
+    vueApp.component(`${componentsPrefix}Radio`, BaseRadio);
     vueApp.component(`${componentsPrefix}Switch`, BaseSwitch);
     vueApp.component(`${componentsPrefix}TextArea`, BaseTextArea);
   },

@@ -3,6 +3,7 @@ import BaseCheckbox from "@_vue/components/BaseCheckbox.vue";
 import type { BaseCounterClassSwitchers } from "@_vue/components/BaseCounter.vue";
 import { type BaseHoverBox } from "@_vue/components/BaseHoverBox.vue";
 import type { BaseInput } from "@_vue/components/BaseInput.vue";
+import BaseRadio from "@_vue/components/BaseRadio.vue";
 import { type BaseTextArea } from "@_vue/components/BaseTextArea.vue";
 import { reactive, ref } from "vue";
 
@@ -53,13 +54,29 @@ const counterClassSwitchers: BaseCounterClassSwitchers = {
 
 const baseTextAreaComponent = ref<BaseTextArea>();
 
-// checkbox
+// checkbox & switch
 
 const checkboxValues = reactive({
   a: false,
   b: false,
   c: false,
 });
+
+// radio
+const radioModel = ref("pikachu");
+const radioObjects = {
+  pikachu: "Pikachu, type Elettro",
+  bulbasaur: "Bulbasaur, type Grass",
+  charmender: "Charmender, type Fire",
+};
+
+function testRadioEvent(value: string) {
+  console.log(value);
+}
+
+function testRadioUnselected(value: string) {
+  console.log("mannaia", value);
+}
 </script>
 
 <template>
@@ -257,15 +274,30 @@ const checkboxValues = reactive({
         <BaseCheckbox v-model="checkboxValues.c">Bark on command</BaseCheckbox>
       </div>
     </section>
+
+    <section>
+      <div class="grid gap-y-sm">
+        <p>{{ radioModel }}</p>
+        <BaseRadio
+          @base-radio:selected="testRadioEvent"
+          @base-radio:unselected="testRadioUnselected"
+          v-for="(value, key) in radioObjects"
+          v-model="radioModel"
+          :value="key"
+          :key="key"
+          >{{ value }}</BaseRadio
+        >
+      </div>
+    </section>
   </main>
 </template>
 
 <style lang="scss">
 .hover-box-test-item {
-  $duration: 1000ms;
+  $duration: 200ms;
 
   .base-hover-box--active & {
-    animation: hover-box-test-item-active $duration ease-out forwards;
+    animation: hover-box-test-item-active $duration * 2 ease-out forwards;
   }
 
   .base-hover-box--inactive & {

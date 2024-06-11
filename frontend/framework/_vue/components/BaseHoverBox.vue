@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, type Ref } from "vue";
 
 export interface BaseHoverBoxProps {
+  removeClamps?: boolean;
   resetOnLeave?: boolean;
 }
 
@@ -66,6 +67,20 @@ function getHoverBoxData() {
   };
 }
 
+function isPointerInsideTracker(e: PointerEvent) {
+  if (hoverBoxElement.value === null) {
+    return false;
+  }
+
+  const { x, width, y, height } = hoverBoxElement.value.getBoundingClientRect();
+  return (
+    e.clientX >= x &&
+    e.clientX <= x + width &&
+    e.clientY >= y &&
+    e.clientY <= y + height
+  );
+}
+
 function updatePointerData(e: PointerEvent) {
   const pointerData = pointersDataMap.get(e.pointerId);
 
@@ -91,8 +106,14 @@ function updateCssProperties(pointerData: PointerData) {
 
   let key: keyof PointerDataProps;
   for (key in pointerData.props) {
+    let value = pointerData.props[key];
+
+    if (props.removeClamps !== true) {
+      value = Math.min(Math.max(-1, value), 1);
+    }
+
     const propertyName = `--pointer-${pointerData.index}-${key}`;
-    const propertyValue = pointerData.props[key].toString();
+    const propertyValue = value.toString();
     hoverBoxElement.value.style.setProperty(propertyName, propertyValue);
   }
 }
@@ -121,21 +142,6 @@ function handlePointerEnterEvent(e: PointerEvent) {
 }
 
 function handlePointerMoveEvent(e: PointerEvent) {
-  // if (hoverBoxElement.value === null) {
-  //   return;
-  // }
-
-  // const { x, width, y, height } = hoverBoxElement.value.getBoundingClientRect();
-  // const pointerIsInsideHoverBoxElement =
-  //   e.clientX >= x &&
-  //   e.clientX <= x + width &&
-  //   e.clientY >= y &&
-  //   e.clientY <= y + height;
-
-  // if (pointerIsInsideHoverBoxElement) {
-  //   updatePointerData(e);
-  // }
-
   updatePointerData(e);
 }
 

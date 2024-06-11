@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { useSplitAttrs } from "@_vue/composables/use-split-attrs";
-import { ref, type Ref } from "vue";
+import { computed, onMounted, ref, watch, type Ref } from "vue";
 
 export interface BaseRadioProps {
-  modelValue?: boolean;
+  modelValue: string;
 }
 
 export interface BaseRadioEmits {
-  (e: "update:modelValue", checked: boolean): void;
-  (e: "base-radio:selected"): void;
-  (e: "base-radio:unselected"): void;
+  (e: "update:modelValue", value: string): void;
+  (e: "base-radio:selected", value: string): void;
+  (e: "base-radio:unselected", value: string): void;
 }
 
 export interface BaseRadio {
@@ -25,17 +25,27 @@ const props = defineProps<BaseRadioProps>();
 const emits = defineEmits<BaseRadioEmits>();
 const inputElement = ref<HTMLInputElement | null>(null);
 const { nonStyleAttrs, styleAttrs } = useSplitAttrs();
+const currentRadioValue = computed(() => props.modelValue);
+let wasLastSelected: boolean;
 
 function handleInputEvent(e: Event) {
-  const { checked } = e.target as HTMLInputElement;
-  emits("update:modelValue", checked);
-
-  if (checked) {
-    emits("base-radio:selected");
-  } else {
-    emits("base-radio:unselected");
-  }
+  const { value } = e.target as HTMLInputElement;
+  emits("update:modelValue", value);
+  emits("base-radio:selected", value);
+  wasLastSelected = true;
 }
+
+watch(currentRadioValue, () => {
+  const value = inputElement.value?.value || "";
+  if (wasLastSelected && currentRadioValue.value != inputElement.value?.value) {
+    wasLastSelected = false;
+    emits("base-radio:unselected", value);
+  }
+});
+
+onMounted(() => {
+  wasLastSelected = props.modelValue === inputElement.value?.value;
+});
 
 defineExpose({ inputElement });
 </script>
@@ -50,7 +60,7 @@ defineExpose({ inputElement });
     </div>
     <input
       type="radio"
-      :checked="modelValue"
+      :checked="inputElement?.value === modelValue"
       @input="handleInputEvent"
       v-bind="nonStyleAttrs"
       ref="inputElement"
@@ -59,4 +69,52 @@ defineExpose({ inputElement });
 </template>
 
 <style lang="scss">
+@use "@_sass/modules/theme.scss";
+@use "@_sass/wtk.scss";
+
+.base-radio {
+  position: relative;
+  align-items: center;
+  grid-template-columns: auto minmax(0, 1fr);
+  display: inline-grid;
+  gap: wtk.get("spacing", "sm");
+  width: fit-content;
+  cursor: pointer;
+
+  &__slider {
+    @include theme.set-color-scheme("input");
+
+    aspect-ratio: 1;
+    border: wtk.get("border");
+    border-radius: 100rem;
+    height: calc(wtk.get("height", "input") / 2);
+    background-color: var(--color-input-inactive);
+  }
+
+  &__handle {
+    scale: 0;
+    transition: scale wtk.get("duration", "sm") ease-out;
+    aspect-ratio: 1;
+    border-radius: inherit;
+    height: 100%;
+    background-color: var(--color-input-handle);
+  }
+
+  input {
+    position: absolute;
+    z-index: -1;
+    width: 0;
+    height: 0;
+  }
+}
+
+.base-radio:has(input:checked) {
+  .base-radio__slider {
+    background-color: var(--color-input-active);
+  }
+
+  .base-radio__handle {
+    scale: 0.75;
+  }
+}
 </style>

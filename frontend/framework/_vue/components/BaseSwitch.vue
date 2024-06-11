@@ -4,7 +4,6 @@ import { ref, type Ref } from "vue";
 
 export interface BaseSwitchProps {
   modelValue?: boolean;
-  checkboxType: "box" | "switch";
 }
 
 export interface BaseSwitchEmits {
