@@ -8,8 +8,8 @@ export interface BaseCheckboxProps {
 
 export interface BaseCheckboxEmits {
   (e: "update:modelValue", checked: boolean): void;
-  (e: "base-radio:selected"): void
-  (e: "base-radio:unselected"): void
+  (e: "base-radio:selected"): void;
+  (e: "base-radio:unselected"): void;
 }
 
 export interface BaseCheckbox {
@@ -92,8 +92,15 @@ defineExpose({ inputElement });
   input {
     position: absolute;
     z-index: -1;
+    opacity: 0;
     width: 0;
     height: 0;
+  }
+}
+
+.base-checkbox:has(input:focus-visible) {
+  .base-checkbox__slider {
+    outline: wtk.get("outline");
   }
 }
 

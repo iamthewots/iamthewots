@@ -97,8 +97,15 @@ defineExpose({ inputElement });
   input {
     position: absolute;
     z-index: -1;
+    opacity: 0;
     width: 0;
     height: 0;
+  }
+}
+
+.base-switch:has(input:focus-visible) {
+  .base-switch__slider {
+    outline: wtk.get("outline");
   }
 }
 

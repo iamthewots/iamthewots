@@ -80,11 +80,12 @@ function testRadioUnselected(value: string) {
 </script>
 
 <template>
-  <main id="components" class="grid-content-layout spread-y-md padding-main">
+  <main id="components" class="box centered-content grid-content-layout spread-y-md padding-main max-width-main-content">
     <h3 class="text-is-title text-color-accent-1">Components test area</h3>
     <section>
       <BaseHoverBox
         class="box center-content centered-content aspect-ratio-square max-width-md"
+        resetOnLeave
         ref="baseHoverBoxComponent"
       >
         <div
@@ -289,6 +290,21 @@ function testRadioUnselected(value: string) {
         >
       </div>
     </section>
+
+    <section>
+      <BaseSelect>
+        <option value="expressjs">ExpressJS</option>
+        <option value="html">HTML</option>
+        <option value="css">CSS</option>
+        <option value="sass">SASS</option>
+        <option value="js">Javascript</option>
+        <option value="ts">Typescript</option>
+        <option value="nodeJs">NodeJS</option>
+        <option value="math">Math</option>
+        <option value="gaming">Gaming</option>
+        <option value="streaming">Streaming</option>
+      </BaseSelect>
+    </section>
   </main>
 </template>
 
@@ -296,12 +312,16 @@ function testRadioUnselected(value: string) {
 .hover-box-test-item {
   $duration: 200ms;
 
+  transition: translate var(--transition-duration) ease;
+  translate: calc(var(--pointer-0-x) * var(--hover-box-x-multiplier))
+    calc(var(--pointer-0-y) * var(--hover-box-y-multiplier));
+
   .base-hover-box--active & {
-    animation: hover-box-test-item-active $duration * 2 ease-out forwards;
+    --transition-duration: 100ms;
   }
 
   .base-hover-box--inactive & {
-    animation: hover-box-test-item-inactive $duration ease-out forwards;
+    --transition-duration: 400ms;
   }
 }
 

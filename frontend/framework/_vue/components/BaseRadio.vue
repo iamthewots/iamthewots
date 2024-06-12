@@ -103,8 +103,15 @@ defineExpose({ inputElement });
   input {
     position: absolute;
     z-index: -1;
+    opacity: 0;
     width: 0;
     height: 0;
+  }
+}
+
+.base-radio:has(input:focus-visible) {
+  .base-radio__slider {
+    outline: wtk.get("outline");
   }
 }
 

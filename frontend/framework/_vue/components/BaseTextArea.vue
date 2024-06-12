@@ -116,8 +116,8 @@ defineExpose({
     padding: wtk.get("spacing", "xs");
     width: 100%;
     background-color: transparent;
-    font-family: inherit;
-    font-size: inherit;
+    font-family: wtk.get("font-family", "input");
+    font-size: wtk.get("font-size", "md");
     color: inherit;
   }
 }
