@@ -5,6 +5,7 @@ import { type BaseHoverBox } from "@_vue/components/BaseHoverBox.vue";
 import type { BaseInput } from "@_vue/components/BaseInput.vue";
 import BaseRadio from "@_vue/components/BaseRadio.vue";
 import { type BaseTextArea } from "@_vue/components/BaseTextArea.vue";
+import { type BaseSelect } from "@_vue/components/BaseSelect.vue";
 import { reactive, ref } from "vue";
 
 // hover-box
@@ -63,6 +64,7 @@ const checkboxValues = reactive({
 });
 
 // radio
+
 const radioModel = ref("pikachu");
 const radioObjects = {
   pikachu: "Pikachu, type Elettro",
@@ -77,6 +79,11 @@ function testRadioEvent(value: string) {
 function testRadioUnselected(value: string) {
   console.log("mannaia", value);
 }
+
+// select
+
+const baseSelectComponent = ref<BaseSelect | null>(null);
+const selectModel = ref<string[]>();
 </script>
 
 <template>
@@ -215,11 +222,13 @@ function testRadioUnselected(value: string) {
       <BaseCard class="aspect-ratio-gaming-card width-md" turnDirection="right">
         <template #front-face>
           <div class="box center-content fit">
+            <img src="https://loremflickr.com/400/600/asian,girl" alt="" />
             <span>Hi, I am in the front!</span>
           </div>
         </template>
         <template #back-face>
           <div class="box center-content fit">
+            <img src="https://loremflickr.com/400/600/shemale" alt="" />
             <span>Hi, I'm in the back!</span>
           </div>
         </template>
@@ -295,8 +304,12 @@ function testRadioUnselected(value: string) {
     </section>
 
     <section>
-      <p class="text-align-center">Select your interests:</p>
-      <BaseSelect>
+      <p class="text-align-center">Select your favorite PC activity:</p>
+      <BaseSelect
+        :selectMax="3"
+        v-model="selectModel"
+        ref="baseSelectComponent"
+      >
         <option value="expressjs">ExpressJS</option>
         <option value="html">HTML</option>
         <option value="css">CSS</option>
@@ -306,8 +319,18 @@ function testRadioUnselected(value: string) {
         <option value="nodeJs">NodeJS</option>
         <option value="math">Math</option>
         <option value="gaming">Gaming</option>
+        <option value="asianLadies" selected>Asian Ladies</option>
         <option value="streaming">Streaming</option>
+        <option value="hateSpeechOnSocialMedia">
+          Hate Speech on Social Media
+        </option>
+        <option value="codingInGeneral">General Coding</option>
       </BaseSelect>
+      <p>Selection: {{ selectModel }}</p>
+      <p>
+        Available:
+        {{ Array.from(baseSelectComponent?.optionValues.unselected || []) }}
+      </p>
     </section>
   </main>
 </template>

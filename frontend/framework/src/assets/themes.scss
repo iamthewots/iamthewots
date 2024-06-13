@@ -22,7 +22,7 @@
     )
   );
   @include theme.add-color("input-handle", hsl(98, 39%, 90%));
-  @include theme.add-color("input-active", hsl(165, 77%, 47%));
+  @include theme.add-color("input-active", hsl(165, 64%, 47%));
   @include theme.add-color("input-inactive", hsl(138, 13%, 66%));
 
   @include theme.set-color-property("background", "body");
