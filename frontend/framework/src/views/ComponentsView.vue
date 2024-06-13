@@ -80,7 +80,10 @@ function testRadioUnselected(value: string) {
 </script>
 
 <template>
-  <main id="components" class="box centered-content grid-content-layout spread-y-md padding-main max-width-main-content">
+  <main
+    id="components"
+    class="box centered-content grid-content-layout spread-y-md padding-main max-width-main-content"
+  >
     <h3 class="text-is-title text-color-accent-1">Components test area</h3>
     <section>
       <BaseHoverBox
@@ -292,6 +295,7 @@ function testRadioUnselected(value: string) {
     </section>
 
     <section>
+      <p class="text-align-center">Select your interests:</p>
       <BaseSelect>
         <option value="expressjs">ExpressJS</option>
         <option value="html">HTML</option>
