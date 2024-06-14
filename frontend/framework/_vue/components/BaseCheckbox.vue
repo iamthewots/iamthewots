@@ -37,7 +37,7 @@ function handleInputEvent(e: Event) {
   }
 }
 
-defineExpose({ inputElement });
+defineExpose<BaseCheckbox>({ inputElement });
 </script>
 
 <template>

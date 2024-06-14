@@ -6,7 +6,7 @@ import {
   type InputToolsProps,
 } from "@_vue/composables/use-input-tools";
 import { useSplitAttrs } from "@_vue/composables/use-split-attrs";
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { onBeforeUnmount, onMounted, ref, type Ref } from "vue";
 
 export interface BaseTextAreaProps {
   storageId?: InputToolsProps["storageId"];
@@ -28,6 +28,7 @@ export interface BaseTextAreaSlot {
 }
 
 export interface BaseTextArea {
+  textAreaElement: Ref<HTMLTextAreaElement | null>;
   browserStorage: InputTools["browserStorage"];
   clearValue: InputTools["clearValue"];
   saveValue: InputTools["saveValue"];
@@ -67,14 +68,14 @@ onMounted(() => {});
 
 onBeforeUnmount(() => disableAutosave());
 
-const slotProps = {
+const slotProps: BaseTextAreaSlot = {
   clearValue,
   saveValue,
   restoreValue,
   enableAutosave,
   disableAutosave,
 };
-defineExpose({
+defineExpose<BaseTextArea>({
   textAreaElement,
   browserStorage,
   clearValue,

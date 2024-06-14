@@ -32,6 +32,7 @@ export interface BaseInputSlot {
 }
 
 export interface BaseInput {
+  inputElement: Ref<HTMLInputElement | null>;
   toggleVisibility: () => void;
   browserStorage: InputTools["browserStorage"];
   clearValue: InputTools["clearValue"];
@@ -97,7 +98,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => disableAutosave());
 
-const slotProps = {
+const slotProps: BaseInputSlot = {
   toggleVisibility,
   clearValue,
   saveValue,
@@ -105,7 +106,7 @@ const slotProps = {
   enableAutosave,
   disableAutosave,
 };
-defineExpose({
+defineExpose<BaseInput>({
   inputElement,
   browserStorage,
   toggleVisibility,

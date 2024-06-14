@@ -207,7 +207,7 @@ onBeforeUnmount(() =>
   window.removeEventListener("resize", handleResizeEventFromWindow)
 );
 
-defineExpose({ hoverBoxElement, getHoverBoxData });
+defineExpose<BaseHoverBox>({ hoverBoxElement, getHoverBoxData });
 </script>
 
 <template>

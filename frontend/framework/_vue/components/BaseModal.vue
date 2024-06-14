@@ -21,7 +21,7 @@ export interface BaseModalSlot {
   close: DialogTools["close"];
 }
 
-export interface Basemodal {
+export interface BaseModal {
   wrapperElement: DialogTools["wrapperElement"];
   contentElement: DialogTools["contentElement"];
   open: DialogTools["open"];
@@ -59,8 +59,8 @@ const {
   emitsPrefix: "base-modal:",
 });
 
-const slotProps = { open, close };
-defineExpose({ wrapperElement, contentElement, open, close });
+const slotProps: BaseModalSlot = { open, close };
+defineExpose<BaseModal>({ wrapperElement, contentElement, open, close });
 </script>
 
 <template>

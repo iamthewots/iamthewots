@@ -47,7 +47,7 @@ onMounted(() => {
   wasLastSelected = props.modelValue === inputElement.value?.value;
 });
 
-defineExpose({ inputElement });
+defineExpose<BaseRadio>({ inputElement });
 </script>
 
 <template>

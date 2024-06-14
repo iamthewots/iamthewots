@@ -37,7 +37,7 @@ function handleInputEvent(e: Event) {
   }
 }
 
-defineExpose({ inputElement });
+defineExpose<BaseSwitch>({ inputElement });
 </script>
 
 <template>

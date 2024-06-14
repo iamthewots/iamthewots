@@ -329,7 +329,7 @@ const selectModel = ref<string[]>();
       <p>Selection: {{ selectModel }}</p>
       <p>
         Available:
-        {{ Array.from(baseSelectComponent?.optionValues.unselected || []) }}
+        {{ Array.from(baseSelectComponent?.optionsValues.notSelected || []) }}
       </p>
     </section>
   </main>
