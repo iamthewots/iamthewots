@@ -111,8 +111,8 @@ function testRadioUnselected(value: string) {
         ref="baseInputComponent"
       >
       </BaseInput>
-      <div class="spread-x-sm spread-y-sm">
-        <p>{{ baseInputModelValue }}</p>
+      <p>Input value: {{ baseInputModelValue }}</p>
+      <div class="flex-top-left flex-wrap gap-sm">
         <BaseButton @click="saveInputValue">Save input value</BaseButton>
         <BaseButton @click="testInputMethod">Test input method</BaseButton>
       </div>
@@ -121,8 +121,10 @@ function testRadioUnselected(value: string) {
     <section>
       <BaseModal closeOnClickOutside>
         <template #activator="modal">
-          <BaseButton @click="modal.open">Open modal</BaseButton>
-          <BaseButton @click="modal.close" disabled>Close modal</BaseButton>
+          <div class="flex-top-left flex-wrap gap-sm">
+            <BaseButton @click="modal.open">Open modal</BaseButton>
+            <BaseButton @click="modal.close" disabled>Close modal</BaseButton>
+          </div>
         </template>
         <template #default>
           <div class="box | modal-test-item">
@@ -239,7 +241,7 @@ function testRadioUnselected(value: string) {
         >
         </BaseCounter
       ></code>
-      <p>
+      <p class="flex-top-left flex-wrap gap-sm">
         <BaseButton @click="counterTestValue = 111">111</BaseButton>
         <BaseButton @click="counterTestValue = 222">222</BaseButton>
         <BaseButton @click="counterTestValue = 333">333</BaseButton>
@@ -254,15 +256,21 @@ function testRadioUnselected(value: string) {
         storageType="local"
         ref="baseTextAreaComponent"
       ></BaseTextArea>
-      <div>
-        <span v-for="n in 3" :key="n">
-          <BaseButton @click="baseTextAreaComponent?.saveValue(`save${n}`)">
-            {{ `save${n}` }}
-          </BaseButton>
-          <BaseButton @click="baseTextAreaComponent?.restoreValue(`save${n}`)">
-            {{ `restore${n}` }}
-          </BaseButton>
-        </span>
+      <div class="flex-top-left flex-wrap gap-sm">
+        <BaseButton
+          @click="baseTextAreaComponent?.saveValue(`save${n}`)"
+          v-for="n in 3"
+          :key="n"
+        >
+          {{ `save${n}` }}
+        </BaseButton>
+        <BaseButton
+          @click="baseTextAreaComponent?.restoreValue(`save${n}`)"
+          v-for="n in 3"
+          :key="n"
+        >
+          {{ `restore${n}` }}
+        </BaseButton>
       </div>
     </section>
 
