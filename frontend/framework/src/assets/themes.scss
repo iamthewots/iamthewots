@@ -3,6 +3,7 @@
 .theme-main {
   --font-family-base: "Exo 2", sans-serif;
   --font-family-pop: "Atkinson Hyperlegible", serif;
+  --font-family-input: "Ubuntu";
 
   @include theme.add-color("main", hsl(98, 39%, 88%));
   @include theme.add-color("body", hsl(98, 29%, 78%));
@@ -10,15 +11,23 @@
   @include theme.add-color("accent-2", hsl(263, 46%, 46%));
   @include theme.add-color("overlay", hsl(140, 8%, 36%));
   @include theme.add-color("shadow", hsl(120, 8%, 26%));
-  @include theme.add-color("outline", hsl(194, 100%, 33%));
+  @include theme.add-color("outline", hsl(175, 81%, 49%));
   @include theme.add-color("border", hsl(130, 27%, 23%));
   @include theme.add-color-scheme(
     "input",
     (
-      "outline": hsl(175, 81%, 49%),
       "border": hsl(98, 27%, 26%),
       "background": hsl(98, 39%, 78%),
       "text": hsl(128, 13%, 23%),
+    )
+  );
+  @include theme.add-color-scheme(
+    "button",
+    (
+      "shadow": hsl(150, 65%, 13%),
+      "border": hsl(150, 35%, 79%),
+      "background": hsl(150, 85%, 95%),
+      "text": hsl(150, 10%, 15%),
     )
   );
   @include theme.add-color("input-handle", hsl(98, 39%, 90%));

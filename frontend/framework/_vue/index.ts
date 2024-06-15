@@ -1,4 +1,5 @@
 import { type App } from "vue";
+import BaseButton from "./components/BaseButton.vue";
 import BaseCard from "./components/BaseCard.vue";
 import BaseCheckbox from "./components/BaseCheckbox.vue";
 import BaseCounter from "./components/BaseCounter.vue";
@@ -20,6 +21,7 @@ export default {
   install(vueApp: App, pluginOptions: PluginOptions = {}) {
     const componentsPrefix = pluginOptions.componentsPrefix || "Base";
 
+    vueApp.component(`${componentsPrefix}Button`, BaseButton);
     vueApp.component(`${componentsPrefix}Card`, BaseCard);
     vueApp.component(`${componentsPrefix}Checkbox`, BaseCheckbox);
     vueApp.component(`${componentsPrefix}Counter`, BaseCounter);

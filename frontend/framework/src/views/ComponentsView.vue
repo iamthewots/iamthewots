@@ -5,7 +5,6 @@ import { type BaseHoverBox } from "@_vue/components/BaseHoverBox.vue";
 import type { BaseInput } from "@_vue/components/BaseInput.vue";
 import BaseRadio from "@_vue/components/BaseRadio.vue";
 import { type BaseTextArea } from "@_vue/components/BaseTextArea.vue";
-import { type BaseSelect } from "@_vue/components/BaseSelect.vue";
 import { reactive, ref } from "vue";
 
 // hover-box
@@ -79,11 +78,6 @@ function testRadioEvent(value: string) {
 function testRadioUnselected(value: string) {
   console.log("mannaia", value);
 }
-
-// select
-
-const baseSelectComponent = ref<BaseSelect | null>(null);
-const selectModel = ref<string[]>();
 </script>
 
 <template>
@@ -117,18 +111,18 @@ const selectModel = ref<string[]>();
         ref="baseInputComponent"
       >
       </BaseInput>
-      <div class="spread-x-sm">
+      <div class="spread-x-sm spread-y-sm">
         <p>{{ baseInputModelValue }}</p>
-        <button @click="saveInputValue">Save input value</button>
-        <button @click="testInputMethod">Test input method</button>
+        <BaseButton @click="saveInputValue">Save input value</BaseButton>
+        <BaseButton @click="testInputMethod">Test input method</BaseButton>
       </div>
     </section>
 
     <section>
       <BaseModal closeOnClickOutside>
         <template #activator="modal">
-          <button @click="modal.open">Open modal</button>
-          <button @click="modal.close">Close modal</button>
+          <BaseButton @click="modal.open">Open modal</BaseButton>
+          <BaseButton @click="modal.close" disabled>Close modal</BaseButton>
         </template>
         <template #default>
           <div class="box | modal-test-item">
@@ -164,7 +158,7 @@ const selectModel = ref<string[]>();
       </p>
       <BaseDrawer closeOnClickOutside>
         <template #activator="drawer">
-          <button @click="drawer.open">Open drawer</button>
+          <BaseButton @click="drawer.open">Open drawer</BaseButton>
         </template>
         <template #default>
           <div
@@ -246,11 +240,11 @@ const selectModel = ref<string[]>();
         </BaseCounter
       ></code>
       <p>
-        <button @click="counterTestValue = 111">111</button>
-        <button @click="counterTestValue = 222">222</button>
-        <button @click="counterTestValue = 333">333</button>
-        <button @click="counterTestValue = 444">444</button>
-        <button @click="counterTestValue = 999.99">999.99</button>
+        <BaseButton @click="counterTestValue = 111">111</BaseButton>
+        <BaseButton @click="counterTestValue = 222">222</BaseButton>
+        <BaseButton @click="counterTestValue = 333">333</BaseButton>
+        <BaseButton @click="counterTestValue = 444">444</BaseButton>
+        <BaseButton @click="counterTestValue = 999.99">999.99</BaseButton>
       </p>
     </section>
 
@@ -262,12 +256,12 @@ const selectModel = ref<string[]>();
       ></BaseTextArea>
       <div>
         <span v-for="n in 3" :key="n">
-          <button @click="baseTextAreaComponent?.saveValue(`save${n}`)">
+          <BaseButton @click="baseTextAreaComponent?.saveValue(`save${n}`)">
             {{ `save${n}` }}
-          </button>
-          <button @click="baseTextAreaComponent?.restoreValue(`save${n}`)">
+          </BaseButton>
+          <BaseButton @click="baseTextAreaComponent?.restoreValue(`save${n}`)">
             {{ `restore${n}` }}
-          </button>
+          </BaseButton>
         </span>
       </div>
     </section>
@@ -301,36 +295,6 @@ const selectModel = ref<string[]>();
           >{{ value }}</BaseRadio
         >
       </div>
-    </section>
-
-    <section>
-      <p class="text-align-center">Select your favorite PC activity:</p>
-      <BaseSelect
-        :selectMax="3"
-        v-model="selectModel"
-        ref="baseSelectComponent"
-      >
-        <option value="expressjs">ExpressJS</option>
-        <option value="html">HTML</option>
-        <option value="css">CSS</option>
-        <option value="sass">SASS</option>
-        <option value="js">Javascript</option>
-        <option value="ts">Typescript</option>
-        <option value="nodeJs">NodeJS</option>
-        <option value="math">Math</option>
-        <option value="gaming">Gaming</option>
-        <option value="asianLadies" selected>Asian Ladies</option>
-        <option value="streaming">Streaming</option>
-        <option value="hateSpeechOnSocialMedia">
-          Hate Speech on Social Media
-        </option>
-        <option value="codingInGeneral">General Coding</option>
-      </BaseSelect>
-      <p>Selection: {{ selectModel }}</p>
-      <p>
-        Available:
-        {{ Array.from(baseSelectComponent?.optionsValues.notSelected || []) }}
-      </p>
     </section>
   </main>
 </template>
