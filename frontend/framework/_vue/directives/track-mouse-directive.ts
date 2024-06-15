@@ -1,4 +1,7 @@
-import { trackPointerFromElement, type PointerProps } from "@_lib/pointer-tracker";
+import {
+  trackPointerFromElement,
+  type PointerProps,
+} from "@_lib/pointer-tracker";
 import type { DirectiveBinding } from "vue";
 
 export function trackMouseDirective(
@@ -19,5 +22,3 @@ export function trackMouseDirective(
     binding.value = mouseProps;
   });
 }
-
-// convert to setup

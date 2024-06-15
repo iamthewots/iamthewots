@@ -6,6 +6,7 @@ import {
 import { computed, onBeforeUnmount, onMounted, ref, type Ref } from "vue";
 
 export interface BaseHoverBoxProps {
+  tag?: string;
   removeClamps?: boolean;
   resetOnLeave?: boolean;
 }
@@ -34,7 +35,9 @@ defineOptions({
   inheritAttrs: false,
 });
 
-const props = defineProps<BaseHoverBoxProps>();
+const props = withDefaults(defineProps<BaseHoverBoxProps>(), {
+  tag: "div",
+});
 const emits = defineEmits<BaseHoverBoxEmits>();
 const hoverBoxElement = ref<HTMLElement | null>(null);
 const hoverBoxIsActive = ref(false);
@@ -189,7 +192,12 @@ defineExpose<BaseHoverBox>({ hoverBoxElement, getHoverBoxData });
 </script>
 
 <template>
-  <div :class="hoverBoxElementClassList" v-bind="$attrs" ref="hoverBoxElement">
+  <component
+    :is="tag"
+    :class="hoverBoxElementClassList"
+    v-bind="$attrs"
+    ref="hoverBoxElement"
+  >
     <slot></slot>
     <div
       class="base-hover-box__tracker"
@@ -197,7 +205,7 @@ defineExpose<BaseHoverBox>({ hoverBoxElement, getHoverBoxData });
       @pointermove="handlePointerMoveEvent"
       @pointerleave="handlePointerLeaveEvent"
     ></div>
-  </div>
+  </component>
 </template>
 
 <style lang="scss">
