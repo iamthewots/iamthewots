@@ -1,30 +1,30 @@
 export type BrowserStorageType = "session" | "local";
 
 export class BrowserStorage<T = any> {
-  private storageId: string;
-  private storageApi: Storage;
+  #storageId: string;
+  #storageApi: Storage;
 
   constructor(storageId: string, storageType: BrowserStorageType) {
     if (storageId === "") {
       throw new Error("empty_storage_id");
     }
 
-    this.storageId = storageId.trim();
+    this.#storageId = storageId.trim();
 
     if (BrowserStorage.isStorageEnabled(storageType) === false) {
       throw new Error("unrecognized_storeage_type");
     }
 
     if (storageType === "local") {
-      this.storageApi = window.localStorage;
+      this.#storageApi = window.localStorage;
     } else {
-      this.storageApi = window.sessionStorage;
+      this.#storageApi = window.sessionStorage;
     }
   }
 
   getItem(rawKey: string): T | null {
     const key = this.formatKey(rawKey);
-    const stringifiedValue = this.storageApi.getItem(key);
+    const stringifiedValue = this.#storageApi.getItem(key);
 
     if (stringifiedValue === null) {
       return null;
@@ -36,13 +36,13 @@ export class BrowserStorage<T = any> {
   setItem(rawKey: string, value: T) {
     const key = this.formatKey(rawKey);
     const stringifiedValue = JSON.stringify(value);
-    this.storageApi.setItem(key, stringifiedValue);
+    this.#storageApi.setItem(key, stringifiedValue);
   }
 
   removeItem(rawKey: string) {
     const key = this.formatKey(rawKey);
     const value = this.getItem(rawKey);
-    this.storageApi.removeItem(key);
+    this.#storageApi.removeItem(key);
 
     return value;
   }
@@ -50,7 +50,7 @@ export class BrowserStorage<T = any> {
   clear() {
     const keys = this.getKeys();
     keys.forEach((key) => {
-      this.storageApi.removeItem(key);
+      this.#storageApi.removeItem(key);
     });
 
     return keys.length;
@@ -60,7 +60,7 @@ export class BrowserStorage<T = any> {
     const outputObject: { [key: string]: any } = {};
     const keys = this.getKeys();
     keys.forEach((key) => {
-      const value = this.storageApi.getItem(key);
+      const value = this.#storageApi.getItem(key);
       const rawKey = this.parseKey(key);
 
       if (value !== null) {
@@ -74,8 +74,8 @@ export class BrowserStorage<T = any> {
   getKeys() {
     const keys: string[] = [];
 
-    for (let i = 0; i < this.storageApi.length; i++) {
-      const key = this.storageApi.key(i);
+    for (let i = 0; i < this.#storageApi.length; i++) {
+      const key = this.#storageApi.key(i);
 
       if (key === null) {
         continue;
@@ -88,11 +88,11 @@ export class BrowserStorage<T = any> {
   }
 
   private formatKey(rawKey: string) {
-    return `BS@${this.storageId}#${rawKey}`;
+    return `BS@${this.#storageId}#${rawKey}`;
   }
 
   private parseKey(key: string) {
-    return key.slice(`BS@${this.storageId}#`.length);
+    return key.slice(`BS@${this.#storageId}#`.length);
   }
 
   static isStorageEnabled(storageType: BrowserStorageType) {

@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import {
+  trackPointerFromElement,
+  type PointerProps,
+} from "@_lib/pointer-tracker";
 import { computed, onBeforeUnmount, onMounted, ref, type Ref } from "vue";
 
 export interface BaseHoverBoxProps {
@@ -22,14 +26,7 @@ export interface BaseHoverBox {
 
 interface PointerData {
   index: number;
-  props: PointerDataProps;
-}
-
-interface PointerDataProps {
-  x: number;
-  y: number;
-  angle: number;
-  distance: number;
+  props: PointerProps;
 }
 
 defineOptions({
@@ -67,20 +64,6 @@ function getHoverBoxData() {
   };
 }
 
-function isPointerInsideTracker(e: PointerEvent) {
-  if (hoverBoxElement.value === null) {
-    return false;
-  }
-
-  const { x, width, y, height } = hoverBoxElement.value.getBoundingClientRect();
-  return (
-    e.clientX >= x &&
-    e.clientX <= x + width &&
-    e.clientY >= y &&
-    e.clientY <= y + height
-  );
-}
-
 function updatePointerData(e: PointerEvent) {
   const pointerData = pointersDataMap.get(e.pointerId);
 
@@ -88,14 +71,7 @@ function updatePointerData(e: PointerEvent) {
     return;
   }
 
-  const { left, width, top, height } =
-    hoverBoxElement.value.getBoundingClientRect();
-  const x = ((e.clientX - left) / width) * 2 - 1;
-  const y = ((e.clientY - top) / height) * 2 - 1;
-  const angle = (Math.atan2(y, x) * 180) / Math.PI;
-  const distance = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)) / 1.414;
-
-  pointerData.props = { x, y, angle, distance };
+  pointerData.props = trackPointerFromElement(e, hoverBoxElement.value);
   updateCssProperties(pointerData);
 }
 
@@ -104,7 +80,7 @@ function updateCssProperties(pointerData: PointerData) {
     return;
   }
 
-  let key: keyof PointerDataProps;
+  let key: keyof PointerProps;
   for (key in pointerData.props) {
     let value = pointerData.props[key];
 
@@ -151,6 +127,8 @@ function handlePointerLeaveEvent(e: PointerEvent) {
   if (pointerData === undefined) {
     return;
   }
+
+  pointersDataMap.delete(e.pointerId);
 
   if (props.resetOnLeave) {
     updateCssProperties({

@@ -11,6 +11,7 @@ import BaseRadio from "./components/BaseRadio.vue";
 import BaseSelect from "./components/BaseSelect.vue";
 import BaseSwitch from "./components/BaseSwitch.vue";
 import BaseTextArea from "./components/BaseTextArea.vue";
+import { trackMouseDirective } from "./directives/track-mouse-directive";
 
 interface PluginOptions {
   componentsPrefix?: string;
@@ -33,5 +34,6 @@ export default {
     vueApp.component(`${componentsPrefix}Select`, BaseSelect);
     vueApp.component(`${componentsPrefix}Switch`, BaseSwitch);
     vueApp.component(`${componentsPrefix}TextArea`, BaseTextArea);
+    vueApp.directive("track-mouse", trackMouseDirective);
   },
 };

@@ -304,6 +304,10 @@ function testRadioUnselected(value: string) {
         >
       </div>
     </section>
+
+    <section class="centered-content">
+      <div class="box aspect-ratio-1x1 width-md" v-track-mouse></div>
+    </section>
   </main>
 </template>
 
