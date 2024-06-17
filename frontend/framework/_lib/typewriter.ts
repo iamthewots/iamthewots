@@ -1,8 +1,3 @@
-interface ActionSettings {
-  id: number;
-  actionName: ActionName;
-}
-
 type ActionName =
   | "writeText"
   | "delete"
@@ -12,33 +7,53 @@ type ActionName =
   | "pause"
   | "setSpeed";
 
-interface WriteTextSettings extends ActionSettings {
+interface WriteTextSettings {
+  id: number;
   actionName: "writeText";
   text: string;
   wrapperElement?: Element;
 }
 
-interface DeleteSettings extends ActionSettings {
+interface DeleteSettings {
+  id: number;
   actionName: "delete";
   charsCount: number;
 }
 
-interface DeleteAllSettings extends ActionSettings {
+interface DeleteAllSettings {
+  id: number;
   actionName: "deleteAll";
 }
 
-interface SkipSettings extends ActionSettings {
+interface SkipSettings {
+  id: number;
   actionName: "skip";
 }
 
+type ActionSettings =
+  | WriteTextSettings
+  | DeleteSettings
+  | DeleteAllSettings
+  | SkipSettings;
+
 export class Typewriter {
+  #outputElement: HTMLElement;
   #baseTimeout: number;
   #timeoutMultiplier = 1;
   #actionsQueue: ActionSettings[] = [];
   #isActive = false;
 
-  constructor(baseSpeed: number = 10) {
+  constructor(outputElement: HTMLElement, baseSpeed: number = 10) {
+    this.#outputElement = outputElement;
     this.#baseTimeout = Math.max(baseSpeed, 10);
+  }
+
+  changeOutputElement(element: HTMLElement) {
+    if (element instanceof HTMLElement === false) {
+      return;
+    }
+
+    this.#outputElement = element;
   }
 
   writeText(text: string, wrapperElement?: Element) {
@@ -66,11 +81,21 @@ export class Typewriter {
   }
 
   start() {
+    if (this.#isActive === true) {
+      return;
+    } else if (this.#outputElement === null) {
+      throw new Error("output_element_not_provided");
+    }
+
     this.#isActive = true;
     this.#executeActions();
   }
 
   stop() {
+    if (this.#isActive === false) {
+      return;
+    }
+
     this.#isActive = false;
   }
 
@@ -78,17 +103,30 @@ export class Typewriter {
     while (this.#actionsQueue.length > 0 && this.#isActive === true) {
       const actionSettings = this.#actionsQueue[0];
       const timeout = this.#baseTimeout * this.#timeoutMultiplier;
+      let intervalId: number;
 
       await new Promise((resolve) => {
-        let intervalId = window.setInterval(() => {
-          if (this.#isActive === false) {
+        let actionComplete = false;
+
+        intervalId = window.setInterval(() => {
+          if (this.#isActive === false || actionComplete) {
             window.clearInterval(intervalId);
             return resolve(null);
           }
 
           switch (actionSettings.actionName) {
+            case "writeText":
+              if (actionSettings.text.length === 0) {
+                return resolve(null);
+              }
+
+              const char = actionSettings.text[0];
+              this.#outputElement.innerText += char;
+              break;
           }
         }, timeout);
+
+        window.clearInterval(intervalId);
       });
     }
   }
