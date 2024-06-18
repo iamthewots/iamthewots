@@ -3,7 +3,7 @@ enum ActionId {
   "DeleteText",
   "PauseText",
   "ChangeOutputElement",
-  "ChangeTimeoutMultiplier",
+  "ChangeTimeout",
   "SetCheckpoint",
 }
 
@@ -23,9 +23,9 @@ interface PauseTextAction {
   timeout: number;
 }
 
-interface ChangeTimeoutMultiplierAction {
-  actionId: ActionId.ChangeTimeoutMultiplier;
-  multiplier: number;
+interface ChangeTimeoutAction {
+  actionId: ActionId.ChangeTimeout;
+  timeout: number;
 }
 
 interface SetCheckpointAction {
@@ -37,24 +37,29 @@ export type TextTyperAction =
   | WriteTextAction
   | DeleteTextAction
   | PauseTextAction
-  | ChangeTimeoutMultiplierAction
+  | ChangeTimeoutAction
   | SetCheckpointAction;
 
 export class TextTyper {
   #outputElement: HTMLElement;
-  #baseTimeout: number;
-  #timeoutMultiplier = 1;
+  #timeout: number;
   #queue: TextTyperAction[] = [];
+  #isActive = false;
   #checkpoints: Map<string, string> = new Map();
 
   constructor(outputElement: HTMLElement, baseTimeout = 10) {
     this.#outputElement = outputElement;
-    this.#baseTimeout = Math.max(baseTimeout, 10);
+    this.#timeout = Math.max(baseTimeout, 10);
   }
 
-  startTyping() {}
+  startTyping() {
+    this.#isActive = true;
+    this.#executeQueueActions();
+  }
 
-  stopTyping() {}
+  stopTyping() {
+    this.#isActive = false;
+  }
 
   skipTyping(checkpointId?: string) {}
 
@@ -80,7 +85,16 @@ export class TextTyper {
   pauseText(timeout: number) {
     this.#queue.push({
       actionId: ActionId.PauseText,
-      timeout: Math.max(timeout, this.#baseTimeout),
+      timeout: Math.max(timeout, this.#timeout),
+    });
+
+    return this;
+  }
+
+  changeTimeout(timeout = 10) {
+    this.#queue.push({
+      actionId: ActionId.ChangeTimeout,
+      timeout: Math.max(timeout, 10),
     });
 
     return this;
@@ -95,36 +109,133 @@ export class TextTyper {
     return this;
   }
 
-  async #executeQueueActions() {}
+  async #executeQueueActions() {
+    while (this.#queue.length > 0 && this.#isActive) {
+      const actionSettings = this.#queue[0];
+
+      if (actionSettings.actionId === ActionId.WriteText) {
+        const { wrapperElement } = actionSettings;
+
+        if (this.#outputElement.contains(wrapperElement) === false) {
+          this.#outputElement.appendChild(actionSettings.wrapperElement);
+        }
+      }
+
+      let actionIsComplete = false;
+
+      while (actionIsComplete === false && this.#isActive) {
+        console.log(actionSettings);
+        switch (actionSettings.actionId) {
+          case ActionId.WriteText:
+            actionIsComplete = await this.#executeWriteTextAction(
+              actionSettings
+            );
+            break;
+          case ActionId.DeleteText:
+            actionIsComplete = await this.#executeDeleteTextAction(
+              actionSettings
+            );
+            break;
+          case ActionId.PauseText:
+            actionIsComplete = await this.#executePauseTextAction(
+              actionSettings
+            );
+            break;
+          case ActionId.ChangeTimeout:
+            actionIsComplete = await this.#executeChangeTimeoutAction(
+              actionSettings
+            );
+            break;
+          case ActionId.SetCheckpoint:
+            actionIsComplete = await this.#executeSetCheckpointAction(
+              actionSettings
+            );
+            break;
+        }
+
+        if (actionIsComplete) {
+          this.#queue.shift();
+        }
+      }
+    }
+  }
 
   async #executeWriteTextAction(settings: WriteTextAction) {
     if (settings.text.length === 0) {
       return true;
     }
 
-    const char = settings.text[0];
-    settings.wrapperElement.innerText += char;
-    settings.text = settings.text.slice(1);
+    await new Promise((resolve) => {
+      window.setTimeout(() => {
+        settings.wrapperElement.textContent += settings.text[0];;
+
+        resolve(true);
+      }, this.#timeout);
+    });
+
+    settings.text = settings.text.substring(1);
 
     return settings.text.length === 0;
   }
 
   async #executeDeleteTextAction(settings: DeleteTextAction) {
-    const length = this.#outputElement.children.length;
-
-    if (length === 0 || settings.charsCount === 0) {
+    if (
+      this.#outputElement.children.length === 0 ||
+      settings.charsCount === 0
+    ) {
       return true;
     }
 
+    let childElement: HTMLElement | undefined;
 
-    // ciclo while (o for con un bel break) per trovare un figlio stronzo con del testo
-    // se il ciclo finisce, si restituisce un bel true coi controcazzi
-    // tranciare un carattere fino a zero
-    // se charsCount indefinito, restituire sempre false, tanto esce true, in caso, al primo controllo
-    // sennò diminuire charsCount e se esce 0, si restituisce true
+    for (let i = this.#outputElement.children.length - 1; i > 0; i--) {
+      const element = this.#outputElement.children[i];
+      if (element instanceof HTMLElement && element.innerText.length > 0) {
+        childElement = element;
+        break;
+      }
+    }
+
+    if (childElement === undefined) {
+      return true;
+    }
+
+    await new Promise((resolve) => {
+      window.setTimeout(() => {
+        childElement.innerText = childElement.innerText.slice(0, -1);
+
+        resolve(true);
+      }, this.#timeout);
+    });
+
+    if (typeof settings.charsCount !== "number") {
+      return false;
+    } else {
+      settings.charsCount--;
+
+      return settings.charsCount <= 0;
+    }
   }
 
-  async #executePauseTextAction({ timeout }: PauseTextAction) {}
+  async #executePauseTextAction({ timeout }: PauseTextAction) {
+    await new Promise((resolve) => {
+      window.setTimeout(() => {
+        resolve(true);
+      }, timeout);
+    });
 
-  async #executeSetCheckpointAction({ checkpointId }: SetCheckpointAction) {}
+    return true;
+  }
+
+  async #executeChangeTimeoutAction({ timeout }: ChangeTimeoutAction) {
+    this.#timeout = timeout;
+
+    return true;
+  }
+
+  async #executeSetCheckpointAction({ checkpointId }: SetCheckpointAction) {
+    this.#checkpoints.set(checkpointId, this.#outputElement.innerHTML);
+
+    return true;
+  }
 }

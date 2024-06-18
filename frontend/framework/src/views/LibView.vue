@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { StopWatch } from "@_lib/stop-watch";
-import { ref, toRef } from "vue";
+import { TextTyper } from "@_lib/text-typer";
+import { onMounted, ref, toRef } from "vue";
 
 const logElement = ref<HTMLElement>();
 const stopWatch = new StopWatch();
@@ -20,10 +21,49 @@ stopWatch.setCallback(20000, () => {
 });
 console.log("ready to start stopwatch...");
 stopWatch.start();
+
+const textTyperElement = ref<HTMLElement>();
+let textTyper: TextTyper;
+onMounted(() => {
+  textTyper = new TextTyper(textTyperElement.value!, 25);
+  textTyper
+    .writeText("Ciao, come va?")
+    .pauseText(1000)
+    .writeText(" Mi sembri molto gay...")
+    .pauseText(1000)
+    .deleteText(6)
+    .writeText("gagliardo!")
+    .pauseText(2000)
+    .deleteText(10)
+    .changeTimeout(1000)
+    .writeText("...")
+    .changeTimeout(25)
+    .pauseText(2000)
+    .deleteText(3)
+    .writeText(
+      " finocchio ( o_o)",
+      (() => {
+        const el = document.createElement("span");
+        el.classList.add("finocchio");
+
+        return el;
+      })()
+    );
+});
 </script>
 
 <template>
-  <main class="centered-content">
-    <div class="box" ref="logElement"></div>
+  <main class="center-content centered-content width-main-content">
+    <div class="box aspect-ratio-square width-md" ref="logElement"></div>
+    <div class="box aspect-ratio-square width-md" ref="textTyperElement"></div>
+    <BaseButton @click="textTyper.startTyping()">Start TextTyper</BaseButton>
+    <BaseButton @click="textTyper.stopTyping()">Stop TextTyper</BaseButton>
   </main>
 </template>
+
+<style lang="scss">
+.finocchio {
+  color: pink;
+  font-weight: bold;
+}
+</style>
