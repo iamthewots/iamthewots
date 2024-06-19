@@ -131,7 +131,6 @@ export class TextTyper {
       let actionIsComplete = false;
 
       while (actionIsComplete === false && this.#isActive) {
-        console.log(actionSettings);
         switch (actionSettings.actionId) {
           case ActionId.WriteText:
             actionIsComplete = await this.#executeWriteTextAction(
@@ -207,7 +206,35 @@ export class TextTyper {
 
     for (let i = this.#outputElement.children.length - 1; i > 0; i--) {
       const element = this.#outputElement.children[i];
-      if (element instanceof HTMLElement && element.innerText.length > 0) {
+
+      if (element instanceof HTMLElement === false) {
+        continue;
+      } else if (element.innerText.length === 0) {
+        this.#outputElement.removeChild(element);
+
+        continue;
+      }
+
+      if (this.#mustSkip) {
+        if (typeof settings.charsCount !== "number") {
+          this.#outputElement.removeChild(element);
+        } else {
+          if (element.innerText.length < settings.charsCount) {
+            settings.charsCount -= element.innerText.length;
+            this.#outputElement.removeChild(element);
+          } else if (element.innerText.length === settings.charsCount) {
+            this.#outputElement.removeChild(element);
+
+            return true;
+          } else {
+            element.innerText.slice(0, -1 * settings.charsCount);
+
+            return true;
+          }
+        }
+
+        continue;
+      } else {
         childElement = element;
         break;
       }
@@ -217,33 +244,22 @@ export class TextTyper {
       return true;
     }
 
-
-    // se skip, calcola il valore più piccolo tra lunghezza testo e charscount
-    // rimuovi quel valore dal testo
-    // rimuovi quel valore da charscount
-    // il resto si calcola uguale
-
     await new Promise((resolve) => {
-      window.setTimeout(
-        () => {
-          childElement.innerText = childElement.innerText.slice(0, -1);
+      setTimeout(() => {
+        childElement.innerText = childElement.innerText.slice(0, -1);
 
-          resolve(true);
-        },
-        this.#mustSkip ? 0 : this.#timeout
-      );
+        resolve(true);
+      }, this.#timeout);
     });
 
-    if (typeof settings.charsCount !== "number") {
-      return false;
-    } else {
+    if (typeof settings.charsCount === "number") {
       settings.charsCount--;
-
-      return settings.charsCount <= 0;
     }
+
+    return settings.charsCount === 0;
   }
 
-  async #executePauseTextAction({ timeout }: PauseTextAction) {
+  async #executePauseTextAction(settings: PauseTextAction) {
     if (this.#mustSkip) {
       return true;
     }
@@ -251,10 +267,12 @@ export class TextTyper {
     await new Promise((resolve) => {
       window.setTimeout(() => {
         resolve(true);
-      }, timeout);
+      }, 100);
     });
 
-    return true;
+    settings.timeout -= 100;
+
+    return settings.timeout <= 0;
   }
 
   async #executeChangeTimeoutAction({ timeout }: ChangeTimeoutAction) {
