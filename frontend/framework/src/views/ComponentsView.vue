@@ -95,7 +95,12 @@ function testRadioUnselected(value: string) {
         <div
           class="aspect-ratio-square width-xs background-color-accent-1 text-align-center | hover-box-test-item"
         >
-          Effect
+          Effect 0
+        </div>
+        <div
+          class="aspect-ratio-square width-xs background-color-accent-2 text-align-center | hover-box-test-item"
+        >
+          Effect 1
         </div>
       </BaseHoverBox>
     </section>
@@ -306,18 +311,33 @@ function testRadioUnselected(value: string) {
     </section>
 
     <section class="centered-content">
-      <div class="box aspect-ratio-1x1 width-md" v-track-mouse></div>
+      <div
+        class="box center-content aspect-ratio-1x1 width-md"
+        v-track-mouse.resetOnLeave
+      >
+        <div
+          class="aspect-ratio-square width-xs background-color-accent-1 text-align-center | mouse-directive-test-item"
+        ></div>
+      </div>
     </section>
   </main>
 </template>
 
 <style lang="scss">
 .hover-box-test-item {
-  $duration: 200ms;
+  position: absolute;
 
-  transition: translate var(--transition-duration) ease;
-  translate: calc(var(--pointer-0-x) * var(--hover-box-x-multiplier))
-    calc(var(--pointer-0-y) * var(--hover-box-y-multiplier));
+  &:nth-child(1) {
+    transition: translate var(--transition-duration) ease;
+    translate: calc(var(--pointer-0-x) * var(--hover-box-x-multiplier))
+      calc(var(--pointer-0-y) * var(--hover-box-y-multiplier));
+  }
+
+  &:nth-child(2) {
+    transition: translate var(--transition-duration) ease;
+    translate: calc(var(--pointer-1-x) * var(--hover-box-x-multiplier))
+      calc(var(--pointer-1-y) * var(--hover-box-y-multiplier));
+  }
 
   .base-hover-box--active & {
     --transition-duration: 100ms;
@@ -328,23 +348,16 @@ function testRadioUnselected(value: string) {
   }
 }
 
-@keyframes hover-box-test-item-active {
-  from {
-    translate: 0 0;
-  }
-  to {
-    translate: calc(var(--pointer-0-x) * var(--hover-box-x-multiplier))
-      calc(var(--pointer-0-y) * var(--hover-box-y-multiplier));
-  }
-}
+.mouse-directive-test-item {
+  transition: translate var(--transition-duration) ease;
+  translate: calc(var(--mouse-x) * 100%) calc(var(--mouse-y) * 100%);
 
-@keyframes hover-box-test-item-inactive {
-  from {
-    translate: calc(var(--pointer-0-x) * var(--hover-box-x-multiplier))
-      calc(var(--pointer-0-y) * var(--hover-box-y-multiplier));
+  .track-mouse-directive--active & {
+    --transition-duration: 100ms;
   }
-  to {
-    translate: 0 0;
+
+  .track-mouse-directive--inactive & {
+    --transition-duration: 400ms;
   }
 }
 
@@ -362,7 +375,7 @@ function testRadioUnselected(value: string) {
   }
 
   &-valid {
-    font-style: italic;
+    text-decoration: underline;
   }
 }
 </style>

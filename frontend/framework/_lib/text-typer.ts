@@ -45,6 +45,7 @@ export class TextTyper {
   #timeout: number;
   #queue: TextTyperAction[] = [];
   #isActive = false;
+  #mustSkip = false;
   #checkpoints: Map<string, string> = new Map();
 
   constructor(outputElement: HTMLElement, baseTimeout = 10) {
@@ -61,7 +62,13 @@ export class TextTyper {
     this.#isActive = false;
   }
 
-  skipTyping(checkpointId?: string) {}
+  skipTyping(checkpointId?: string) {
+    if (this.#isActive === false) {
+      return;
+    }
+
+    this.#mustSkip = true;
+  }
 
   writeText(text: string, wrapperElement?: HTMLElement) {
     this.#queue.push({
@@ -158,6 +165,10 @@ export class TextTyper {
         }
       }
     }
+
+    if (this.#queue.length === 0) {
+      this.#isActive = false;
+    }
   }
 
   async #executeWriteTextAction(settings: WriteTextAction) {
@@ -165,9 +176,15 @@ export class TextTyper {
       return true;
     }
 
+    if (this.#mustSkip) {
+      settings.wrapperElement.textContent += settings.text;
+
+      return true;
+    }
+
     await new Promise((resolve) => {
       window.setTimeout(() => {
-        settings.wrapperElement.textContent += settings.text[0];;
+        settings.wrapperElement.textContent += settings.text[0];
 
         resolve(true);
       }, this.#timeout);
@@ -200,12 +217,21 @@ export class TextTyper {
       return true;
     }
 
-    await new Promise((resolve) => {
-      window.setTimeout(() => {
-        childElement.innerText = childElement.innerText.slice(0, -1);
 
-        resolve(true);
-      }, this.#timeout);
+    // se skip, calcola il valore più piccolo tra lunghezza testo e charscount
+    // rimuovi quel valore dal testo
+    // rimuovi quel valore da charscount
+    // il resto si calcola uguale
+
+    await new Promise((resolve) => {
+      window.setTimeout(
+        () => {
+          childElement.innerText = childElement.innerText.slice(0, -1);
+
+          resolve(true);
+        },
+        this.#mustSkip ? 0 : this.#timeout
+      );
     });
 
     if (typeof settings.charsCount !== "number") {
@@ -218,6 +244,10 @@ export class TextTyper {
   }
 
   async #executePauseTextAction({ timeout }: PauseTextAction) {
+    if (this.#mustSkip) {
+      return true;
+    }
+
     await new Promise((resolve) => {
       window.setTimeout(() => {
         resolve(true);

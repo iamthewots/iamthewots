@@ -157,6 +157,8 @@ function handlePointerLeaveEvent(e: PointerEvent) {
   }
 }
 
+function handleAlternativeLeaveEvent(e: PointerEvent) {}
+
 function handleResizeEventFromWindow() {
   if (hoverBoxElement.value === null) {
     return;
@@ -204,6 +206,8 @@ defineExpose<BaseHoverBox>({ hoverBoxElement, getHoverBoxData });
       @pointerenter="handlePointerEnterEvent"
       @pointermove="handlePointerMoveEvent"
       @pointerleave="handlePointerLeaveEvent"
+      @pointercancel="handleAlternativeLeaveEvent"
+      @pointerout="handleAlternativeLeaveEvent"
     ></div>
   </component>
 </template>

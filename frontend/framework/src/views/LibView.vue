@@ -53,11 +53,19 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="center-content centered-content width-main-content">
-    <div class="box aspect-ratio-square width-md" ref="logElement"></div>
-    <div class="box aspect-ratio-square width-md" ref="textTyperElement"></div>
-    <BaseButton @click="textTyper.startTyping()">Start TextTyper</BaseButton>
-    <BaseButton @click="textTyper.stopTyping()">Stop TextTyper</BaseButton>
+  <main
+    class="center-content centered-content spread-y-md max-width-main-content padding-main"
+  >
+    <div class="box aspect-ratio-square max-width-md" ref="logElement"></div>
+    <div
+      class="box aspect-ratio-square max-width-md"
+      ref="textTyperElement"
+    ></div>
+    <div class="flex-center-center gap-sm">
+      <BaseButton @click="textTyper.startTyping()">Start TextTyper</BaseButton>
+      <BaseButton @click="textTyper.stopTyping()">Stop TextTyper</BaseButton>
+      <BaseButton @click="textTyper.skipTyping()">Skip TextTyper</BaseButton>
+    </div>
   </main>
 </template>
 
