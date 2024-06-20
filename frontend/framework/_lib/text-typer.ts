@@ -5,6 +5,7 @@ enum ActionId {
   "ChangeElement",
   "ChangeTimeout",
   "SetCheckpoint",
+  "SetCallback",
 }
 
 interface WriteTextAction {
@@ -38,18 +39,29 @@ interface SetCheckpointAction {
   checkpointId: string;
 }
 
+interface SetCallbackAction {
+  actionId: ActionId.SetCallback;
+  callback: Callback;
+}
+
 type TextTyperAction =
   | WriteTextAction
   | DeleteTextAction
   | AddPauseAction
   | ChangeElementAction
   | ChangeTimeoutAction
-  | SetCheckpointAction;
+  | SetCheckpointAction
+  | SetCallbackAction;
+
+type Callback = (...args: any[]) => any;
 
 export class TextTyper {
   #element: HTMLElement;
   #timeout: number;
+  #punctuationTimeoutMultiplier = 1;
+  #deleteTimeoutMultiplier = 1;
   #queue: TextTyperAction[] = [];
+  #handleQueueEndEvent?: Callback;
   #isActive = false;
   #skipQueue = false;
   #checkpointsMap: Map<string, string> = new Map();
@@ -190,6 +202,15 @@ export class TextTyper {
     return this;
   }
 
+  setCallback(callback: Callback) {
+    this.#queue.push({
+      actionId: ActionId.SetCallback,
+      callback,
+    });
+
+    return this;
+  }
+
   async #runQueue() {
     while (this.#queue.length > 0 && this.#isActive) {
       const settings = this.#queue[0];
@@ -230,6 +251,9 @@ export class TextTyper {
               settings
             );
             break;
+          case ActionId.SetCallback:
+            actionWasCompleted = await this.#executeSetCallbackAction(settings);
+            break;
           default:
             actionWasCompleted = true;
         }
@@ -241,7 +265,12 @@ export class TextTyper {
 
       if (this.#queue.length === 0) {
         this.#isActive = false;
+        this.#skipQueue = false;
       }
+    }
+
+    if (this.#queue.length === 0 && this.#handleQueueEndEvent !== undefined) {
+      this.#handleQueueEndEvent();
     }
   }
 
@@ -254,9 +283,12 @@ export class TextTyper {
       return true;
     }
 
-    await this.#timeoutPromise();
+    const char = settings.text[0];
+    const timeoutMultiplier =
+      ",;.:!?".indexOf(char) !== -1 ? this.#punctuationTimeoutMultiplier : 1;
     settings.wrapperElement.textContent += settings.text[0];
     settings.text = settings.text.substring(1);
+    await this.#timeoutPromise(this.#timeout * timeoutMultiplier);
 
     return settings.text.length === 0;
   }
@@ -307,7 +339,7 @@ export class TextTyper {
       return true;
     }
 
-    await this.#timeoutPromise();
+    await this.#timeoutPromise(this.#timeout * this.#deleteTimeoutMultiplier);
     childElement.innerText = childElement.innerText.slice(0, -1);
 
     if (typeof settings.charsCount === "number") {
@@ -347,11 +379,37 @@ export class TextTyper {
     return true;
   }
 
+  async #executeSetCallbackAction(settings: SetCallbackAction) {
+    settings.callback();
+
+    return true;
+  }
+
   async #timeoutPromise(timeout = this.#timeout) {
     return new Promise((resolve) => {
       window.setTimeout(() => {
         resolve(true);
       }, timeout);
     });
+  }
+
+  get punctuationTimeoutMultiplier() {
+    return this.#punctuationTimeoutMultiplier;
+  }
+
+  set punctuationTimeoutMultiplier(value: number) {
+    this.#punctuationTimeoutMultiplier = Math.max(value, 1);
+  }
+
+  get deleteTimeoutMultiplier() {
+    return this.#deleteTimeoutMultiplier;
+  }
+
+  set deleteTimeoutMultiplier(value: number) {
+    this.#deleteTimeoutMultiplier = Math.max(value, 1);
+  }
+
+  set handleQueueEndEvent(value: Callback) {
+    this.#handleQueueEndEvent = value;
   }
 }

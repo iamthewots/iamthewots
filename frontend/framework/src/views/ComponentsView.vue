@@ -292,6 +292,7 @@ function testRadioUnselected(value: string) {
           >Allow cat petting</BaseCheckbox
         >
         <BaseCheckbox v-model="checkboxValues.c">Bark on command</BaseCheckbox>
+        <input type="range" name="" id="">
       </div>
     </section>
 

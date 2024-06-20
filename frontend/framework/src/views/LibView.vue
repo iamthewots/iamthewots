@@ -25,7 +25,9 @@ stopWatch.start();
 const textTyperElement = ref<HTMLElement>();
 let textTyper: TextTyper;
 onMounted(() => {
-  textTyper = new TextTyper(textTyperElement.value!, 15);
+  textTyper = new TextTyper(textTyperElement.value!, 50);
+  textTyper.punctuationTimeoutMultiplier = 10;
+  textTyper.deleteTimeoutMultiplier = 0.25;
   textTyper
     .writeText("Today we launch a new component, the ")
     .writeText("#TextTyper", "span", "twitter-tag")
@@ -39,6 +41,23 @@ onMounted(() => {
     .changeTimeout(150)
     .addPause(1000)
     .spellText("P-H-E-N-O-M-E-N-A-L!", "span", "phenomenal-entry");
+
+  let refill = 2;
+
+  textTyper.handleQueueEndEvent = () => {
+    if (refill <= 0) {
+      return;
+    }
+
+    textTyper
+      .addLineBreak()
+      .writeText("nigga...")
+      .addLineBreak()
+      .setCallback(() => console.log("Stole my bike?"))
+      .writeText("WHAT CONSOLE SAID! He fucking stole my bike!")
+      .start();
+    refill--;
+  };
 });
 </script>
 
@@ -67,7 +86,8 @@ onMounted(() => {
 
 .phenomenal-entry {
   display: inline-block;
-  animation: zoom-in 600ms ease-out forwards, fade-in 300ms ease-out forwards;
+  animation: slide-from-bottom 1600ms ease-out forwards,
+    fade-in 1300ms ease-out forwards;
   color: red;
   font-weight: bold;
 }
