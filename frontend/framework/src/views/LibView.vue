@@ -25,7 +25,7 @@ stopWatch.start();
 const textTyperElement = ref<HTMLElement>();
 let textTyper: TextTyper;
 onMounted(() => {
-  textTyper = new TextTyper(textTyperElement.value!, 25);
+  textTyper = new TextTyper(textTyperElement.value!, 15);
   textTyper
     .writeText("Today we launch a new component, the ")
     .writeText("#TextTyper", "span", "twitter-tag")
@@ -36,7 +36,7 @@ onMounted(() => {
       "Let us know what you think, we already have one word to describe it:"
     )
     .addLineBreak()
-    .changeTimeout(250)
+    .changeTimeout(150)
     .addPause(1000)
     .spellText("P-H-E-N-O-M-E-N-A-L!", "span", "phenomenal-entry");
 });

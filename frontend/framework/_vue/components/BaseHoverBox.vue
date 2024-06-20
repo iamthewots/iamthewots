@@ -145,9 +145,7 @@ function handlePointerLeaveEvent(e: PointerEvent) {
     });
   }
 
-  if (pointerData.index === 0) {
-    pointersDataMap.clear();
-  }
+  pointersDataMap.delete(e.pointerId);
 
   emits("base-hover-box:pointer-leave", pointerData);
 
@@ -156,8 +154,6 @@ function handlePointerLeaveEvent(e: PointerEvent) {
     hoverBoxIsActive.value = false;
   }
 }
-
-function handleAlternativeLeaveEvent(e: PointerEvent) {}
 
 function handleResizeEventFromWindow() {
   if (hoverBoxElement.value === null) {
@@ -206,8 +202,8 @@ defineExpose<BaseHoverBox>({ hoverBoxElement, getHoverBoxData });
       @pointerenter="handlePointerEnterEvent"
       @pointermove="handlePointerMoveEvent"
       @pointerleave="handlePointerLeaveEvent"
-      @pointercancel="handleAlternativeLeaveEvent"
-      @pointerout="handleAlternativeLeaveEvent"
+      @pointercancel="handlePointerLeaveEvent"
+      @pointerout="handlePointerLeaveEvent"
     ></div>
   </component>
 </template>

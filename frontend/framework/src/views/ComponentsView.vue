@@ -88,17 +88,17 @@ function testRadioUnselected(value: string) {
     <h3 class="text-is-title text-color-accent-1">Components test area</h3>
     <section>
       <BaseHoverBox
-        class="box center-content centered-content aspect-ratio-square max-width-md"
+        class="box center-content centered-content aspect-ratio-square max-width-md | hover-box-test"
         resetOnLeave
         ref="baseHoverBoxComponent"
       >
         <div
-          class="aspect-ratio-square width-xs background-color-accent-1 text-align-center | hover-box-test-item"
+          class="aspect-ratio-square width-xs text-align-center | hover-box-test-item"
         >
           Effect 0
         </div>
         <div
-          class="aspect-ratio-square width-xs background-color-accent-2 text-align-center | hover-box-test-item"
+          class="aspect-ratio-square width-xs text-align-center | hover-box-test-item"
         >
           Effect 1
         </div>
@@ -326,17 +326,20 @@ function testRadioUnselected(value: string) {
 <style lang="scss">
 .hover-box-test-item {
   position: absolute;
+  mix-blend-mode: multiply;
 
   &:nth-child(1) {
     transition: translate var(--transition-duration) ease;
     translate: calc(var(--pointer-0-x) * var(--hover-box-x-multiplier))
       calc(var(--pointer-0-y) * var(--hover-box-y-multiplier));
+    background-color: yellow;
   }
 
   &:nth-child(2) {
     transition: translate var(--transition-duration) ease;
     translate: calc(var(--pointer-1-x) * var(--hover-box-x-multiplier))
       calc(var(--pointer-1-y) * var(--hover-box-y-multiplier));
+    background-color: lightskyblue;
   }
 
   .base-hover-box--active & {
