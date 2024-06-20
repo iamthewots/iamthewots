@@ -1,8 +1,8 @@
 enum ActionId {
   "WriteText",
   "DeleteText",
-  "PauseText",
-  "ChangeOutputElement",
+  "AddPause",
+  "ChangeElement",
   "ChangeTimeout",
   "SetCheckpoint",
 }
@@ -18,9 +18,14 @@ interface DeleteTextAction {
   charsCount?: number;
 }
 
-interface PauseTextAction {
-  actionId: ActionId.PauseText;
+interface AddPauseAction {
+  actionId: ActionId.AddPause;
   timeout: number;
+}
+
+interface ChangeElementAction {
+  actionId: ActionId.ChangeElement;
+  element: HTMLElement;
 }
 
 interface ChangeTimeoutAction {
@@ -33,48 +38,108 @@ interface SetCheckpointAction {
   checkpointId: string;
 }
 
-export type TextTyperAction =
+type TextTyperAction =
   | WriteTextAction
   | DeleteTextAction
-  | PauseTextAction
+  | AddPauseAction
+  | ChangeElementAction
   | ChangeTimeoutAction
   | SetCheckpointAction;
 
 export class TextTyper {
-  #outputElement: HTMLElement;
+  #element: HTMLElement;
   #timeout: number;
   #queue: TextTyperAction[] = [];
   #isActive = false;
-  #mustSkip = false;
-  #checkpoints: Map<string, string> = new Map();
+  #skipQueue = false;
+  #checkpointsMap: Map<string, string> = new Map();
 
-  constructor(outputElement: HTMLElement, baseTimeout = 10) {
-    this.#outputElement = outputElement;
-    this.#timeout = Math.max(baseTimeout, 10);
+  constructor(element: HTMLElement, timeout = 10) {
+    this.#element = element;
+    this.#element.style.whiteSpace = "pre-wrap";
+    this.#timeout = Math.max(timeout, 1);
   }
 
-  startTyping() {
-    this.#isActive = true;
-    this.#executeQueueActions();
-  }
-
-  stopTyping() {
-    this.#isActive = false;
-  }
-
-  skipTyping(checkpointId?: string) {
-    if (this.#isActive === false) {
-      return;
+  start() {
+    if (this.#isActive === true || this.#queue.length === 0) {
+      return false;
     }
 
-    this.#mustSkip = true;
+    this.#isActive = true;
+    this.#runQueue();
+
+    return true;
   }
 
-  writeText(text: string, wrapperElement?: HTMLElement) {
+  stop() {
+    if (this.#isActive === false) {
+      return false;
+    }
+
+    this.#isActive = false;
+
+    return true;
+  }
+
+  skip() {
+    if (this.#isActive === false) {
+      return false;
+    }
+
+    this.#skipQueue = true;
+
+    return true;
+  }
+
+  writeText(
+    text: string,
+    wrapperElement?: HTMLElement | keyof HTMLElementTagNameMap,
+    ...classNames: string[]
+  ) {
     this.#queue.push({
       actionId: ActionId.WriteText,
       text,
-      wrapperElement: wrapperElement ?? document.createElement("span"),
+      wrapperElement: this.#parseWrapperElement(wrapperElement, ...classNames),
+    });
+
+    return this;
+  }
+
+  spellText(
+    text: string,
+    wrapperElement?: HTMLElement | keyof HTMLElementTagNameMap,
+    ...classNames: string[]
+  ) {
+    for (let i = 0; i < text.length; i++) {
+      this.writeText(text[i], wrapperElement, ...classNames);
+    }
+
+    return this;
+  }
+
+  #parseWrapperElement(
+    value?: HTMLElement | keyof HTMLElementTagNameMap,
+    ...classNames: string[]
+  ) {
+    if (value === undefined) {
+      return document.createElement("span");
+    }
+
+    const wrapperElement =
+      value instanceof HTMLElement
+        ? value
+        : document.createElement(value.toString());
+
+    classNames.forEach((className) => wrapperElement.classList.add(className));
+
+    return wrapperElement;
+  }
+
+  addLineBreak() {
+    this.#queue.push({
+      actionId: ActionId.WriteText,
+      text: "",
+      wrapperElement: document.createElement("br"),
     });
 
     return this;
@@ -89,19 +154,28 @@ export class TextTyper {
     return this;
   }
 
-  pauseText(timeout: number) {
+  addPause(timeout: number) {
     this.#queue.push({
-      actionId: ActionId.PauseText,
-      timeout: Math.max(timeout, this.#timeout),
+      actionId: ActionId.AddPause,
+      timeout,
     });
 
     return this;
   }
 
-  changeTimeout(timeout = 10) {
+  changeElement(element: HTMLElement) {
+    this.#queue.push({
+      actionId: ActionId.ChangeElement,
+      element,
+    });
+
+    return this;
+  }
+
+  changeTimeout(timeout: number) {
     this.#queue.push({
       actionId: ActionId.ChangeTimeout,
-      timeout: Math.max(timeout, 10),
+      timeout,
     });
 
     return this;
@@ -116,114 +190,104 @@ export class TextTyper {
     return this;
   }
 
-  async #executeQueueActions() {
+  async #runQueue() {
     while (this.#queue.length > 0 && this.#isActive) {
-      const actionSettings = this.#queue[0];
+      const settings = this.#queue[0];
 
-      if (actionSettings.actionId === ActionId.WriteText) {
-        const { wrapperElement } = actionSettings;
+      if (settings.actionId === ActionId.WriteText) {
+        const { wrapperElement } = settings;
 
-        if (this.#outputElement.contains(wrapperElement) === false) {
-          this.#outputElement.appendChild(actionSettings.wrapperElement);
+        if (this.#element.contains(wrapperElement) === false) {
+          this.#element.appendChild(wrapperElement);
         }
       }
 
-      let actionIsComplete = false;
+      let actionWasCompleted = false;
 
-      while (actionIsComplete === false && this.#isActive) {
-        switch (actionSettings.actionId) {
+      while (actionWasCompleted === false && this.#isActive) {
+        switch (settings.actionId) {
           case ActionId.WriteText:
-            actionIsComplete = await this.#executeWriteTextAction(
-              actionSettings
-            );
+            actionWasCompleted = await this.#executeWriteTextAction(settings);
             break;
           case ActionId.DeleteText:
-            actionIsComplete = await this.#executeDeleteTextAction(
-              actionSettings
-            );
+            actionWasCompleted = await this.#executeDeleteTextAction(settings);
             break;
-          case ActionId.PauseText:
-            actionIsComplete = await this.#executePauseTextAction(
-              actionSettings
+          case ActionId.AddPause:
+            actionWasCompleted = await this.#executeAddPauseAction(settings);
+            break;
+          case ActionId.ChangeElement:
+            actionWasCompleted = await this.#executeChangeElementAction(
+              settings
             );
             break;
           case ActionId.ChangeTimeout:
-            actionIsComplete = await this.#executeChangeTimeoutAction(
-              actionSettings
+            actionWasCompleted = await this.#executeChangeTimeoutAction(
+              settings
             );
             break;
           case ActionId.SetCheckpoint:
-            actionIsComplete = await this.#executeSetCheckpointAction(
-              actionSettings
+            actionWasCompleted = await this.#executeSetCheckpointAction(
+              settings
             );
             break;
+          default:
+            actionWasCompleted = true;
         }
 
-        if (actionIsComplete) {
+        if (actionWasCompleted) {
           this.#queue.shift();
         }
       }
-    }
 
-    if (this.#queue.length === 0) {
-      this.#isActive = false;
+      if (this.#queue.length === 0) {
+        this.#isActive = false;
+      }
     }
   }
 
   async #executeWriteTextAction(settings: WriteTextAction) {
     if (settings.text.length === 0) {
       return true;
-    }
-
-    if (this.#mustSkip) {
+    } else if (this.#skipQueue) {
       settings.wrapperElement.textContent += settings.text;
 
       return true;
     }
 
-    await new Promise((resolve) => {
-      window.setTimeout(() => {
-        settings.wrapperElement.textContent += settings.text[0];
-
-        resolve(true);
-      }, this.#timeout);
-    });
-
+    await this.#timeoutPromise();
+    settings.wrapperElement.textContent += settings.text[0];
     settings.text = settings.text.substring(1);
 
     return settings.text.length === 0;
   }
 
   async #executeDeleteTextAction(settings: DeleteTextAction) {
-    if (
-      this.#outputElement.children.length === 0 ||
-      settings.charsCount === 0
-    ) {
+    if (this.#element.children.length === 0 || settings.charsCount === 0) {
       return true;
     }
 
     let childElement: HTMLElement | undefined;
 
-    for (let i = this.#outputElement.children.length - 1; i > 0; i--) {
-      const element = this.#outputElement.children[i];
+    for (let i = this.#element.children.length - 1; i > 0; i--) {
+      const element = this.#element.children[i];
 
       if (element instanceof HTMLElement === false) {
         continue;
       } else if (element.innerText.length === 0) {
-        this.#outputElement.removeChild(element);
+        element.parentElement?.removeChild(element);
 
         continue;
       }
 
-      if (this.#mustSkip) {
+      if (this.#skipQueue) {
         if (typeof settings.charsCount !== "number") {
-          this.#outputElement.removeChild(element);
+          element.parentElement?.removeChild(element);
         } else {
           if (element.innerText.length < settings.charsCount) {
             settings.charsCount -= element.innerText.length;
-            this.#outputElement.removeChild(element);
+            element.parentElement?.removeChild(element);
           } else if (element.innerText.length === settings.charsCount) {
-            this.#outputElement.removeChild(element);
+            element.parentElement?.removeChild(element);
 
             return true;
           } else {
@@ -232,10 +296,9 @@ export class TextTyper {
             return true;
           }
         }
-
-        continue;
       } else {
         childElement = element;
+
         break;
       }
     }
@@ -244,13 +307,8 @@ export class TextTyper {
       return true;
     }
 
-    await new Promise((resolve) => {
-      setTimeout(() => {
-        childElement.innerText = childElement.innerText.slice(0, -1);
-
-        resolve(true);
-      }, this.#timeout);
-    });
+    await this.#timeoutPromise();
+    childElement.innerText = childElement.innerText.slice(0, -1);
 
     if (typeof settings.charsCount === "number") {
       settings.charsCount--;
@@ -259,31 +317,41 @@ export class TextTyper {
     return settings.charsCount === 0;
   }
 
-  async #executePauseTextAction(settings: PauseTextAction) {
-    if (this.#mustSkip) {
+  async #executeAddPauseAction(settings: AddPauseAction) {
+    if (this.#skipQueue) {
       return true;
     }
 
-    await new Promise((resolve) => {
-      window.setTimeout(() => {
-        resolve(true);
-      }, 100);
-    });
-
-    settings.timeout -= 100;
+    await this.#timeoutPromise(50);
+    settings.timeout -= 50;
 
     return settings.timeout <= 0;
   }
 
-  async #executeChangeTimeoutAction({ timeout }: ChangeTimeoutAction) {
-    this.#timeout = timeout;
+  async #executeChangeElementAction(settings: ChangeElementAction) {
+    this.#element = settings.element;
+    this.#element.style.whiteSpace = "pre-wrap";
 
     return true;
   }
 
-  async #executeSetCheckpointAction({ checkpointId }: SetCheckpointAction) {
-    this.#checkpoints.set(checkpointId, this.#outputElement.innerHTML);
+  async #executeChangeTimeoutAction(settings: ChangeTimeoutAction) {
+    this.#timeout = Math.max(settings.timeout, 1);
 
     return true;
+  }
+
+  async #executeSetCheckpointAction(settings: SetCheckpointAction) {
+    this.#checkpointsMap.set(settings.checkpointId, this.#element.innerText);
+
+    return true;
+  }
+
+  async #timeoutPromise(timeout = this.#timeout) {
+    return new Promise((resolve) => {
+      window.setTimeout(() => {
+        resolve(true);
+      }, timeout);
+    });
   }
 }

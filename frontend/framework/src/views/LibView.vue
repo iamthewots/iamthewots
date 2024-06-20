@@ -27,28 +27,18 @@ let textTyper: TextTyper;
 onMounted(() => {
   textTyper = new TextTyper(textTyperElement.value!, 25);
   textTyper
-    .writeText("Ciao, come va?")
-    .pauseText(1000)
-    .writeText(" Mi sembri molto gay...")
-    .pauseText(1000)
-    .deleteText(6)
-    .writeText("gagliardo!")
-    .pauseText(2000)
-    .deleteText(10)
-    .changeTimeout(1000)
-    .writeText("...")
-    .changeTimeout(25)
-    .pauseText(2000)
-    .deleteText(3)
+    .writeText("Today we launch a new component, the ")
+    .writeText("#TextTyper", "span", "twitter-tag")
+    .writeText(". ")
+    .addPause(1000)
+    .addLineBreak()
     .writeText(
-      " finocchio ( o_o)",
-      (() => {
-        const el = document.createElement("span");
-        el.classList.add("finocchio");
-
-        return el;
-      })()
-    );
+      "Let us know what you think, we already have one word to describe it:"
+    )
+    .addLineBreak()
+    .changeTimeout(250)
+    .addPause(1000)
+    .spellText("P-H-E-N-O-M-E-N-A-L!", "span", "phenomenal-entry");
 });
 </script>
 
@@ -62,16 +52,23 @@ onMounted(() => {
       ref="textTyperElement"
     ></div>
     <div class="flex-center-center gap-sm">
-      <BaseButton @click="textTyper.startTyping()">Start TextTyper</BaseButton>
-      <BaseButton @click="textTyper.stopTyping()">Stop TextTyper</BaseButton>
-      <BaseButton @click="textTyper.skipTyping()">Skip TextTyper</BaseButton>
+      <BaseButton @click="textTyper.start()">Start TextTyper</BaseButton>
+      <BaseButton @click="textTyper.stop()">Stop TextTyper</BaseButton>
+      <BaseButton @click="textTyper.skip()">Skip TextTyper</BaseButton>
     </div>
   </main>
 </template>
 
 <style lang="scss">
-.finocchio {
-  color: pink;
+.twitter-tag {
+  color: hsl(187, 93%, 51%);
+  font-weight: bold;
+}
+
+.phenomenal-entry {
+  display: inline-block;
+  animation: zoom-in 600ms ease-out forwards, fade-in 300ms ease-out forwards;
+  color: red;
   font-weight: bold;
 }
 </style>
