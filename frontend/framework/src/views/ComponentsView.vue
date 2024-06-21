@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { BaseCanvasToolSettings } from "@_vue/components/BaseCanvas.vue";
 import BaseCheckbox from "@_vue/components/BaseCheckbox.vue";
 import type { BaseCounterClassSwitchers } from "@_vue/components/BaseCounter.vue";
 import { type BaseHoverBox } from "@_vue/components/BaseHoverBox.vue";
@@ -78,6 +79,26 @@ function testRadioEvent(value: string) {
 function testRadioUnselected(value: string) {
   console.log("mannaia", value);
 }
+
+// canvas
+
+const pencil: BaseCanvasToolSettings = {
+  id: "pencil",
+  action: "draw",
+  lineWidth: 5,
+  lineCap: "round",
+  lineJoin: "round",
+  color: "#6441a4",
+};
+const rubber: BaseCanvasToolSettings = {
+  id: "rubber",
+  action: "erase",
+  lineWidth: 5,
+  lineCap: "round",
+  lineJoin: "round",
+  color: "#6441a4",
+};
+const selectedTool = ref<BaseCanvasToolSettings>(pencil);
 </script>
 
 <template>
@@ -322,8 +343,13 @@ function testRadioUnselected(value: string) {
       </div>
     </section>
 
-    <section>
-      <BaseCanvas class="border"></BaseCanvas>
+    <section class="grid gap-y-sm">
+      <BaseCanvas class="border" :toolSettings="selectedTool"></BaseCanvas>
+      <div>
+        <p>{{ selectedTool.id }}</p>
+        <BaseButton @click="selectedTool = pencil">Pencil</BaseButton>
+        <BaseButton @click="selectedTool = rubber">Rubber</BaseButton>
+      </div>
     </section>
   </main>
 </template>
