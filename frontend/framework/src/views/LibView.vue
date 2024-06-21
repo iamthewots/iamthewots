@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { StopWatch } from "@_lib/stop-watch";
 import { TextTyper } from "@_lib/text-typer";
-import { onMounted, ref, toRef } from "vue";
+import { computed, onMounted, reactive, ref, toRef, watch } from "vue";
 
 const logElement = ref<HTMLElement>();
 const stopWatch = new StopWatch();
@@ -24,6 +24,7 @@ stopWatch.start();
 
 const textTyperElement = ref<HTMLElement>();
 let textTyper: TextTyper;
+
 onMounted(() => {
   textTyper = new TextTyper(textTyperElement.value!, 50);
   textTyper.punctuationTimeoutMultiplier = 10;
@@ -39,13 +40,20 @@ onMounted(() => {
     )
     .addLineBreak()
     .changeTimeout(150)
-    .addPause(1000)
-    .spellText("P-H-E-N-O-M-E-N-A-L!", "span", "phenomenal-entry");
+    .addPause(3000)
+    .spellText("P-H-E-N-O-M-E-N-A-L!", "span", "phenomenal-entry")
+    .changeTimeout(50);
 
   let refill = 2;
 
   textTyper.handleQueueEndEvent = () => {
     if (refill <= 0) {
+      textTyper.clear();
+
+      window.setTimeout(() => {
+        textTyper.restore("myBike");
+      }, 3000);
+
       return;
     }
 
@@ -55,6 +63,7 @@ onMounted(() => {
       .addLineBreak()
       .setCallback(() => console.log("Stole my bike?"))
       .writeText("WHAT CONSOLE SAID! He fucking stole my bike!")
+      .setCheckpoint("myBike")
       .start();
     refill--;
   };
@@ -74,6 +83,10 @@ onMounted(() => {
       <BaseButton @click="textTyper.start()">Start TextTyper</BaseButton>
       <BaseButton @click="textTyper.stop()">Stop TextTyper</BaseButton>
       <BaseButton @click="textTyper.skip()">Skip TextTyper</BaseButton>
+      <BaseButton @click="textTyper.clear()">Clear TextTyper</BaseButton>
+      <BaseButton @click="textTyper.restore('myBike')"
+        >Restore TextTyper</BaseButton
+      >
     </div>
   </main>
 </template>

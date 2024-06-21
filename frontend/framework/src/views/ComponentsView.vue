@@ -255,7 +255,7 @@ function testRadioUnselected(value: string) {
       </p>
     </section>
 
-    <section>
+    <section class="grid gap-y-sm">
       <BaseTextArea
         storageId="test-textarea"
         storageType="local"
@@ -292,7 +292,7 @@ function testRadioUnselected(value: string) {
           >Allow cat petting</BaseCheckbox
         >
         <BaseCheckbox v-model="checkboxValues.c">Bark on command</BaseCheckbox>
-        <input type="range" name="" id="">
+        <BaseRange></BaseRange>
       </div>
     </section>
 
@@ -320,6 +320,10 @@ function testRadioUnselected(value: string) {
           class="aspect-ratio-square width-xs background-color-accent-1 text-align-center | mouse-directive-test-item"
         ></div>
       </div>
+    </section>
+
+    <section>
+      <BaseCanvas class="border"></BaseCanvas>
     </section>
   </main>
 </template>

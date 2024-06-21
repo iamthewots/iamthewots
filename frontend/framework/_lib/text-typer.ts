@@ -64,6 +64,7 @@ export class TextTyper {
   #handleQueueEndEvent?: Callback;
   #isActive = false;
   #skipQueue = false;
+  #currentTimeoutPromiseResolve?: (value: unknown) => void;
   #checkpointsMap: Map<string, string> = new Map();
 
   constructor(element: HTMLElement, timeout = 10) {
@@ -99,8 +100,25 @@ export class TextTyper {
     }
 
     this.#skipQueue = true;
+    this.#currentTimeoutPromiseResolve?.(true);
 
     return true;
+  }
+
+  clear() {
+    this.#element.innerHTML = "";
+
+    return true;
+  }
+
+  restore(checkpointId: string) {
+    const innerHTML = this.#checkpointsMap.get(checkpointId);
+
+    if (innerHTML === undefined) {
+      return false;
+    }
+
+    this.#element.innerHTML = innerHTML;
   }
 
   writeText(
@@ -354,10 +372,9 @@ export class TextTyper {
       return true;
     }
 
-    await this.#timeoutPromise(50);
-    settings.timeout -= 50;
+    await this.#timeoutPromise(settings.timeout);
 
-    return settings.timeout <= 0;
+    return true;
   }
 
   async #executeChangeElementAction(settings: ChangeElementAction) {
@@ -374,7 +391,7 @@ export class TextTyper {
   }
 
   async #executeSetCheckpointAction(settings: SetCheckpointAction) {
-    this.#checkpointsMap.set(settings.checkpointId, this.#element.innerText);
+    this.#checkpointsMap.set(settings.checkpointId, this.#element.innerHTML);
 
     return true;
   }
@@ -387,6 +404,7 @@ export class TextTyper {
 
   async #timeoutPromise(timeout = this.#timeout) {
     return new Promise((resolve) => {
+      this.#currentTimeoutPromiseResolve = resolve;
       window.setTimeout(() => {
         resolve(true);
       }, timeout);
@@ -411,5 +429,9 @@ export class TextTyper {
 
   set handleQueueEndEvent(value: Callback) {
     this.#handleQueueEndEvent = value;
+  }
+
+  get queueLength() {
+    return this.#queue.length;
   }
 }
