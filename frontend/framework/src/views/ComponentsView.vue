@@ -82,23 +82,42 @@ function testRadioUnselected(value: string) {
 
 // canvas
 
-const pencil: BaseCanvasToolSettings = {
-  id: "pencil",
-  action: "draw",
-  lineWidth: 5,
-  lineCap: "round",
-  lineJoin: "round",
-  color: "#6441a4",
+const canvasToolSet: { [key: string]: BaseCanvasToolSettings } = {
+  Pencil: {
+    toolName: "pencil",
+    action: "draw",
+    lineWidth: 5,
+    lineCap: "round",
+    lineJoin: "round",
+    color: "#6441a4",
+  },
+  "Round Rubber": {
+    toolName: "rubber",
+    action: "erase",
+    lineWidth: 15,
+    lineCap: "round",
+    lineJoin: "round",
+    color: "#6441a4",
+  },
+  "Square Rubber": {
+    toolName: "rubber",
+    action: "erase",
+    lineWidth: 15,
+    lineCap: "square",
+    lineJoin: "round",
+    color: "#6441a4",
+  },
 };
-const rubber: BaseCanvasToolSettings = {
-  id: "rubber",
-  action: "erase",
-  lineWidth: 5,
-  lineCap: "round",
-  lineJoin: "round",
-  color: "#6441a4",
-};
-const selectedTool = ref<BaseCanvasToolSettings>(pencil);
+
+const selectedTool = ref<BaseCanvasToolSettings>(canvasToolSet.Pencil);
+
+function changeSelectedToolColor(e: Event) {
+  if (selectedTool.value.action !== "draw") {
+    return;
+  }
+
+  selectedTool.value.color = (e.target as HTMLInputElement).value;
+}
 </script>
 
 <template>
@@ -344,11 +363,18 @@ const selectedTool = ref<BaseCanvasToolSettings>(pencil);
     </section>
 
     <section class="grid gap-y-sm">
-      <BaseCanvas class="border" :toolSettings="selectedTool"></BaseCanvas>
+      <BaseCanvas :toolSettings="selectedTool"></BaseCanvas>
       <div>
-        <p>{{ selectedTool.id }}</p>
-        <BaseButton @click="selectedTool = pencil">Pencil</BaseButton>
-        <BaseButton @click="selectedTool = rubber">Rubber</BaseButton>
+        <p :style="`color: ${selectedTool.color}`">
+          {{ selectedTool.toolName }}
+        </p>
+        <BaseButton
+          @click="selectedTool = toolSettings"
+          v-for="(toolSettings, toolName) in canvasToolSet"
+          :key="toolName"
+          >{{ toolName }}</BaseButton
+        >
+        <input type="color" @input="changeSelectedToolColor" />
       </div>
     </section>
   </main>

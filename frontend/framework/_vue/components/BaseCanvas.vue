@@ -1,32 +1,31 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { useSplitAttrs } from "@_vue/composables/use-split-attrs";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 
 export interface BaseCanvasProps {
   toolSettings?: BaseCanvasToolSettings;
 }
 
 export interface BaseCanvasEmits {
-  (e: "base-canvas:draw-start", toolSettings: BaseCanvasToolSettings): void;
-  (e: "base-canvas:draw-end", toolSettings: BaseCanvasToolSettings): void;
-  (e: "base-canvas:erase-start", toolSettings: BaseCanvasToolSettings): void;
-  (e: "base-canvas:erase-end", toolSettings: BaseCanvasToolSettings): void;
+  (e: "base-canvas:interaction-start", action: BaseCanvasToolAction): void;
+  (e: "base-canvas:interaction-end", action: BaseCanvasToolAction): void;
 }
 
-export interface BaseCanvas {}
+export interface BaseCanvas {
+  clear: () => void;
+  setBackgroudColor: (color: string) => void;
+}
 
 export interface BaseCanvasToolSettings {
-  id: string;
-  action: "draw" | "erase";
-  lineWidth: CanvasPathDrawingStyles["lineWidth"];
+  toolName: string;
+  action: BaseCanvasToolAction;
   lineCap: CanvasPathDrawingStyles["lineCap"];
   lineJoin: CanvasPathDrawingStyles["lineJoin"];
-  color: string;
+  lineWidth: CanvasPathDrawingStyles["lineWidth"];
+  color: string | CanvasPattern | CanvasGradient;
 }
 
-interface MouseCoordinates {
-  x: number;
-  y: number;
-}
+type BaseCanvasToolAction = "draw" | "erase";
 
 defineOptions({
   name: "BaseCanvas",
@@ -36,19 +35,22 @@ defineOptions({
 const props = defineProps<BaseCanvasProps>();
 const emits = defineEmits<BaseCanvasEmits>();
 const canvasElement = ref<HTMLCanvasElement | null>(null);
-const inputIsOver = ref(false);
-const inputIsActive = ref(false);
+const pointerId = ref<number | null>(null);
+const pointerIsOver = ref(false);
+const pointerIsActive = ref(false);
 let context: CanvasRenderingContext2D | null = null;
 const wrapperElementClassList = computed(() => {
   return {
     "base-canvas": true,
-    "base-canvas--input-is-over": inputIsOver.value,
-    "base-canvas--input-is-active": inputIsActive.value,
+    "base-canvas--pointer-is-over": pointerIsOver.value,
+    "base-canvas--pointer-is-active": pointerIsActive.value,
   };
 });
+const { nonStyleAttrs, styleAttrs } = useSplitAttrs();
 
-function handleInputInteraction(e: MouseEvent) {
+function handleCanvasInteraction(e: PointerEvent) {
   if (
+    pointerIsActive.value === false ||
     props.toolSettings === undefined ||
     context === null ||
     canvasElement.value === null
@@ -60,14 +62,15 @@ function handleInputInteraction(e: MouseEvent) {
   const x = e.clientX - left;
   const y = e.clientY - top;
 
-  if (props.toolSettings.action === "draw") {
-    draw(x, y);
-  } else if (props.toolSettings.action === "erase") {
-    erase(x, y);
+  switch (props.toolSettings.action) {
+    case "draw":
+      return draw(x, y);
+    case "erase":
+      return erase(x, y);
   }
 }
 
-function handleInputInteractionEnd() {
+function handleCanvasInteractionEnd() {
   if (context === null) {
     return;
   }
@@ -76,51 +79,102 @@ function handleInputInteractionEnd() {
 }
 
 function draw(x: number, y: number) {
-  if (context === null) {
+  if (
+    context === null ||
+    props.toolSettings === undefined ||
+    canvasElement.value === null
+  ) {
     return;
   }
 
-  // bezierCurveTo ?
-  context.lineCap = "round";
-  context.lineJoin = "round";
+  context.lineCap = props.toolSettings.lineCap;
+  context.lineJoin = props.toolSettings.lineJoin;
+  context.lineWidth = props.toolSettings.lineWidth;
+  context.strokeStyle = props.toolSettings.color;
   context.lineTo(x, y);
   context.stroke();
 }
 
 function erase(x: number, y: number) {
-  if (context === null || props.toolSettings === undefined) {
+  if (
+    context === null ||
+    props.toolSettings === undefined ||
+    canvasElement.value === null
+  ) {
     return;
   }
 
   const { lineWidth } = props.toolSettings;
-  context.clearRect(x, y, lineWidth, lineWidth);
+
+  switch (props.toolSettings.lineCap) {
+    case "round":
+      context.save();
+      context.arc(x, y, lineWidth / 2, 0, 360);
+      context.clip();
+      context.clearRect(
+        0,
+        0,
+        canvasElement.value.width,
+        canvasElement.value.height
+      );
+      context.restore();
+
+      break;
+    case "square":
+      context.clearRect(
+        x - lineWidth / 2,
+        y - lineWidth / 2,
+        lineWidth,
+        lineWidth
+      );
+
+      break;
+  }
 }
 
-function handleMouseEnterEvent(e: MouseEvent) {
-  inputIsOver.value = true;
-}
+function clear() {}
 
-function handleMouseMoveEvent(e: MouseEvent) {
-  if (inputIsActive.value === false || context === null) {
+function handlePointerEnterEvent(e: PointerEvent) {
+  if (pointerId.value !== null) {
     return;
   }
 
-  handleInputInteraction(e);
+  pointerId.value = e.pointerId;
+  pointerIsOver.value = true;
 }
 
-function handleMouseLeaveEvent() {
-  inputIsOver.value = false;
-  inputIsActive.value = false;
-  handleInputInteractionEnd();
+function handlePointerMoveEvent(e: PointerEvent) {
+  if (pointerId.value !== e.pointerId) {
+    return;
+  }
+
+  handleCanvasInteraction(e);
 }
 
-function handleMouseDownEvent() {
-  inputIsActive.value = true;
+function handlePointerLeaveEvent(e: PointerEvent) {
+  if (pointerId.value !== e.pointerId) {
+    return;
+  }
+
+  pointerId.value = null;
+  pointerIsOver.value = false;
 }
 
-function handleMouseUpEvent() {
-  inputIsActive.value = false;
-  handleInputInteractionEnd();
+function handlePointerDownEvent(e: PointerEvent) {
+  if (pointerId.value !== e.pointerId) {
+    return;
+  }
+
+  pointerIsActive.value = true;
+}
+
+function handlePointerUpEvent(e: PointerEvent) {
+  if (pointerId.value !== e.pointerId) {
+    return;
+  }
+
+  pointerIsActive.value = false;
+  handleCanvasInteractionEnd();
 }
 
 onMounted(() => {
@@ -128,47 +182,37 @@ onMounted(() => {
     return;
   }
 
+  window.addEventListener("pointerup", handlePointerUpEvent);
   context = canvasElement.value.getContext("2d");
 });
+
+onUnmounted(() =>
+  window.removeEventListener("pointerup", handlePointerUpEvent)
+);
 </script>
 
 <template>
-  <section :class="wrapperElementClassList">
+  <div :class="wrapperElementClassList" v-bind="styleAttrs">
     <canvas
-      class="base-canvas"
       width="500"
-      height="300"
-      @mouseenter="handleMouseEnterEvent"
-      @mousemove="handleMouseMoveEvent"
-      @mouseleave="handleMouseLeaveEvent"
-      @mousedown="handleMouseDownEvent"
-      @mouseup="handleMouseUpEvent"
-      v-bind="$attrs"
+      height="400"
+      @pointerenter="handlePointerEnterEvent"
+      @pointermove="handlePointerMoveEvent"
+      @pointerleave="handlePointerLeaveEvent"
+      @pointerdown="handlePointerDownEvent"
+      v-bind="nonStyleAttrs"
       ref="canvasElement"
     ></canvas>
-    <div class="base-canvas__cursor">cazzoduro</div>
-  </section>
+  </div>
 </template>
 
 <style lang="scss">
 .base-canvas {
-  position: relative;
-  place-items: center;
-  display: grid;
+  touch-action: none;
 
   canvas {
+    border: 1px solid black;
     cursor: crosshair;
-  }
-
-  &__cursor {
-    position: absolute;
-    display: none;
-    width: var(--base-canvas-input-size);
-    height: var(--base-canvas-input-size);
-
-    .base-canvas--input-is-over & {
-      display: block;
-    }
   }
 }
 </style>
