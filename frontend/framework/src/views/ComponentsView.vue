@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import type { BaseCanvasToolSettings } from "@_vue/components/BaseCanvas.vue";
+import BaseButton from "@_vue/components/BaseButton.vue";
+import {
+  type BaseCanvas,
+  type BaseCanvasToolSettings,
+} from "@_vue/components/BaseCanvas.vue";
 import BaseCheckbox from "@_vue/components/BaseCheckbox.vue";
 import type { BaseCounterClassSwitchers } from "@_vue/components/BaseCounter.vue";
 import { type BaseHoverBox } from "@_vue/components/BaseHoverBox.vue";
@@ -82,10 +86,16 @@ function testRadioUnselected(value: string) {
 
 // canvas
 
+enum ToolAction {
+  "Draw",
+  "Erase"
+}
+
+const baseCanvasComponent = ref<BaseCanvas>();
 const canvasToolSet: { [key: string]: BaseCanvasToolSettings } = {
   Pencil: {
     toolName: "pencil",
-    action: "draw",
+    toolAction: ToolAction.Draw,
     lineWidth: 5,
     lineCap: "round",
     lineJoin: "round",
@@ -93,26 +103,22 @@ const canvasToolSet: { [key: string]: BaseCanvasToolSettings } = {
   },
   "Round Rubber": {
     toolName: "rubber",
-    action: "erase",
+    toolAction: ToolAction.Erase,
     lineWidth: 15,
     lineCap: "round",
-    lineJoin: "round",
-    color: "#6441a4",
   },
   "Square Rubber": {
     toolName: "rubber",
-    action: "erase",
+    toolAction: ToolAction.Erase,
     lineWidth: 15,
     lineCap: "square",
-    lineJoin: "round",
-    color: "#6441a4",
   },
 };
 
 const selectedTool = ref<BaseCanvasToolSettings>(canvasToolSet.Pencil);
 
 function changeSelectedToolColor(e: Event) {
-  if (selectedTool.value.action !== "draw") {
+  if (selectedTool.value.toolAction !== ToolAction.Draw) {
     return;
   }
 
@@ -363,18 +369,46 @@ function changeSelectedToolColor(e: Event) {
     </section>
 
     <section class="grid gap-y-sm">
-      <BaseCanvas :toolSettings="selectedTool"></BaseCanvas>
+      <BaseCanvas
+        :toolSettings="selectedTool"
+        ref="baseCanvasComponent"
+      ></BaseCanvas>
       <div>
-        <p :style="`color: ${selectedTool.color}`">
+        <p
+          :style="`color: ${
+            selectedTool.toolAction === ToolAction.Draw
+              ? selectedTool.color
+              : 'inherit'
+          }`"
+        >
           {{ selectedTool.toolName }}
         </p>
+        <BaseButton @click="baseCanvasComponent?.clearCanvas()"
+          >Clear Canvas</BaseButton
+        >
         <BaseButton
           @click="selectedTool = toolSettings"
           v-for="(toolSettings, toolName) in canvasToolSet"
           :key="toolName"
           >{{ toolName }}</BaseButton
         >
+        <input
+          type="range"
+          @input="
+            selectedTool.lineWidth = parseInt(
+              ($event.target as HTMLInputElement).value
+            )
+          "
+          min="1"
+          max="30"
+          :value="selectedTool.lineWidth"
+        />
         <input type="color" @input="changeSelectedToolColor" />
+        <p>{{ selectedTool }}</p>
+        <BaseButton
+          @click="baseCanvasComponent?.exportAsImage('picture', 'png')"
+          >Export</BaseButton
+        >
       </div>
     </section>
   </main>

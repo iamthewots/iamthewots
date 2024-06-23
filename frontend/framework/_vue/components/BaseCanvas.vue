@@ -1,31 +1,45 @@
 <script setup lang="ts">
 import { useSplitAttrs } from "@_vue/composables/use-split-attrs";
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref, type Ref } from "vue";
 
 export interface BaseCanvasProps {
   toolSettings?: BaseCanvasToolSettings;
 }
 
 export interface BaseCanvasEmits {
-  (e: "base-canvas:interaction-start", action: BaseCanvasToolAction): void;
-  (e: "base-canvas:interaction-end", action: BaseCanvasToolAction): void;
+  (e: "base-canvas:interaction-start", toolAction: ToolAction): void;
+  (e: "base-canvas:interaction-end", toolAction: ToolAction): void;
 }
 
 export interface BaseCanvas {
-  clear: () => void;
-  setBackgroudColor: (color: string) => void;
+  canvasElement: Ref<HTMLCanvasElement | null>;
+  clearCanvas: () => void;
+  setBackgroundColor: (color: string) => void;
+  exportAsImage: (fileName: string, fileExtension: "jpeg" | "png") => void;
 }
 
-export interface BaseCanvasToolSettings {
+enum ToolAction {
+  "Draw",
+  "Erase"
+}
+
+interface DrawTool {
   toolName: string;
-  action: BaseCanvasToolAction;
+  toolAction: ToolAction.Draw;
   lineCap: CanvasPathDrawingStyles["lineCap"];
   lineJoin: CanvasPathDrawingStyles["lineJoin"];
   lineWidth: CanvasPathDrawingStyles["lineWidth"];
   color: string | CanvasPattern | CanvasGradient;
 }
 
-type BaseCanvasToolAction = "draw" | "erase";
+interface EraseTool {
+  toolName: string;
+  toolAction: ToolAction.Erase;
+  lineCap: CanvasPathDrawingStyles["lineCap"];
+  lineWidth: CanvasPathDrawingStyles["lineWidth"];
+}
+
+export type BaseCanvasToolSettings = DrawTool | EraseTool;
 
 defineOptions({
   name: "BaseCanvas",
@@ -62,10 +76,10 @@ function handleCanvasInteraction(e: PointerEvent) {
   const x = e.clientX - left;
   const y = e.clientY - top;
 
-  switch (props.toolSettings.action) {
-    case "draw":
+  switch (props.toolSettings.toolAction) {
+    case ToolAction.Draw:
       return draw(x, y);
-    case "erase":
+    case ToolAction.Erase:
       return erase(x, y);
   }
 }
@@ -82,6 +96,7 @@ function draw(x: number, y: number) {
   if (
     context === null ||
     props.toolSettings === undefined ||
+    props.toolSettings.toolAction !== ToolAction.Draw ||
     canvasElement.value === null
   ) {
     return;
@@ -107,6 +122,7 @@ function erase(x: number, y: number) {
   const { lineWidth } = props.toolSettings;
 
   switch (props.toolSettings.lineCap) {
+    case "butt":
     case "round":
       context.save();
       context.arc(x, y, lineWidth / 2, 0, 360);
@@ -132,7 +148,33 @@ function erase(x: number, y: number) {
   }
 }
 
-function clear() {}
+function clearCanvas() {
+  if (context === null || canvasElement.value === null) {
+    return;
+  }
+
+  context.clearRect(
+    0,
+    0,
+    canvasElement.value.width,
+    canvasElement.value.height
+  );
+}
+
+function setBackgroundColor(color: string) {}
+
+function exportAsImage(fileName: string, fileExtension: "jpeg" | "png") {
+  if (canvasElement.value === null) {
+    throw new Error("canvas_element_not_found");
+  }
+
+  const data = canvasElement.value.toDataURL(`image/${fileExtension}`);
+  const url = data.replace(/^data:image\/png/, "data:application/octet-stream");
+  const downloadLink = document.createElement("a");
+  downloadLink.setAttribute("download", `${fileName}.${fileExtension}`);
+  downloadLink.setAttribute("href", url);
+  downloadLink.click();
+}
 
 function handlePointerEnterEvent(e: PointerEvent) {
   if (pointerId.value !== null) {
@@ -189,6 +231,13 @@ onMounted(() => {
 onUnmounted(() =>
   window.removeEventListener("pointerup", handlePointerUpEvent)
 );
+
+defineExpose<BaseCanvas>({
+  canvasElement,
+  clearCanvas,
+  setBackgroundColor,
+  exportAsImage,
+});
 </script>
 
 <template>
