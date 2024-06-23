@@ -1,8 +1,14 @@
 <script setup lang="ts">
 import { useSplitAttrs } from "@_vue/composables/use-split-attrs";
-import { computed, onMounted, onUnmounted, ref, type Ref } from "vue";
+import { computed, onMounted, onUnmounted, reactive, ref, type Ref } from "vue";
+
+// allow to select tool from same settings from history
+// allow to select canvas statys from history
+// introduce opacity
+// introduce me to your mum, bitch
 
 export interface BaseCanvasProps {
+  historySize?: number;
   toolSettings?: BaseCanvasToolSettings;
 }
 
@@ -13,6 +19,7 @@ export interface BaseCanvasEmits {
 
 export interface BaseCanvas {
   canvasElement: Ref<HTMLCanvasElement | null>;
+  canvasHistory: BaseCanvasHistoryEntry[];
   clearCanvas: () => void;
   setBackgroundColor: (color: string) => void;
   exportAsImage: (fileName: string, fileExtension: "jpeg" | "png") => void;
@@ -20,7 +27,7 @@ export interface BaseCanvas {
 
 enum ToolAction {
   "Draw",
-  "Erase"
+  "Erase",
 }
 
 interface DrawTool {
@@ -41,17 +48,27 @@ interface EraseTool {
 
 export type BaseCanvasToolSettings = DrawTool | EraseTool;
 
+interface BaseCanvasHistoryEntry {
+  toolName: string;
+  timestamp: number;
+  imageData: ImageData;
+}
+
 defineOptions({
   name: "BaseCanvas",
   inheritAttrs: false,
 });
 
-const props = defineProps<BaseCanvasProps>();
+const props = withDefaults(defineProps<BaseCanvasProps>(), {
+  historySize: 5,
+});
 const emits = defineEmits<BaseCanvasEmits>();
 const canvasElement = ref<HTMLCanvasElement | null>(null);
 const pointerId = ref<number | null>(null);
 const pointerIsOver = ref(false);
 const pointerIsActive = ref(false);
+const canvasHistory = reactive<BaseCanvasHistoryEntry[]>([]);
+const canvasHistoryIndex = ref(0);
 let context: CanvasRenderingContext2D | null = null;
 const wrapperElementClassList = computed(() => {
   return {
@@ -85,11 +102,32 @@ function handleCanvasInteraction(e: PointerEvent) {
 }
 
 function handleCanvasInteractionEnd() {
-  if (context === null) {
+  if (context === null || canvasElement.value === null) {
     return;
   }
 
   context.beginPath();
+  const imageData = context.getImageData(
+    0,
+    0,
+    canvasElement.value.width,
+    canvasElement.value.height
+  );
+
+  if (canvasHistoryIndex.value !== canvasHistory.length - 1) {
+    canvasHistory.splice(canvasHistoryIndex.value);
+  }
+
+  if (canvasHistory.length === props.historySize) {
+    canvasHistory.shift();
+  }
+
+  canvasHistory.push({
+    toolName: props.toolSettings?.toolName || "Tool",
+    timestamp: Date.now(),
+    imageData,
+  });
+  canvasHistoryIndex.value = canvasHistory.length - 1;
 }
 
 function draw(x: number, y: number) {
@@ -234,6 +272,7 @@ onUnmounted(() =>
 
 defineExpose<BaseCanvas>({
   canvasElement,
+  canvasHistory,
   clearCanvas,
   setBackgroundColor,
   exportAsImage,

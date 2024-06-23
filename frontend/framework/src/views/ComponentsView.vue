@@ -88,7 +88,7 @@ function testRadioUnselected(value: string) {
 
 enum ToolAction {
   "Draw",
-  "Erase"
+  "Erase",
 }
 
 const baseCanvasComponent = ref<BaseCanvas>();
@@ -102,13 +102,13 @@ const canvasToolSet: { [key: string]: BaseCanvasToolSettings } = {
     color: "#6441a4",
   },
   "Round Rubber": {
-    toolName: "rubber",
+    toolName: "round_rubber",
     toolAction: ToolAction.Erase,
     lineWidth: 15,
     lineCap: "round",
   },
   "Square Rubber": {
-    toolName: "rubber",
+    toolName: "square_rubber",
     toolAction: ToolAction.Erase,
     lineWidth: 15,
     lineCap: "square",
@@ -409,6 +409,14 @@ function changeSelectedToolColor(e: Event) {
           @click="baseCanvasComponent?.exportAsImage('picture', 'png')"
           >Export</BaseButton
         >
+        <div>
+          <p
+            v-for="historyEntry in baseCanvasComponent?.canvasHistory"
+            :key="historyEntry.timestamp"
+          >
+            {{ historyEntry.toolName }} @{{ new Date(historyEntry.timestamp) }}
+          </p>
+        </div>
       </div>
     </section>
   </main>
