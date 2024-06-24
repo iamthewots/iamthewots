@@ -1,6 +1,6 @@
-import type {
-  BaseCanvasTool,
-  InteractionData,
+import {
+  type BaseCanvasTool,
+  type InteractionData,
 } from "@_vue/components/BaseCanvas.vue";
 
 interface PenTool extends BaseCanvasTool {
@@ -18,8 +18,11 @@ interface EraserTool extends BaseCanvasTool {
 
 type CanvasColor = string | CanvasPattern | CanvasGradient;
 
-export function useCanvasTool() {
-  function createPenTool(name: string, settings: Partial<PenTool>): PenTool {
+export function useCanvasTools() {
+  function createPenTool(
+    name: string,
+    settings: Partial<PenTool> = {}
+  ): PenTool {
     return {
       toolName: name,
       handleInteraction(_e: PointerEvent, data: InteractionData) {
@@ -44,7 +47,7 @@ export function useCanvasTool() {
 
   function createEraserTool(
     name: string,
-    settings: Partial<EraserTool>
+    settings: Partial<EraserTool> = {}
   ): EraserTool {
     return {
       toolName: name,

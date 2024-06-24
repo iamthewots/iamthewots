@@ -70,12 +70,16 @@ const emits = defineEmits<BaseCanvasEmits>();
 const wrapperElement = ref<HTMLElement | null>(null);
 const canvasElement = ref<HTMLCanvasElement | null>(null);
 const canvasContext = ref<CanvasRenderingContext2D | null>(null);
+const canvasZoom = ref(1);
 const canvasHistory = reactive<CanvasHistory>([]);
+const canvasHistoryIndex = ref(0);
 const pointerId = ref<number | null>(null);
 const pointerIsOver = ref(false);
 const pointerIsActive = ref(false);
 const pointerHistory = reactive<PointerHistory>([]);
 const { nonStyleAttrs, styleAttrs } = useSplitAttrs();
+
+function setZoom(value: number) {}
 
 function handleInteraction(e: PointerEvent, status: InteractionStatus) {
   if (
@@ -87,10 +91,9 @@ function handleInteraction(e: PointerEvent, status: InteractionStatus) {
     return;
   }
 
-  const { scrollLeft, scrollTop } = wrapperElement.value;
   const { left, top } = canvasElement.value.getBoundingClientRect();
-  const x = e.clientX - left + scrollLeft;
-  const y = e.clientY - top + scrollTop;
+  const x = e.clientX - left;
+  const y = e.clientY - top;
   pointerHistory.push({ timestamp: Date.now(), x, y });
   const data: InteractionData = {
     x,
@@ -119,17 +122,43 @@ function handleInteraction(e: PointerEvent, status: InteractionStatus) {
 function updateCanvasHistory() {
   if (
     props.maxHistoryLength <= 0 ||
+    canvasElement.value === null ||
     canvasContext.value === null ||
     props.canvasTool === undefined
   ) {
     return;
   }
+
+  if (
+    canvasHistoryIndex.value !== canvasHistory.length - 1 &&
+    canvasHistory.length !== 0
+  ) {
+    canvasHistory.splice(canvasHistoryIndex.value);
+  }
+
+  const { width, height } = canvasElement.value;
+  canvasHistory.push({
+    timestamp: Date.now(),
+    canvasTool: props.canvasTool,
+    imageData: canvasContext.value.getImageData(0, 0, width, height),
+  });
 }
 
 function restoreCanvasHistoryPoint(index: number) {
-  if (index < 0 || index > canvasHistory.length - 1) {
+  if (
+    index < 0 ||
+    index > canvasHistory.length - 1 ||
+    canvasElement.value === null ||
+    canvasContext.value === null
+  ) {
     return false;
   }
+
+  const data = canvasHistory[index];
+  const { width, height } = canvasElement.value;
+  canvasContext.value.clearRect(0, 0, width, height);
+  canvasContext.value.putImageData(data.imageData, 0, 0);
+  canvasHistoryIndex.value = index;
 
   return true;
 }
@@ -235,6 +264,7 @@ defineExpose<BaseCanvas>({
 <style lang="scss">
 .base-canvas {
   overflow: auto;
+  touch-action: none;
 
   canvas {
     cursor: crosshair;
