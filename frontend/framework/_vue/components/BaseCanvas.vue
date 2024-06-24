@@ -1,57 +1,61 @@
 <script setup lang="ts">
 import { useSplitAttrs } from "@_vue/composables/use-split-attrs";
-import { computed, onMounted, onUnmounted, reactive, ref, type Ref } from "vue";
-
-// allow to select tool from same settings from history
-// allow to select canvas statys from history
-// introduce opacity
-// introduce me to your mum, bitch
+import { onMounted, onUnmounted, reactive, ref, type Ref } from "vue";
 
 export interface BaseCanvasProps {
-  historySize?: number;
-  toolSettings?: BaseCanvasToolSettings;
+  maxHistoryLength?: number;
+  canvasTool?: BaseCanvasTool;
 }
 
 export interface BaseCanvasEmits {
-  (e: "base-canvas:interaction-start", toolAction: ToolAction): void;
-  (e: "base-canvas:interaction-end", toolAction: ToolAction): void;
+  (e: "base-canvas:interaction-start", canvasTool: BaseCanvasTool): void;
+  (e: "base-canvas:interaction-end", canvasTool: BaseCanvasTool): void;
 }
 
 export interface BaseCanvas {
   canvasElement: Ref<HTMLCanvasElement | null>;
-  canvasHistory: BaseCanvasHistoryEntry[];
-  clearCanvas: () => void;
-  setBackgroundColor: (color: string) => void;
-  exportAsImage: (fileName: string, fileExtension: "jpeg" | "png") => void;
+  canvasContext: Ref<CanvasRenderingContext2D | null>;
+  canvasHistory: CanvasHistory;
+  restoreCanvasHistoryPoint: (index: number) => boolean;
+  exportAsImage: (
+    fileName: string,
+    fileExtension: "jpg" | "jpeg" | "png"
+  ) => void;
 }
 
-enum ToolAction {
-  "Draw",
-  "Erase",
-}
-
-interface DrawTool {
+export interface BaseCanvasTool {
   toolName: string;
-  toolAction: ToolAction.Draw;
-  lineCap: CanvasPathDrawingStyles["lineCap"];
-  lineJoin: CanvasPathDrawingStyles["lineJoin"];
-  lineWidth: CanvasPathDrawingStyles["lineWidth"];
-  color: string | CanvasPattern | CanvasGradient;
+  handleInteractionStart?: InteractionHandler;
+  handleInteraction?: InteractionHandler;
+  handleInteractionEnd?: InteractionHandler;
+  [key: string]: any;
 }
 
-interface EraseTool {
-  toolName: string;
-  toolAction: ToolAction.Erase;
-  lineCap: CanvasPathDrawingStyles["lineCap"];
-  lineWidth: CanvasPathDrawingStyles["lineWidth"];
-}
+export type InteractionHandler = (
+  e: PointerEvent,
+  data: InteractionData
+) => void;
 
-export type BaseCanvasToolSettings = DrawTool | EraseTool;
+export type InteractionData = {
+  x: number;
+  y: number;
+  pointerHistory: PointerHistory;
+  canvasElement: HTMLCanvasElement;
+  canvasContext: CanvasRenderingContext2D;
+};
 
-interface BaseCanvasHistoryEntry {
-  toolName: string;
+export type CanvasHistory = {
   timestamp: number;
+  canvasTool: BaseCanvasTool;
   imageData: ImageData;
+}[];
+
+type PointerHistory = { timestamp: number; x: number; y: number }[];
+
+enum InteractionStatus {
+  "Start",
+  "Active",
+  "End",
 }
 
 defineOptions({
@@ -60,158 +64,93 @@ defineOptions({
 });
 
 const props = withDefaults(defineProps<BaseCanvasProps>(), {
-  historySize: 5,
+  maxHistoryLength: 10,
 });
 const emits = defineEmits<BaseCanvasEmits>();
+const wrapperElement = ref<HTMLElement | null>(null);
 const canvasElement = ref<HTMLCanvasElement | null>(null);
+const canvasContext = ref<CanvasRenderingContext2D | null>(null);
+const canvasHistory = reactive<CanvasHistory>([]);
 const pointerId = ref<number | null>(null);
 const pointerIsOver = ref(false);
 const pointerIsActive = ref(false);
-const canvasHistory = reactive<BaseCanvasHistoryEntry[]>([]);
-const canvasHistoryIndex = ref(0);
-let context: CanvasRenderingContext2D | null = null;
-const wrapperElementClassList = computed(() => {
-  return {
-    "base-canvas": true,
-    "base-canvas--pointer-is-over": pointerIsOver.value,
-    "base-canvas--pointer-is-active": pointerIsActive.value,
-  };
-});
+const pointerHistory = reactive<PointerHistory>([]);
 const { nonStyleAttrs, styleAttrs } = useSplitAttrs();
 
-function handleCanvasInteraction(e: PointerEvent) {
+function handleInteraction(e: PointerEvent, status: InteractionStatus) {
   if (
-    pointerIsActive.value === false ||
-    props.toolSettings === undefined ||
-    context === null ||
-    canvasElement.value === null
+    wrapperElement.value === null ||
+    canvasElement.value === null ||
+    canvasContext.value === null ||
+    props.canvasTool === undefined
   ) {
     return;
   }
 
+  const { scrollLeft, scrollTop } = wrapperElement.value;
   const { left, top } = canvasElement.value.getBoundingClientRect();
-  const x = e.clientX - left;
-  const y = e.clientY - top;
+  const x = e.clientX - left + scrollLeft;
+  const y = e.clientY - top + scrollTop;
+  pointerHistory.push({ timestamp: Date.now(), x, y });
+  const data: InteractionData = {
+    x,
+    y,
+    pointerHistory,
+    canvasElement: canvasElement.value,
+    canvasContext: canvasContext.value,
+  };
 
-  switch (props.toolSettings.toolAction) {
-    case ToolAction.Draw:
-      return draw(x, y);
-    case ToolAction.Erase:
-      return erase(x, y);
-  }
-}
-
-function handleCanvasInteractionEnd() {
-  if (context === null || canvasElement.value === null) {
-    return;
-  }
-
-  context.beginPath();
-  const imageData = context.getImageData(
-    0,
-    0,
-    canvasElement.value.width,
-    canvasElement.value.height
-  );
-
-  if (canvasHistoryIndex.value !== canvasHistory.length - 1) {
-    canvasHistory.splice(canvasHistoryIndex.value);
-  }
-
-  if (canvasHistory.length === props.historySize) {
-    canvasHistory.shift();
-  }
-
-  canvasHistory.push({
-    toolName: props.toolSettings?.toolName || "Tool",
-    timestamp: Date.now(),
-    imageData,
-  });
-  canvasHistoryIndex.value = canvasHistory.length - 1;
-}
-
-function draw(x: number, y: number) {
-  if (
-    context === null ||
-    props.toolSettings === undefined ||
-    props.toolSettings.toolAction !== ToolAction.Draw ||
-    canvasElement.value === null
-  ) {
-    return;
-  }
-
-  context.lineCap = props.toolSettings.lineCap;
-  context.lineJoin = props.toolSettings.lineJoin;
-  context.lineWidth = props.toolSettings.lineWidth;
-  context.strokeStyle = props.toolSettings.color;
-  context.lineTo(x, y);
-  context.stroke();
-}
-
-function erase(x: number, y: number) {
-  if (
-    context === null ||
-    props.toolSettings === undefined ||
-    canvasElement.value === null
-  ) {
-    return;
-  }
-
-  const { lineWidth } = props.toolSettings;
-
-  switch (props.toolSettings.lineCap) {
-    case "butt":
-    case "round":
-      context.save();
-      context.arc(x, y, lineWidth / 2, 0, 360);
-      context.clip();
-      context.clearRect(
-        0,
-        0,
-        canvasElement.value.width,
-        canvasElement.value.height
-      );
-      context.restore();
+  switch (status) {
+    case InteractionStatus.Start:
+      props.canvasTool.handleInteractionStart?.(e, data);
+    case InteractionStatus.Active:
+      props.canvasTool.handleInteraction?.(e, data);
 
       break;
-    case "square":
-      context.clearRect(
-        x - lineWidth / 2,
-        y - lineWidth / 2,
-        lineWidth,
-        lineWidth
-      );
+    case InteractionStatus.End:
+      props.canvasTool.handleInteractionEnd?.(e, data);
+      pointerHistory.length = 0;
+      updateCanvasHistory();
 
       break;
   }
 }
 
-function clearCanvas() {
-  if (context === null || canvasElement.value === null) {
+function updateCanvasHistory() {
+  if (
+    props.maxHistoryLength <= 0 ||
+    canvasContext.value === null ||
+    props.canvasTool === undefined
+  ) {
     return;
   }
-
-  context.clearRect(
-    0,
-    0,
-    canvasElement.value.width,
-    canvasElement.value.height
-  );
 }
 
-function setBackgroundColor(color: string) {}
+function restoreCanvasHistoryPoint(index: number) {
+  if (index < 0 || index > canvasHistory.length - 1) {
+    return false;
+  }
 
-function exportAsImage(fileName: string, fileExtension: "jpeg" | "png") {
+  return true;
+}
+
+function exportAsImage(
+  fileName: string,
+  fileExtension: "jpg" | "jpeg" | "png"
+) {
   if (canvasElement.value === null) {
-    throw new Error("canvas_element_not_found");
+    throw new Error("canvas_element_not_mounted");
   }
 
-  const data = canvasElement.value.toDataURL(`image/${fileExtension}`);
-  const url = data.replace(/^data:image\/png/, "data:application/octet-stream");
-  const downloadLink = document.createElement("a");
-  downloadLink.setAttribute("download", `${fileName}.${fileExtension}`);
-  downloadLink.setAttribute("href", url);
-  downloadLink.click();
+  const dataUrl = canvasElement.value.toDataURL(`image/${fileExtension}`);
+  const url = dataUrl.replace(
+    /^data:image\/png/,
+    "data:application/octet-stream"
+  );
+  const linkElement = document.createElement("a");
+  linkElement.setAttribute("download", `${fileName}.${fileExtension}`);
+  linkElement.setAttribute("href", url);
+  linkElement.click();
 }
 
 function handlePointerEnterEvent(e: PointerEvent) {
@@ -224,11 +163,11 @@ function handlePointerEnterEvent(e: PointerEvent) {
 }
 
 function handlePointerMoveEvent(e: PointerEvent) {
-  if (pointerId.value !== e.pointerId) {
+  if (pointerId.value !== e.pointerId || pointerIsActive.value === false) {
     return;
   }
 
-  handleCanvasInteraction(e);
+  handleInteraction(e, InteractionStatus.Active);
 }
 
 function handlePointerLeaveEvent(e: PointerEvent) {
@@ -246,6 +185,7 @@ function handlePointerDownEvent(e: PointerEvent) {
   }
 
   pointerIsActive.value = true;
+  handleInteraction(e, InteractionStatus.Start);
 }
 
 function handlePointerUpEvent(e: PointerEvent) {
@@ -254,36 +194,34 @@ function handlePointerUpEvent(e: PointerEvent) {
   }
 
   pointerIsActive.value = false;
-  handleCanvasInteractionEnd();
+  handleInteraction(e, InteractionStatus.End);
 }
 
 onMounted(() => {
   if (canvasElement.value === null) {
-    return;
+    throw new Error("unable_to_mount_canvas_element");
   }
 
+  canvasContext.value = canvasElement.value.getContext("2d");
   window.addEventListener("pointerup", handlePointerUpEvent);
-  context = canvasElement.value.getContext("2d");
 });
 
-onUnmounted(() =>
-  window.removeEventListener("pointerup", handlePointerUpEvent)
-);
+onUnmounted(() => {
+  window.removeEventListener("pointerup", handlePointerUpEvent);
+});
 
 defineExpose<BaseCanvas>({
   canvasElement,
+  canvasContext,
   canvasHistory,
-  clearCanvas,
-  setBackgroundColor,
+  restoreCanvasHistoryPoint,
   exportAsImage,
 });
 </script>
 
 <template>
-  <div :class="wrapperElementClassList" v-bind="styleAttrs">
+  <div class="base-canvas" v-bind="styleAttrs" ref="wrapperElement">
     <canvas
-      width="500"
-      height="400"
       @pointerenter="handlePointerEnterEvent"
       @pointermove="handlePointerMoveEvent"
       @pointerleave="handlePointerLeaveEvent"
@@ -296,10 +234,9 @@ defineExpose<BaseCanvas>({
 
 <style lang="scss">
 .base-canvas {
-  touch-action: none;
+  overflow: auto;
 
   canvas {
-    border: 1px solid black;
     cursor: crosshair;
   }
 }
