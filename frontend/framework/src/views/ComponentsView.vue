@@ -1,16 +1,11 @@
 <script setup lang="ts">
 import BaseButton from "@_vue/components/BaseButton.vue";
-import {
-  type BaseCanvas,
-  type BaseCanvasTool,
-} from "@_vue/components/BaseCanvas.vue";
 import BaseCheckbox from "@_vue/components/BaseCheckbox.vue";
 import type { BaseCounterClassSwitchers } from "@_vue/components/BaseCounter.vue";
 import { type BaseHoverBox } from "@_vue/components/BaseHoverBox.vue";
 import type { BaseInput } from "@_vue/components/BaseInput.vue";
 import BaseRadio from "@_vue/components/BaseRadio.vue";
 import { type BaseTextArea } from "@_vue/components/BaseTextArea.vue";
-import { useCanvasTools } from "@_vue/composables/use-canvas-tools";
 import { reactive, ref } from "vue";
 
 // hover-box
@@ -85,16 +80,6 @@ function testRadioUnselected(value: string) {
   console.log("mannaia", value);
 }
 
-// canvas
-
-const baseCanvasComponent = ref<BaseCanvas>();
-const { createPenTool, createEraserTool } = useCanvasTools();
-const baseCanvasToolSet = {
-  pencil: createPenTool("pencil"),
-  roundEraser: createEraserTool("round_eraser", { lineCap: "round" }),
-  squareEraser: createEraserTool("round_eraser", { lineCap: "square" }),
-};
-const selectedTool = ref<BaseCanvasTool>(baseCanvasToolSet.pencil);
 </script>
 
 <template>
@@ -338,24 +323,6 @@ const selectedTool = ref<BaseCanvasTool>(baseCanvasToolSet.pencil);
         ></div>
       </div>
     </section>
-
-    <section class="grid gap-y-sm">
-      <BaseCanvas
-        class="centered-content padding-md | paint-canvas"
-        width="640"
-        height="480"
-        :canvasTool="selectedTool"
-        ref="baseCanvasComponent"
-      ></BaseCanvas>
-
-      <p>{{ selectedTool }}</p>
-      <BaseButton @click="baseCanvasComponent?.exportAsImage('picture', 'png')"
-        >Export</BaseButton
-      >
-      <BaseButton @click="baseCanvasComponent?.setZoom(0.75)">75%</BaseButton>
-      <BaseButton @click="baseCanvasComponent?.setZoom(1)">100%</BaseButton>
-      <BaseButton @click="baseCanvasComponent?.setZoom(1.25)">125%</BaseButton>
-    </section>
   </main>
 </template>
 
@@ -415,13 +382,6 @@ const selectedTool = ref<BaseCanvasTool>(baseCanvasToolSet.pencil);
 
   &-valid {
     text-decoration: underline;
-  }
-}
-
-.paint-canvas {
-  border: 1px solid black;
-  canvas {
-    border: 1px solid black;
   }
 }
 </style>

@@ -1,66 +1,64 @@
 <script setup lang="ts">
-// define device type on enter
-// swap pan type accordingly
-// move BaseCanvas to app folder
-
 import { useSplitAttrs } from "@_vue/composables/use-split-attrs";
-import { onMounted, onUnmounted, reactive, ref, type Ref } from "vue";
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 
 export interface BaseCanvasProps {
-  maxHistoryLength?: number;
-  canvasTool?: BaseCanvasTool;
+  historyMaxLength?: number;
+  canvasTool?: CanvasTool;
 }
 
 export interface BaseCanvasEmits {
-  (e: "base-canvas:interaction-start", canvasTool: BaseCanvasTool): void;
-  (e: "base-canvas:interaction-end", canvasTool: BaseCanvasTool): void;
+  (e: "base-canvas:tool-select", canvasTool?: CanvasTool): void;
+  (e: "base-canvas:tool-deselect", canvasTool?: CanvasTool): void;
+  (e: "base-canvas:interaction-start"): void;
+  (e: "base-canvas:interaction-end"): void;
 }
 
 export interface BaseCanvas {
-  canvasElement: Ref<HTMLCanvasElement | null>;
-  canvasContext: Ref<CanvasRenderingContext2D | null>;
-  canvasZoom: Ref<number>;
-  canvasHistory: CanvasHistory;
-  setZoom: (value: number) => number;
-  restoreCanvasHistoryPoint: (index: number) => boolean;
-  exportAsImage: (
-    fileName: string,
-    fileExtension: "jpg" | "jpeg" | "png"
-  ) => void;
+  wrapperElement: typeof wrapperElement;
+  canvasElement: typeof canvasElement;
+  canvasContext: typeof canvasContext;
+  canvasHistory: typeof canvasHistory;
+  canvasHistoryIndex: typeof canvasHistoryIndex;
+  clearCanvas: typeof clearCanvas;
+  zoomCanvas: typeof zoomCanvas;
+  saveCanvasAsImage: typeof saveCanvasAsImage;
+  restoreCanvasFromHistory: typeof restoreCanvasFromHistory;
 }
 
-export interface BaseCanvasTool {
-  toolName: string;
-  handleInteractionStart?: InteractionHandler;
-  handleInteraction?: InteractionHandler;
-  handleInteractionEnd?: InteractionHandler;
-  [key: string]: any;
+export interface CanvasTool {
+  name: string;
+  doNotUpdateHistory?: boolean;
+  handleSelection?: CanvasToolSelectionHandler;
+  handleDeselection?: CanvasToolSelectionHandler;
+  handleInteractionStart?: CanvasInteractionHandler;
+  handleInteraction?: CanvasInteractionHandler;
+  handleInteractionEnd?: CanvasInteractionHandler;
 }
 
-export type InteractionHandler = (
-  e: PointerEvent,
-  data: InteractionData
-) => void;
-
-export type InteractionData = {
-  x: number;
-  y: number;
-  pointerHistory: PointerHistory;
+export type CanvasToolSelectionHandler = (data: {
+  wrapperElement: HTMLElement;
   canvasElement: HTMLCanvasElement;
   canvasContext: CanvasRenderingContext2D;
-};
+}) => void;
 
-export type CanvasHistory = {
-  timestamp: number;
-  canvasTool: BaseCanvasTool;
-  imageData: ImageData;
-}[];
+export type CanvasInteractionHandler = (
+  e: PointerEvent,
+  data: CanvasInteractionData
+) => void;
 
-type PointerHistory = { timestamp: number; x: number; y: number }[];
+export interface CanvasInteractionData {
+  x: number;
+  y: number;
+  pointerHistory: typeof pointerHistory;
+  wrapperElement: HTMLElement;
+  canvasElement: HTMLCanvasElement;
+  canvasContext: CanvasRenderingContext2D;
+}
 
-enum InteractionStatus {
+enum InteractionStep {
   "Start",
-  "Active",
+  "Ongoing",
   "End",
 }
 
@@ -70,97 +68,94 @@ defineOptions({
 });
 
 const props = withDefaults(defineProps<BaseCanvasProps>(), {
-  maxHistoryLength: 10,
+  historyMaxLength: 10,
 });
 const emits = defineEmits<BaseCanvasEmits>();
 const wrapperElement = ref<HTMLElement | null>(null);
 const canvasElement = ref<HTMLCanvasElement | null>(null);
 const canvasContext = ref<CanvasRenderingContext2D | null>(null);
 const canvasZoom = ref(1);
-const canvasHistory = reactive<CanvasHistory>([]);
+const canvasHistory = reactive<
+  { details: CanvasTool | string; imageData: ImageData; timestamp: number }[]
+>([]);
 const canvasHistoryIndex = ref(0);
 const pointerId = ref<number | null>(null);
+const pointerType = ref<"mouse" | "pen" | "touch" | "unknown">("unknown");
 const pointerIsOver = ref(false);
 const pointerIsActive = ref(false);
-const pointerHistory = reactive<PointerHistory>([]);
+const pointerHistory = reactive<{ x: number; y: number; timestamp: number }[]>(
+  []
+);
 const { nonStyleAttrs, styleAttrs } = useSplitAttrs();
 
-function handleInteraction(e: PointerEvent, status: InteractionStatus) {
-  if (
-    canvasElement.value === null ||
-    canvasContext.value === null ||
-    props.canvasTool === undefined
-  ) {
+function clearCanvas() {
+  if (canvasElement.value === null || canvasContext.value === null) {
     return;
   }
 
-  const { left, width, top, height } =
-    canvasElement.value.getBoundingClientRect();
-  const x = (e.clientX - left) * (canvasElement.value.width / width);
-  const y = (e.clientY - top) * (canvasElement.value.height / height);
-  pointerHistory.push({ timestamp: Date.now(), x, y });
-  const data: InteractionData = {
-    x,
-    y,
-    pointerHistory,
-    canvasElement: canvasElement.value,
-    canvasContext: canvasContext.value,
-  };
-
-  switch (status) {
-    case InteractionStatus.Start:
-      props.canvasTool.handleInteractionStart?.(e, data);
-    case InteractionStatus.Active:
-      props.canvasTool.handleInteraction?.(e, data);
-
-      break;
-    case InteractionStatus.End:
-      props.canvasTool.handleInteractionEnd?.(e, data);
-      pointerHistory.length = 0;
-      updateCanvasHistory();
-
-      break;
-  }
+  const { width, height } = canvasElement.value;
+  canvasContext.value.clearRect(0, 0, width, height);
+  updateCanvasHistory("clear_canvas");
 }
 
-function setZoom(value: number) {
+function zoomCanvas(value: number) {
   if (canvasElement.value === null) {
-    return -1;
+    return;
   }
 
   value = Math.max(Math.min(value, 5), 0.1);
+  canvasElement.value.style.scale = value.toString();
   canvasZoom.value = value;
-  canvasElement.value.style.scale = canvasZoom.value.toString();
-
-  return canvasZoom.value;
 }
 
-function updateCanvasHistory() {
+function saveCanvasAsImage(fileName: string, fileExtension: string) {
+  if (canvasElement.value === null || canvasContext.value === null) {
+    throw new Error("canvas_element_not_mounted");
+  }
+
+  const dataUrl = canvasElement.value.toDataURL(`image/${fileExtension}`);
+  const url = dataUrl.replace(
+    /^data:image\/png/,
+    "data:application/octet-stream"
+  );
+  const anchorElement = document.createElement("a");
+  anchorElement.setAttribute("download", `${fileName}.${fileExtension}`);
+  anchorElement.setAttribute("href", url);
+  anchorElement.click();
+}
+
+function updateCanvasHistory(details?: string) {
   if (
-    props.maxHistoryLength <= 0 ||
+    props.historyMaxLength === 0 ||
     canvasElement.value === null ||
-    canvasContext.value === null ||
-    props.canvasTool === undefined
+    canvasContext.value === null
   ) {
-    return;
+    return false;
   }
 
   if (
-    canvasHistoryIndex.value !== canvasHistory.length - 1 &&
-    canvasHistory.length !== 0
+    canvasHistory.length !== 0 &&
+    canvasHistoryIndex.value !== canvasHistory.length - 1
   ) {
     canvasHistory.splice(canvasHistoryIndex.value);
   }
 
+  if (canvasHistory.length === props.historyMaxLength) {
+    canvasHistory.shift();
+  }
+
   const { width, height } = canvasElement.value;
   canvasHistory.push({
-    timestamp: Date.now(),
-    canvasTool: props.canvasTool,
+    details: details || props.canvasTool || "unknown",
     imageData: canvasContext.value.getImageData(0, 0, width, height),
+    timestamp: Date.now(),
   });
+  canvasHistoryIndex.value = canvasHistory.length - 1;
+
+  return true;
 }
 
-function restoreCanvasHistoryPoint(index: number) {
+function restoreCanvasFromHistory(index: number) {
   if (
     index < 0 ||
     index > canvasHistory.length - 1 ||
@@ -170,32 +165,64 @@ function restoreCanvasHistoryPoint(index: number) {
     return false;
   }
 
-  const data = canvasHistory[index];
+  const { imageData } = canvasHistory[index];
   const { width, height } = canvasElement.value;
   canvasContext.value.clearRect(0, 0, width, height);
-  canvasContext.value.putImageData(data.imageData, 0, 0);
+  canvasContext.value.putImageData(imageData, 0, 0);
   canvasHistoryIndex.value = index;
 
   return true;
 }
 
-function exportAsImage(
-  fileName: string,
-  fileExtension: "jpg" | "jpeg" | "png"
-) {
-  if (canvasElement.value === null) {
-    throw new Error("canvas_element_not_mounted");
+function handleInteraction(e: PointerEvent, interactionStep: InteractionStep) {
+  if (
+    wrapperElement.value === null ||
+    canvasElement.value === null ||
+    canvasContext.value === null ||
+    props.canvasTool === undefined
+  ) {
+    return;
   }
 
-  const dataUrl = canvasElement.value.toDataURL(`image/${fileExtension}`);
-  const url = dataUrl.replace(
-    /^data:image\/png/,
-    "data:application/octet-stream"
-  );
-  const linkElement = document.createElement("a");
-  linkElement.setAttribute("download", `${fileName}.${fileExtension}`);
-  linkElement.setAttribute("href", url);
-  linkElement.click();
+  const { width, height } = canvasElement.value;
+  const {
+    left,
+    width: scaledWidth,
+    top,
+    height: scaledHeight,
+  } = canvasElement.value.getBoundingClientRect();
+  const x = (e.clientX - left) * (width / scaledWidth);
+  const y = (e.clientY - top) * (height / scaledHeight);
+  pointerHistory.push({ x, y, timestamp: Date.now() });
+
+  const interactionData: CanvasInteractionData = {
+    x,
+    y,
+    pointerHistory,
+    wrapperElement: wrapperElement.value,
+    canvasElement: canvasElement.value,
+    canvasContext: canvasContext.value,
+  };
+
+  switch (interactionStep) {
+    case InteractionStep.Start:
+      emits("base-canvas:interaction-start");
+      props.canvasTool.handleInteractionStart?.(e, interactionData);
+    case InteractionStep.Ongoing:
+      props.canvasTool.handleInteraction?.(e, interactionData);
+
+      break;
+    case InteractionStep.End:
+      emits("base-canvas:interaction-end");
+      props.canvasTool.handleInteractionEnd?.(e, interactionData);
+      pointerHistory.length = 0;
+
+      if (!props.canvasTool.doNotUpdateHistory) {
+        updateCanvasHistory();
+      }
+
+      break;
+  }
 }
 
 function handlePointerEnterEvent(e: PointerEvent) {
@@ -205,14 +232,16 @@ function handlePointerEnterEvent(e: PointerEvent) {
 
   pointerId.value = e.pointerId;
   pointerIsOver.value = true;
+  pointerType.value =
+    (e.pointerType as (typeof pointerType)["value"]) || "unknown";
 }
 
 function handlePointerMoveEvent(e: PointerEvent) {
-  if (pointerId.value !== e.pointerId || pointerIsActive.value === false) {
+  if (pointerIsActive.value === false || pointerId.value !== e.pointerId) {
     return;
   }
 
-  handleInteraction(e, InteractionStatus.Active);
+  handleInteraction(e, InteractionStep.Ongoing);
 }
 
 function handlePointerLeaveEvent(e: PointerEvent) {
@@ -221,6 +250,7 @@ function handlePointerLeaveEvent(e: PointerEvent) {
   }
 
   pointerId.value = null;
+  pointerType.value = "unknown";
   pointerIsOver.value = false;
 }
 
@@ -230,7 +260,7 @@ function handlePointerDownEvent(e: PointerEvent) {
   }
 
   pointerIsActive.value = true;
-  handleInteraction(e, InteractionStatus.Start);
+  handleInteraction(e, InteractionStep.Start);
 }
 
 function handlePointerUpEvent(e: PointerEvent) {
@@ -239,16 +269,44 @@ function handlePointerUpEvent(e: PointerEvent) {
   }
 
   pointerIsActive.value = false;
-  handleInteraction(e, InteractionStatus.End);
+  handleInteraction(e, InteractionStep.End);
 }
+
+watch(
+  computed(() => props.canvasTool),
+  (newCanvasTool, previousCanvasTool) => {
+    if (
+      wrapperElement.value === null ||
+      canvasElement.value === null ||
+      canvasContext.value === null
+    ) {
+      return;
+    }
+
+    const selectionData = {
+      wrapperElement: wrapperElement.value,
+      canvasElement: canvasElement.value,
+      canvasContext: canvasContext.value,
+    };
+
+    emits("base-canvas:tool-select", newCanvasTool);
+    newCanvasTool?.handleSelection?.(selectionData);
+
+    emits("base-canvas:tool-deselect", previousCanvasTool);
+    previousCanvasTool?.handleDeselection?.(selectionData);
+  }
+);
 
 onMounted(() => {
   if (canvasElement.value === null) {
     throw new Error("unable_to_mount_canvas_element");
   }
 
-  canvasContext.value = canvasElement.value.getContext("2d");
+  canvasContext.value = canvasElement.value.getContext("2d", {
+    willReadFrequently: true,
+  });
   window.addEventListener("pointerup", handlePointerUpEvent);
+  updateCanvasHistory("open");
 });
 
 onUnmounted(() => {
@@ -256,13 +314,15 @@ onUnmounted(() => {
 });
 
 defineExpose<BaseCanvas>({
+  wrapperElement,
   canvasElement,
   canvasContext,
-  canvasZoom,
   canvasHistory,
-  restoreCanvasHistoryPoint,
-  setZoom,
-  exportAsImage,
+  canvasHistoryIndex,
+  clearCanvas,
+  zoomCanvas,
+  saveCanvasAsImage,
+  restoreCanvasFromHistory,
 });
 </script>
 
@@ -280,12 +340,17 @@ defineExpose<BaseCanvas>({
 </template>
 
 <style lang="scss">
+@use "@_sass/wtk.scss";
+
 .base-canvas {
+  place-items: center;
+  display: grid;
   overflow: auto;
-  touch-action: none;
-  
+  border: wtk.get("border");
+
   canvas {
-    cursor: crosshair;
+    transform-origin: center;
+    touch-action: none;
   }
 }
 </style>
