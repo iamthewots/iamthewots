@@ -341,9 +341,9 @@ const selectedTool = ref<BaseCanvasTool>(baseCanvasToolSet.pencil);
 
     <section class="grid gap-y-sm">
       <BaseCanvas
-        class="paint-canvas"
-        width="1280"
-        height="400"
+        class="centered-content padding-md | paint-canvas"
+        width="640"
+        height="480"
         :canvasTool="selectedTool"
         ref="baseCanvasComponent"
       ></BaseCanvas>
@@ -352,6 +352,9 @@ const selectedTool = ref<BaseCanvasTool>(baseCanvasToolSet.pencil);
       <BaseButton @click="baseCanvasComponent?.exportAsImage('picture', 'png')"
         >Export</BaseButton
       >
+      <BaseButton @click="baseCanvasComponent?.setZoom(0.75)">75%</BaseButton>
+      <BaseButton @click="baseCanvasComponent?.setZoom(1)">100%</BaseButton>
+      <BaseButton @click="baseCanvasComponent?.setZoom(1.25)">125%</BaseButton>
     </section>
   </main>
 </template>
@@ -415,7 +418,10 @@ const selectedTool = ref<BaseCanvasTool>(baseCanvasToolSet.pencil);
   }
 }
 
-.paint-canvas canvas {
+.paint-canvas {
   border: 1px solid black;
+  canvas {
+    border: 1px solid black;
+  }
 }
 </style>

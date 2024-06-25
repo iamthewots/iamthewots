@@ -1,4 +1,8 @@
 <script setup lang="ts">
+// define device type on enter
+// swap pan type accordingly
+// move BaseCanvas to app folder
+
 import { useSplitAttrs } from "@_vue/composables/use-split-attrs";
 import { onMounted, onUnmounted, reactive, ref, type Ref } from "vue";
 
@@ -15,7 +19,9 @@ export interface BaseCanvasEmits {
 export interface BaseCanvas {
   canvasElement: Ref<HTMLCanvasElement | null>;
   canvasContext: Ref<CanvasRenderingContext2D | null>;
+  canvasZoom: Ref<number>;
   canvasHistory: CanvasHistory;
+  setZoom: (value: number) => number;
   restoreCanvasHistoryPoint: (index: number) => boolean;
   exportAsImage: (
     fileName: string,
@@ -79,11 +85,8 @@ const pointerIsActive = ref(false);
 const pointerHistory = reactive<PointerHistory>([]);
 const { nonStyleAttrs, styleAttrs } = useSplitAttrs();
 
-function setZoom(value: number) {}
-
 function handleInteraction(e: PointerEvent, status: InteractionStatus) {
   if (
-    wrapperElement.value === null ||
     canvasElement.value === null ||
     canvasContext.value === null ||
     props.canvasTool === undefined
@@ -91,9 +94,10 @@ function handleInteraction(e: PointerEvent, status: InteractionStatus) {
     return;
   }
 
-  const { left, top } = canvasElement.value.getBoundingClientRect();
-  const x = e.clientX - left;
-  const y = e.clientY - top;
+  const { left, width, top, height } =
+    canvasElement.value.getBoundingClientRect();
+  const x = (e.clientX - left) * (canvasElement.value.width / width);
+  const y = (e.clientY - top) * (canvasElement.value.height / height);
   pointerHistory.push({ timestamp: Date.now(), x, y });
   const data: InteractionData = {
     x,
@@ -117,6 +121,18 @@ function handleInteraction(e: PointerEvent, status: InteractionStatus) {
 
       break;
   }
+}
+
+function setZoom(value: number) {
+  if (canvasElement.value === null) {
+    return -1;
+  }
+
+  value = Math.max(Math.min(value, 5), 0.1);
+  canvasZoom.value = value;
+  canvasElement.value.style.scale = canvasZoom.value.toString();
+
+  return canvasZoom.value;
 }
 
 function updateCanvasHistory() {
@@ -242,8 +258,10 @@ onUnmounted(() => {
 defineExpose<BaseCanvas>({
   canvasElement,
   canvasContext,
+  canvasZoom,
   canvasHistory,
   restoreCanvasHistoryPoint,
+  setZoom,
   exportAsImage,
 });
 </script>
@@ -265,7 +283,7 @@ defineExpose<BaseCanvas>({
 .base-canvas {
   overflow: auto;
   touch-action: none;
-
+  
   canvas {
     cursor: crosshair;
   }
