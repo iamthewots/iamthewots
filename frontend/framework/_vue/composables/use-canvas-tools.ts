@@ -37,7 +37,7 @@ export function useCanvasTools() {
       },
       handleInteractionEnd(_e, data) {
         const { canvasContext } = data;
-        canvasContext.closePath();
+        canvasContext.beginPath();
       },
       lineCap: "round",
       lineJoin: "round",
@@ -52,10 +52,6 @@ export function useCanvasTools() {
   ): EraserTool {
     return {
       name,
-      handleInteractionStart(_e, data) {
-        const { canvasContext } = data;
-        canvasContext.beginPath();
-      },
       handleInteraction(_e, data) {
         const { x, y, canvasElement, canvasContext } = data;
         const { width, height } = canvasElement;
@@ -63,6 +59,7 @@ export function useCanvasTools() {
         switch (this.lineCap) {
           case "butt":
           case "round":
+            canvasContext.beginPath();
             canvasContext.save();
             canvasContext.arc(x, y, this.lineWidth / 2, 0, 360);
             canvasContext.clip();
@@ -81,8 +78,13 @@ export function useCanvasTools() {
             break;
         }
       },
+      handleInteractionEnd(_e, data) {
+        const { canvasContext } = data;
+        canvasContext.beginPath();
+      },
       lineCap: "round",
       lineWidth: 10,
+      ...settings,
     };
   }
 

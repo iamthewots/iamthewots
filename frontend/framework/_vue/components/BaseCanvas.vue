@@ -349,7 +349,7 @@ defineExpose<BaseCanvas>({
   border: wtk.get("border");
 
   canvas {
-    transform-origin: center;
+    border: wtk.get("border");
     touch-action: none;
   }
 }

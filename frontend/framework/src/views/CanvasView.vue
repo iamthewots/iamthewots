@@ -14,7 +14,27 @@ const canvasToolSet: { [key: string]: CanvasTool } = {
   "Round Eraser": createEraserTool("round_eraser", { lineCap: "round" }),
   "Square Eraser": createEraserTool("round_eraser", { lineCap: "square" }),
   Pan: panTool,
-} as const;
+};
+
+function adjustZoomToFit() {
+  if (baseCanvasComponent.value === undefined) {
+    return;
+  }
+
+  const { wrapperElement, canvasElement } = baseCanvasComponent.value;
+
+  if (wrapperElement.value === null || canvasElement.value === null) {
+    return;
+  }
+
+  console.log("e alora")
+  const { width: wrapperWidth, height: wrapperHeight } =
+    wrapperElement.value.getBoundingClientRect();
+  const { width: canvasWidth, height: canvasHeight } = canvasElement.value;
+  const scaleX = wrapperWidth / canvasWidth;
+  const scaleY = wrapperHeight / canvasHeight;
+  baseCanvasComponent.value.zoomCanvas(Math.min(scaleX, scaleY));
+}
 </script>
 
 <template>
@@ -60,6 +80,7 @@ const canvasToolSet: { [key: string]: CanvasTool } = {
         </div>
       </div>
       <div class="canvas-ui__zoom-bar">
+        <BaseButton @click="adjustZoomToFit">Fit</BaseButton>
         <BaseButton
           @click="baseCanvasComponent?.zoomCanvas(value)"
           v-for="value in [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]"
@@ -99,6 +120,7 @@ const canvasToolSet: { [key: string]: CanvasTool } = {
   &__zoom-bar {
     grid-area: zoom;
     justify-content: center;
+    flex-wrap: wrap;
     display: flex;
     gap: wtk.get("spacing", "xs");
   }
