@@ -1,0 +1,2 @@
+defineExpose Interface:
+- Ref/computed are unwrapped. Type value instead of Ref<value>/ComputedRef<value>

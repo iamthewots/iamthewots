@@ -13,6 +13,8 @@ interface EraserTool extends CanvasTool {
   color?: CanvasColor;
 }
 
+interface PanTool extends CanvasTool {}
+
 type CanvasColor = string | CanvasGradient | CanvasPattern;
 
 export function useCanvasTools() {
@@ -22,10 +24,6 @@ export function useCanvasTools() {
   ): PenTool {
     return {
       name,
-      handleInteractionStart(_e, data) {
-        const { canvasContext } = data;
-        canvasContext.beginPath();
-      },
       handleInteraction(_e, data) {
         const { x, y, canvasContext } = data;
         canvasContext.lineCap = this.lineCap;
@@ -53,17 +51,20 @@ export function useCanvasTools() {
     return {
       name,
       handleInteraction(_e, data) {
-        const { x, y, canvasElement, canvasContext } = data;
-        const { width, height } = canvasElement;
+        const { x, y, canvasContext } = data;
 
         switch (this.lineCap) {
           case "butt":
           case "round":
-            canvasContext.beginPath();
             canvasContext.save();
             canvasContext.arc(x, y, this.lineWidth / 2, 0, 360);
             canvasContext.clip();
-            canvasContext.clearRect(0, 0, width, height);
+            canvasContext.clearRect(
+              x - this.lineWidth / 2,
+              y - this.lineWidth / 2,
+              this.lineWidth,
+              this.lineWidth
+            );
             canvasContext.restore();
 
             break;
@@ -88,20 +89,13 @@ export function useCanvasTools() {
     };
   }
 
-  const panTool: CanvasTool = {
+  const panTool: PanTool = {
     name: "pan",
     doNotUpdateHistory: true,
-    handleInteraction(e, data) {
-      const { wrapperElement, pointerHistory } = data;
-
-      if (pointerHistory.length < 2) {
-        return;
-      }
-
-      const [point1, point2] = pointerHistory.slice(-2);
-      const left = (point2.x - point1.x) * -1;
-      const top = (point2.y - point1.y) * -1;
-      wrapperElement.scrollBy({ left, top, behavior: "smooth" });
+    handleInteractionStart(e, data) {
+      // use pointerhistory again
+      // fuck you leo
+      // seriously, fuck everything
     },
   };
 

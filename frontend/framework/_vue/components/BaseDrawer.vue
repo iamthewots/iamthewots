@@ -16,18 +16,6 @@ export interface BaseDrawerProps {
 
 export interface BaseDrawerEmits extends DialogToolsEmits<"base-drawer:"> {}
 
-export interface BaseDrawerSlot {
-  open: DialogTools["open"];
-  close: DialogTools["close"];
-}
-
-export interface BaseDrawer {
-  wrapperElement: DialogTools["wrapperElement"];
-  contentElement: DialogTools["contentElement"];
-  open: DialogTools["open"];
-  close: DialogTools["close"];
-}
-
 type DrawDirection = (typeof drawDirections)[number];
 
 defineOptions({
@@ -69,8 +57,19 @@ const parsedWrapperElementTransitionName = computed(() => {
   return props.isFullscreen ? props.wrapperElementTransitionName : "";
 });
 
-const slotProps: BaseDrawerSlot = { open, close };
-defineExpose<BaseDrawer>({ wrapperElement, contentElement, open, close });
+export interface BaseDrawerSlot {
+  open: DialogTools["open"];
+  close: DialogTools["close"];
+}
+const slotProps = { open, close };
+
+export interface BaseDrawer {
+  wrapperElement: DialogTools["wrapperElement"]["value"];
+  contentElement: DialogTools["contentElement"]["value"];
+  open: DialogTools["open"];
+  close: DialogTools["close"];
+}
+defineExpose({ wrapperElement, contentElement, open, close });
 </script>
 
 <template>

@@ -30,16 +30,6 @@ export interface BaseCounterEmits {
   (e: "base-counter:counter-end", counter: number): void;
 }
 
-export interface BaseCounterSlot {
-  counter: Ref<number>;
-  counterGoal: ComputedRef<number>;
-}
-
-export interface BaseCounter {
-  counter: Ref<number>;
-  counterGoal: ComputedRef<number>;
-}
-
 type CounterMethod = (typeof counterMethods)[number];
 
 export type BaseCounterClassSwitchers =
@@ -149,8 +139,17 @@ onBeforeUnmount(() => {
   stopCounter();
 });
 
-const slotProps: BaseCounterSlot = { counter, counterGoal };
-defineExpose<BaseCounter>({ counter, counterGoal });
+export interface BaseCounterSlot {
+  counter: (typeof counter)["value"];
+  counterGoal: (typeof counterGoal)["value"];
+}
+const slotProps = { counter, counterGoal };
+
+export interface BaseCounter {
+  counter: (typeof counter)["value"];
+  counterGoal: (typeof counterGoal)["value"];
+}
+defineExpose({ counter, counterGoal });
 </script>
 
 <template>

@@ -16,18 +16,6 @@ export interface BaseModalProps {
 
 export interface BaseModalEmits extends DialogToolsEmits<"base-modal:"> {}
 
-export interface BaseModalSlot {
-  open: DialogTools["open"];
-  close: DialogTools["close"];
-}
-
-export interface BaseModal {
-  wrapperElement: DialogTools["wrapperElement"];
-  contentElement: DialogTools["contentElement"];
-  open: DialogTools["open"];
-  close: DialogTools["close"];
-}
-
 type DrawDirection = (typeof drawDirections)[number];
 
 defineOptions({
@@ -59,8 +47,19 @@ const {
   emitsPrefix: "base-modal:",
 });
 
-const slotProps: BaseModalSlot = { open, close };
-defineExpose<BaseModal>({ wrapperElement, contentElement, open, close });
+export interface BaseModalSlot {
+  open: DialogTools["open"];
+  close: DialogTools["close"];
+}
+const slotProps = { open, close };
+
+export interface BaseModal {
+  wrapperElement: DialogTools["wrapperElement"]["value"];
+  contentElement: DialogTools["contentElement"]["value"];
+  open: DialogTools["open"];
+  close: DialogTools["close"];
+}
+defineExpose({ wrapperElement, contentElement, open, close });
 </script>
 
 <template>

@@ -22,26 +22,6 @@ export interface BaseInputEmits extends InputToolsEmits<"base-input:"> {
   (e: "base-input:visibility-change", inputElementValueIsHidden: boolean): void;
 }
 
-export interface BaseInputSlot {
-  toggleVisibility: () => void;
-  clearValue: InputTools["clearValue"];
-  saveValue: InputTools["saveValue"];
-  restoreValue: InputTools["restoreValue"];
-  enableAutosave: InputTools["enableAutosave"];
-  disableAutosave: InputTools["disableAutosave"];
-}
-
-export interface BaseInput {
-  inputElement: Ref<HTMLInputElement | null>;
-  toggleVisibility: () => void;
-  browserStorage: InputTools["browserStorage"];
-  clearValue: InputTools["clearValue"];
-  saveValue: InputTools["saveValue"];
-  restoreValue: InputTools["restoreValue"];
-  enableAutosave: InputTools["enableAutosave"];
-  disableAutosave: InputTools["disableAutosave"];
-}
-
 defineOptions({
   name: "BaseInput",
   inheritAttrs: false,
@@ -98,7 +78,15 @@ onMounted(() => {
 
 onBeforeUnmount(() => disableAutosave());
 
-const slotProps: BaseInputSlot = {
+export interface BaseInputSlot {
+  toggleVisibility: typeof toggleVisibility;
+  clearValue: InputTools["clearValue"];
+  saveValue: InputTools["saveValue"];
+  restoreValue: InputTools["restoreValue"];
+  enableAutosave: InputTools["enableAutosave"];
+  disableAutosave: InputTools["disableAutosave"];
+}
+const slotProps = {
   toggleVisibility,
   clearValue,
   saveValue,
@@ -106,7 +94,18 @@ const slotProps: BaseInputSlot = {
   enableAutosave,
   disableAutosave,
 };
-defineExpose<BaseInput>({
+
+export interface BaseInput {
+  inputElement: (typeof inputElement)["value"];
+  toggleVisibility: typeof toggleVisibility;
+  browserStorage: InputTools["browserStorage"];
+  clearValue: InputTools["clearValue"];
+  saveValue: InputTools["saveValue"];
+  restoreValue: InputTools["restoreValue"];
+  enableAutosave: InputTools["enableAutosave"];
+  disableAutosave: InputTools["disableAutosave"];
+}
+defineExpose({
   inputElement,
   browserStorage,
   toggleVisibility,

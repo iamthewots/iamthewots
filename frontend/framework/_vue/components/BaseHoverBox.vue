@@ -18,13 +18,6 @@ export interface BaseHoverBoxEmits {
   (e: "base-hover-box:pointer-leave", pointerData: PointerData): void;
 }
 
-export interface BaseHoverBox {
-  hoverBoxElement: Ref<HTMLElement | null>;
-  getHoverBoxData: () =>
-    | { hoverBoxElement: HTMLElement; pointersDataArray: PointerData[] }
-    | undefined;
-}
-
 interface PointerData {
   index: number;
   props: PointerProps;
@@ -186,7 +179,11 @@ onBeforeUnmount(() =>
   window.removeEventListener("resize", handleResizeEventFromWindow)
 );
 
-defineExpose<BaseHoverBox>({ hoverBoxElement, getHoverBoxData });
+export interface BaseHoverBox {
+  hoverBoxElement: (typeof hoverBoxElement)["value"];
+  getHoverBoxData: typeof getHoverBoxData;
+}
+defineExpose({ hoverBoxElement, getHoverBoxData });
 </script>
 
 <template>

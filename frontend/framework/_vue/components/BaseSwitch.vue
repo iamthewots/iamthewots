@@ -12,10 +12,6 @@ export interface BaseSwitchEmits {
   (e: "base-switch:switch-off"): void;
 }
 
-export interface BaseSwitch {
-  inputElement: Ref<HTMLInputElement | null>;
-}
-
 defineOptions({
   name: "BaseSwitch",
   inheritAttrs: false,
@@ -37,7 +33,10 @@ function handleInputEvent(e: Event) {
   }
 }
 
-defineExpose<BaseSwitch>({ inputElement });
+export interface BaseSwitch {
+  inputElement: (typeof inputElement)["value"];
+}
+defineExpose({ inputElement });
 </script>
 
 <template>

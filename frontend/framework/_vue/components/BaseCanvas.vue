@@ -14,18 +14,6 @@ export interface BaseCanvasEmits {
   (e: "base-canvas:interaction-end"): void;
 }
 
-export interface BaseCanvas {
-  wrapperElement: typeof wrapperElement;
-  canvasElement: typeof canvasElement;
-  canvasContext: typeof canvasContext;
-  canvasHistory: typeof canvasHistory;
-  canvasHistoryIndex: typeof canvasHistoryIndex;
-  clearCanvas: typeof clearCanvas;
-  zoomCanvas: typeof zoomCanvas;
-  saveCanvasAsImage: typeof saveCanvasAsImage;
-  restoreCanvasFromHistory: typeof restoreCanvasFromHistory;
-}
-
 export interface CanvasTool {
   name: string;
   doNotUpdateHistory?: boolean;
@@ -98,14 +86,31 @@ function clearCanvas() {
   updateCanvasHistory("clear_canvas");
 }
 
-function zoomCanvas(value: number) {
+function zoomCanvas(value: number | "fit") {
   if (canvasElement.value === null) {
     return;
   }
 
-  value = Math.max(Math.min(value, 5), 0.1);
-  canvasElement.value.style.scale = value.toString();
-  canvasZoom.value = value;
+  let zoomValue = 1;
+
+  if (typeof value === "number") {
+    zoomValue = Math.max(Math.min(value, 5), 0.1);
+  } else if (value === "fit") {
+    if (wrapperElement.value === null || canvasElement.value === null) {
+      return;
+    }
+
+    const { width: wrapperElementWidth, height: wrapperElementHeight } =
+      wrapperElement.value.getBoundingClientRect();
+    const { width: canvasElementWidth, height: canvasElementHeight } =
+      canvasElement.value;
+    const scaleX = canvasElementWidth / wrapperElementWidth;
+    const scaleY = canvasElementHeight / wrapperElementHeight;
+    zoomValue = Math.min(scaleX, scaleY);
+  }
+
+  canvasElement.value.style.scale = zoomValue.toString();
+  canvasZoom.value = zoomValue;
 }
 
 function saveCanvasAsImage(fileName: string, fileExtension: string) {
@@ -130,6 +135,7 @@ function updateCanvasHistory(details?: string) {
     canvasElement.value === null ||
     canvasContext.value === null
   ) {
+    console.log("A")
     return false;
   }
 
@@ -137,10 +143,12 @@ function updateCanvasHistory(details?: string) {
     canvasHistory.length !== 0 &&
     canvasHistoryIndex.value !== canvasHistory.length - 1
   ) {
-    canvasHistory.splice(canvasHistoryIndex.value);
+    console.log("B")
+    canvasHistory.splice(canvasHistoryIndex.value + 1);
   }
 
   if (canvasHistory.length === props.historyMaxLength) {
+    console.log("C")
     canvasHistory.shift();
   }
 
@@ -313,10 +321,23 @@ onUnmounted(() => {
   window.removeEventListener("pointerup", handlePointerUpEvent);
 });
 
-defineExpose<BaseCanvas>({
+export interface BaseCanvas {
+  wrapperElement: (typeof wrapperElement)["value"];
+  canvasElement: (typeof canvasElement)["value"];
+  canvasContext: (typeof canvasContext)["value"];
+  canvasZoom: (typeof canvasZoom)["value"];
+  canvasHistory: typeof canvasHistory;
+  canvasHistoryIndex: (typeof canvasHistoryIndex)["value"];
+  clearCanvas: typeof clearCanvas;
+  zoomCanvas: typeof zoomCanvas;
+  saveCanvasAsImage: typeof saveCanvasAsImage;
+  restoreCanvasFromHistory: typeof restoreCanvasFromHistory;
+}
+defineExpose({
   wrapperElement,
   canvasElement,
   canvasContext,
+  canvasZoom,
   canvasHistory,
   canvasHistoryIndex,
   clearCanvas,

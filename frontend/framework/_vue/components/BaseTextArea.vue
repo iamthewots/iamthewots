@@ -19,24 +19,6 @@ export interface BaseTextAreaEmits extends InputToolsEmits<"base-text-area:"> {
   (e: "update:modelValue", value: string): void;
 }
 
-export interface BaseTextAreaSlot {
-  clearValue: InputTools["clearValue"];
-  saveValue: InputTools["saveValue"];
-  restoreValue: InputTools["restoreValue"];
-  enableAutosave: InputTools["enableAutosave"];
-  disableAutosave: InputTools["disableAutosave"];
-}
-
-export interface BaseTextArea {
-  textAreaElement: Ref<HTMLTextAreaElement | null>;
-  browserStorage: InputTools["browserStorage"];
-  clearValue: InputTools["clearValue"];
-  saveValue: InputTools["saveValue"];
-  restoreValue: InputTools["restoreValue"];
-  enableAutosave: InputTools["enableAutosave"];
-  disableAutosave: InputTools["disableAutosave"];
-}
-
 defineOptions({
   name: "BaseTextArea",
   inheritAttrs: false,
@@ -68,14 +50,31 @@ onMounted(() => {});
 
 onBeforeUnmount(() => disableAutosave());
 
-const slotProps: BaseTextAreaSlot = {
+export interface BaseTextAreaSlot {
+  clearValue: InputTools["clearValue"];
+  saveValue: InputTools["saveValue"];
+  restoreValue: InputTools["restoreValue"];
+  enableAutosave: InputTools["enableAutosave"];
+  disableAutosave: InputTools["disableAutosave"];
+}
+const slotProps = {
   clearValue,
   saveValue,
   restoreValue,
   enableAutosave,
   disableAutosave,
 };
-defineExpose<BaseTextArea>({
+
+export interface BaseTextArea {
+  textAreaElement: (typeof textAreaElement)["value"];
+  browserStorage: InputTools["browserStorage"];
+  clearValue: InputTools["clearValue"];
+  saveValue: InputTools["saveValue"];
+  restoreValue: InputTools["restoreValue"];
+  enableAutosave: InputTools["enableAutosave"];
+  disableAutosave: InputTools["disableAutosave"];
+}
+defineExpose({
   textAreaElement,
   browserStorage,
   clearValue,

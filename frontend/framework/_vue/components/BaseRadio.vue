@@ -12,10 +12,6 @@ export interface BaseRadioEmits {
   (e: "base-radio:unselected", value: string): void;
 }
 
-export interface BaseRadio {
-  inputElement: Ref<HTMLInputElement | null>;
-}
-
 defineOptions({
   name: "BaseRadio",
   inheritAttrs: false,
@@ -47,7 +43,10 @@ onMounted(() => {
   wasLastSelected = props.modelValue === inputElement.value?.value;
 });
 
-defineExpose<BaseRadio>({ inputElement });
+export interface BaseRadio {
+  inputElement: (typeof inputElement)["value"];
+}
+defineExpose({ inputElement });
 </script>
 
 <template>

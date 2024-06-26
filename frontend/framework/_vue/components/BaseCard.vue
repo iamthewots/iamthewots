@@ -13,19 +13,6 @@ export interface BaseCardEmits {
   (e: "base-card:turn-back"): void;
 }
 
-export interface BaseCardSlot {
-  turn: (cardFace: CardFace) => void;
-  turnFront: () => void;
-  turnBack: () => void;
-}
-
-export interface BaseCard {
-  cardElement: Ref<HTMLElement | null>;
-  turn: (cardFace: CardFace) => void;
-  turnFront: () => void;
-  turnBack: () => void;
-}
-
 type CardFace = "front" | "back";
 type TurnMethod = (typeof turnMethods)[number];
 type TurnDirection = (typeof turnDirections)[number];
@@ -100,8 +87,20 @@ function handleTransitionEndEvent() {
   }
 }
 
-const slotProps: BaseCardSlot = { turn, turnFront, turnBack };
-defineExpose<BaseCard>({ cardElement, turn, turnFront, turnBack });
+export interface BaseCardSlot {
+  turn: typeof turn;
+  turnFront: typeof turnFront;
+  turnBack: typeof turnBack;
+}
+const slotProps = { turn, turnFront, turnBack };
+
+export interface BaseCard {
+  cardElement: (typeof cardElement)["value"];
+  turn: typeof turn;
+  turnFront: typeof turnFront;
+  turnBack: typeof turnBack;
+}
+defineExpose({ cardElement, turn, turnFront, turnBack });
 </script>
 
 <template>
