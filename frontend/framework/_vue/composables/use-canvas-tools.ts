@@ -1,4 +1,4 @@
-import type { CanvasTool } from "@_vue/components/BaseCanvas.vue";
+import { CanvasTool } from "@_vue/components/BaseCanvas.vue";
 
 interface PenTool extends CanvasTool {
   lineCap: CanvasPathDrawingStyles["lineCap"];
@@ -24,18 +24,20 @@ export function useCanvasTools() {
   ): PenTool {
     return {
       name,
+      handleInteractionStart(_e, data) {
+        const { x, y, canvasContext } = data;
+        canvasContext.beginPath();
+        canvasContext.moveTo(x, y);
+      },
       handleInteraction(_e, data) {
         const { x, y, canvasContext } = data;
+
         canvasContext.lineCap = this.lineCap;
         canvasContext.lineJoin = this.lineJoin;
         canvasContext.lineWidth = this.lineWidth;
         canvasContext.strokeStyle = this.color ?? "#000";
         canvasContext.lineTo(x, y);
         canvasContext.stroke();
-      },
-      handleInteractionEnd(_e, data) {
-        const { canvasContext } = data;
-        canvasContext.beginPath();
       },
       lineCap: "round",
       lineJoin: "round",
@@ -50,6 +52,10 @@ export function useCanvasTools() {
   ): EraserTool {
     return {
       name,
+      handleInteractionStart(_e, data) {
+        const { canvasContext } = data;
+        canvasContext.beginPath();
+      },
       handleInteraction(_e, data) {
         const { x, y, canvasContext } = data;
 
@@ -79,10 +85,6 @@ export function useCanvasTools() {
             break;
         }
       },
-      handleInteractionEnd(_e, data) {
-        const { canvasContext } = data;
-        canvasContext.beginPath();
-      },
       lineCap: "round",
       lineWidth: 10,
       ...settings,
@@ -97,6 +99,18 @@ export function useCanvasTools() {
       // use pointerhistory again
       // fuck you leo
       // seriously, fuck everything
+
+      const { x, y, wrapperElement, pointerHistory } = data;
+
+      if (pointerHistory.length < 2) {
+        return;
+      }
+
+      const previousPoint = pointerHistory.slice(-2)[0];
+      const left = Math.sign(x - previousPoint.x) * 10;
+      const top = Math.sign(y - previousPoint.y) * 10;
+      console.log(left, top);
+      wrapperElement.scrollBy({ left, top });
     },
   };
 
