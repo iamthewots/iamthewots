@@ -1,4 +1,4 @@
-import { CanvasTool } from "@_vue/components/BaseCanvas.vue";
+import type { CanvasTool } from "@_vue/components/BaseCanvas.vue";
 
 interface PenTool extends CanvasTool {
   lineCap: CanvasPathDrawingStyles["lineCap"];
@@ -39,9 +39,13 @@ export function useCanvasTools() {
         canvasContext.lineTo(x, y);
         canvasContext.stroke();
       },
+      // handleInteractionEnd(_e, data) {
+      //   const { canvasContext } = data;
+      //   canvasContext.stroke();
+      // },
       lineCap: "round",
       lineJoin: "round",
-      lineWidth: 5,
+      lineWidth: 2,
       ...settings,
     };
   }
