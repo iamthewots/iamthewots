@@ -182,6 +182,14 @@ function restoreCanvasFromHistory(index: number) {
   return true;
 }
 
+function undo() {
+  restoreCanvasFromHistory(canvasHistoryIndex.value - 1);
+}
+
+function redo() {
+  restoreCanvasFromHistory(canvasHistoryIndex.value + 1);
+}
+
 function handleInteraction(e: PointerEvent, interactionStep: InteractionStep) {
   if (
     wrapperElement.value === null ||
@@ -280,6 +288,15 @@ function handlePointerUpEvent(e: PointerEvent) {
   handleInteraction(e, InteractionStep.End);
 }
 
+function handlePointerCancelEvent(e: PointerEvent) {
+  if (pointerId.value !== e.pointerId) {
+    return;
+  }
+
+  pointerIsActive.value = false;
+  handleInteraction(e, InteractionStep.End);
+}
+
 watch(
   computed(() => props.canvasTool),
   (newCanvasTool, previousCanvasTool) => {
@@ -332,6 +349,8 @@ export interface BaseCanvas {
   zoomCanvas: typeof zoomCanvas;
   saveCanvasAsImage: typeof saveCanvasAsImage;
   restoreCanvasFromHistory: typeof restoreCanvasFromHistory;
+  undo: typeof undo;
+  redo: typeof redo;
 }
 defineExpose({
   wrapperElement,
@@ -344,6 +363,8 @@ defineExpose({
   zoomCanvas,
   saveCanvasAsImage,
   restoreCanvasFromHistory,
+  undo,
+  redo,
 });
 </script>
 
@@ -354,6 +375,7 @@ defineExpose({
       @pointermove="handlePointerMoveEvent"
       @pointerleave="handlePointerLeaveEvent"
       @pointerdown="handlePointerDownEvent"
+      @pointercancel="handlePointerCancelEvent"
       v-bind="nonStyleAttrs"
       ref="canvasElement"
       ><slot></slot
