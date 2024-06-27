@@ -93,6 +93,7 @@ export function useCanvasTools() {
     name: "pan",
     doNotUpdateHistory: true,
     handleInteractionStart(e, data) {
+      // https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Drawing_shapes
       // use pointerhistory again
       // fuck you leo
       // seriously, fuck everything

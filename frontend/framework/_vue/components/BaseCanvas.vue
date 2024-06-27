@@ -135,7 +135,7 @@ function updateCanvasHistory(details?: string) {
     canvasElement.value === null ||
     canvasContext.value === null
   ) {
-    console.log("A")
+    console.log("A");
     return false;
   }
 
@@ -143,12 +143,12 @@ function updateCanvasHistory(details?: string) {
     canvasHistory.length !== 0 &&
     canvasHistoryIndex.value !== canvasHistory.length - 1
   ) {
-    console.log("B")
+    console.log("B");
     canvasHistory.splice(canvasHistoryIndex.value + 1);
   }
 
   if (canvasHistory.length === props.historyMaxLength) {
-    console.log("C")
+    console.log("C");
     canvasHistory.shift();
   }
 
@@ -356,6 +356,7 @@ defineExpose({
       @pointerdown="handlePointerDownEvent"
       v-bind="nonStyleAttrs"
       ref="canvasElement"
+      ><slot></slot
     ></canvas>
   </div>
 </template>
