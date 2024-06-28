@@ -53,6 +53,8 @@ export class TouchGestures {
   }
 
   #handlePointerMoveEvent(e: PointerEvent) {
+    // add a callback that inject custom values to payload
+    // this way special gestures can be recordedFi
     const event = new CustomEvent<GestureUpdateEventPayload>(
       "touch-gestures:gesture-update",
       {
