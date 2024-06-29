@@ -12,27 +12,26 @@ interface PointerGestureSettings {
 
 type PointerType = "mouse" | "pen" | "touch";
 
-export class PointerGesture {
-  _gestureName: string;
+export abstract class PointerGesture {
+  _element: HTMLElement;
   _pointersMap: Map<number, PointerData> = new Map();
-  #element: HTMLElement;
   #pointersRequired: number;
   #eventTypesAllowed: PointerType[] | "all";
   #mouseDownButton: number;
 
   constructor(
     element: HTMLElement,
-    gestureName: string,
     settings: Partial<PointerGestureSettings> = {}
   ) {
-    this.#element = element;
-    this._gestureName = gestureName;
+    this._element = element;
     this.#pointersRequired = Math.max(settings.pointersRequired ?? 1, 0);
     this.#eventTypesAllowed = settings.eventTypesAllowed ?? "all";
     this.#mouseDownButton = settings.mouseDownButton ?? 0;
+    this.connect();
   }
 
   connect() {
+    console.log(this._element);
     this.#manageEventListeners(1);
   }
 
@@ -40,11 +39,17 @@ export class PointerGesture {
     this.#manageEventListeners(0);
   }
 
+  _handleGestureStart(_e: PointerEvent) {}
+
+  _handleGesture(_e: PointerEvent) {}
+
+  _handleGestureEnd(_e: PointerEvent) {}
+
   #manageEventListeners(action: 1 | 0) {
     const fn =
       action === 1
-        ? this.#element.addEventListener
-        : this.#element.removeEventListener;
+        ? this._element.addEventListener
+        : this._element.removeEventListener;
     fn("pointerdown", this.#handlePointerDownEvent.bind(this));
     fn("pointermove", this.#handlePointerMoveEvent.bind(this));
     fn("pointerleave", this.#handlePointerLeaveEvent.bind(this));
@@ -69,7 +74,7 @@ export class PointerGesture {
     this._pointersMap.set(e.pointerId, pointerData);
 
     if (this._pointersMap.size === this.#pointersRequired) {
-      this.#handleGestureStart(e);
+      this._handleGestureStart(e);
     }
   }
 
@@ -84,17 +89,18 @@ export class PointerGesture {
     }
 
     pointerData.pointerHistory.push({ x: e.clientX, y: e.clientY });
-    this.#handleGesture(e);
+    this._handleGesture(e);
   }
 
   #handlePointerLeaveEvent(e: PointerEvent) {
+    console.log("calzone");
     const pointerData = this._pointersMap.get(e.pointerId);
 
     if (pointerData === undefined) {
       return;
     }
 
-    this.#handleGestureEnd(e);
+    this._handleGestureEnd(e);
     this._pointersMap.clear();
   }
 
@@ -105,15 +111,9 @@ export class PointerGesture {
       return;
     }
 
-    this.#handleGestureEnd(e);
+    this._handleGestureEnd(e);
     this._pointersMap.clear();
   }
-
-  #handleGestureStart(_e: PointerEvent) {}
-
-  #handleGesture(_e: PointerEvent) {}
-
-  #handleGestureEnd(_e: PointerEvent) {}
 
   #isPointerTypeAllowed(e: PointerEvent) {
     if (this.#eventTypesAllowed === "all") {
@@ -122,22 +122,38 @@ export class PointerGesture {
       return this.#eventTypesAllowed.includes(e.type as PointerType);
     }
   }
-
-  get pointersMap() {
-    return this._pointersMap;
-  }
 }
 
 export class SwipeGesture extends PointerGesture {
   constructor(element: HTMLElement) {
-    super(element, "swipe", {
+    super(element, {
       pointersRequired: 1,
     });
   }
 
-  #handleGestureStart(_e: PointerEvent) {}
+  _handleGestureStart(_e: PointerEvent) {
+    this._element.dispatchEvent(new Event("swipe-start"));
+  }
 
-  #handleGesture(_e: PointerEvent) {}
+  _handleGesture(e: PointerEvent) {
+    const pointerData = this._pointersMap.get(e.pointerId);
 
-  #handleGestureEnd(_e: PointerEvent) {}
+    if (pointerData === undefined) {
+      return;
+    }
+
+    const { pointerHistory } = pointerData;
+    const [firstPoint] = pointerHistory;
+    const [lastPoint] = pointerHistory.slice(-1);
+    const distanceX = lastPoint.x - firstPoint.x;
+    const distanceY = lastPoint.y - firstPoint.y;
+    const event = new CustomEvent("swipe", {
+      detail: { distanceX, distanceY },
+    });
+    this._element.dispatchEvent(event);
+  }
+
+  _handleGestureEnd(_e: PointerEvent) {
+    this._element.dispatchEvent(new Event("swipe-end"));
+  }
 }

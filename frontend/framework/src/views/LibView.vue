@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { SwipeGesture } from "@_lib/pointer-gesture";
 import { StopWatch } from "@_lib/stop-watch";
 import { TextTyper } from "@_lib/text-typer";
-import { computed, onMounted, reactive, ref, toRef, watch } from "vue";
+import { onMounted, ref } from "vue";
 
 const logElement = ref<HTMLElement>();
 const stopWatch = new StopWatch();
@@ -70,10 +71,31 @@ onMounted(() => {
 });
 
 // gesture
-const gestureElement = ref<HTMLElement|null>(null);
+const gestureElement = ref<HTMLElement | null>(null);
+
+function handleSwipeEvent(e: CustomEvent) {
+  if (gestureElement.value === null) {
+    return;
+  }
+
+  gestureElement.value.innerText = `x: ${e.detail.distanceX} \n y: ${e.detail.distanceY}`;
+}
+
+function handleSwipeStartEvent() {
+  console.log("tacci tua!");
+}
+
+function handleSwipeEndEvent() {
+  console.log("AOOOH");
+}
 
 onMounted(() => {
-})
+  if (gestureElement.value === null) {
+    return;
+  }
+
+  const swipeGesture = new SwipeGesture(gestureElement.value!);
+});
 </script>
 
 <template>
@@ -94,7 +116,13 @@ onMounted(() => {
         >Restore TextTyper</BaseButton
       >
     </div>
-    <div class="box aspect-ratio-square max-width-md | gesture-element" ref="gestureElement"></div>
+    <div
+      class="box aspect-ratio-square max-width-md | gesture-element"
+      @swipe-start="handleSwipeStartEvent"
+      @swipe="handleSwipeEvent"
+      @swipe-end="handleSwipeEndEvent"
+      ref="gestureElement"
+    ></div>
   </main>
 </template>
 
