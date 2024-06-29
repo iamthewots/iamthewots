@@ -68,6 +68,12 @@ onMounted(() => {
     refill--;
   };
 });
+
+// gesture
+const gestureElement = ref<HTMLElement|null>(null);
+
+onMounted(() => {
+})
 </script>
 
 <template>
@@ -88,6 +94,7 @@ onMounted(() => {
         >Restore TextTyper</BaseButton
       >
     </div>
+    <div class="box aspect-ratio-square max-width-md | gesture-element" ref="gestureElement"></div>
   </main>
 </template>
 
@@ -103,5 +110,9 @@ onMounted(() => {
     fade-in 1300ms ease-out forwards;
   color: red;
   font-weight: bold;
+}
+
+.gesture-element {
+  touch-action: none;
 }
 </style>

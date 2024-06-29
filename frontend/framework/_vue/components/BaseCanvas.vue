@@ -293,6 +293,7 @@ function handlePointerCancelEvent(e: PointerEvent) {
     return;
   }
 
+  pointerIsOver.value = false;
   pointerIsActive.value = false;
   handleInteraction(e, InteractionStep.End);
 }
