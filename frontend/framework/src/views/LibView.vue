@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SwipeGesture } from "@_lib/pointer-gesture";
+import { PanGesture, SwipeGesture } from "@_lib/pointer-gesture";
 import { StopWatch } from "@_lib/stop-watch";
 import { TextTyper } from "@_lib/text-typer";
 import { onMounted, ref } from "vue";
@@ -72,8 +72,9 @@ onMounted(() => {
 
 // gesture
 const gestureElement = ref<HTMLElement | null>(null);
+const swipeOutputElement = ref<HTMLElement | null>(null);
 
-function handleSwipeEvent(e: CustomEvent) {
+function handlePanEvent(e: CustomEvent) {
   if (gestureElement.value === null) {
     return;
   }
@@ -81,12 +82,20 @@ function handleSwipeEvent(e: CustomEvent) {
   gestureElement.value.innerText = `x: ${e.detail.distanceX} \n y: ${e.detail.distanceY}`;
 }
 
-function handleSwipeStartEvent() {
-  console.log("tacci tua!");
+function handlePanStartEvent() {
+  console.log("Pan start");
 }
 
-function handleSwipeEndEvent() {
-  console.log("AOOOH");
+function handlePanEndEvent() {
+  console.log("Pan end");
+}
+
+function handleSwipeEvent(e: Event) {
+  if (swipeOutputElement.value === null) {
+    return;
+  }
+
+  swipeOutputElement.value.innerText += `${e.type} | `;
 }
 
 onMounted(() => {
@@ -94,7 +103,8 @@ onMounted(() => {
     return;
   }
 
-  const swipeGesture = new SwipeGesture(gestureElement.value!);
+  const panGesture = new PanGesture(gestureElement.value);
+  const swipeGesture = new SwipeGesture(gestureElement.value, 1, 100);
 });
 </script>
 
@@ -118,11 +128,16 @@ onMounted(() => {
     </div>
     <div
       class="box aspect-ratio-square max-width-md | gesture-element"
-      @swipe-start="handleSwipeStartEvent"
-      @swipe="handleSwipeEvent"
-      @swipe-end="handleSwipeEndEvent"
+      @pan-start="handlePanStartEvent"
+      @pan="handlePanEvent"
+      @pan-end="handlePanEndEvent"
+      @swipe-left="handleSwipeEvent"
+      @swipe-right="handleSwipeEvent"
+      @swipe-up="handleSwipeEvent"
+      @swipe-down="handleSwipeEvent"
       ref="gestureElement"
     ></div>
+    <p ref="swipeOutputElement"></p>
   </main>
 </template>
 

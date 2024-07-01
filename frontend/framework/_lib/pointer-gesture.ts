@@ -31,7 +31,6 @@ export abstract class PointerGesture {
   }
 
   connect() {
-    console.log(this._element);
     this.#manageEventListeners(1);
   }
 
@@ -124,7 +123,7 @@ export abstract class PointerGesture {
   }
 }
 
-export class SwipeGesture extends PointerGesture {
+export class PanGesture extends PointerGesture {
   constructor(element: HTMLElement) {
     super(element, {
       pointersRequired: 1,
@@ -132,7 +131,7 @@ export class SwipeGesture extends PointerGesture {
   }
 
   _handleGestureStart(_e: PointerEvent) {
-    this._element.dispatchEvent(new Event("swipe-start"));
+    this._element.dispatchEvent(new Event("pan-start"));
   }
 
   _handleGesture(e: PointerEvent) {
@@ -142,18 +141,80 @@ export class SwipeGesture extends PointerGesture {
       return;
     }
 
-    const { pointerHistory } = pointerData;
-    const [firstPoint] = pointerHistory;
-    const [lastPoint] = pointerHistory.slice(-1);
-    const distanceX = lastPoint.x - firstPoint.x;
-    const distanceY = lastPoint.y - firstPoint.y;
-    const event = new CustomEvent("swipe", {
+    const { distanceX, distanceY } = this.#getDistance(pointerData);
+    const event = new CustomEvent("pan", {
       detail: { distanceX, distanceY },
     });
     this._element.dispatchEvent(event);
   }
 
-  _handleGestureEnd(_e: PointerEvent) {
-    this._element.dispatchEvent(new Event("swipe-end"));
+  _handleGestureEnd(e: PointerEvent) {
+    this._element.dispatchEvent(new Event("pan-end"));
+  }
+
+  #getDistance(pointerData: PointerData) {
+    const { pointerHistory } = pointerData;
+    const [firstPoint] = pointerHistory;
+    const [lastPoint] = pointerHistory.slice(-1);
+    const distanceX = lastPoint.x - firstPoint.x;
+    const distanceY = lastPoint.y - firstPoint.y;
+
+    return { distanceX, distanceY };
+  }
+}
+
+export class SwipeGesture extends PointerGesture {
+  #threshold: number;
+  #maxTimeout = 1000;
+
+  constructor(
+    element: HTMLElement,
+    pointersRequired: number,
+    threshold: number
+  ) {
+    super(element, { pointersRequired });
+    this.#threshold = Math.abs(threshold);
+  }
+
+  _handleGestureEnd(e: PointerEvent): void {
+    const pointerData = this._pointersMap.get(e.pointerId);
+
+    if (
+      pointerData === undefined ||
+      this.#isTimeoutValid(pointerData) === false
+    ) {
+      return;
+    }
+
+    const { distanceX, distanceY } = this.#getDistance(pointerData);
+
+    if (distanceX > 0 && distanceX >= this.#threshold) {
+      this._element.dispatchEvent(new Event("swipe-right"));
+    } else if (distanceX < 0 && distanceX <= this.#threshold * -1) {
+      this._element.dispatchEvent(new Event("swipe-left"));
+    }
+
+    if (distanceY > 0 && distanceY >= this.#threshold) {
+      this._element.dispatchEvent(new Event("swipe-down"));
+    } else if (distanceY < 0 && distanceY <= this.#threshold * -1) {
+      this._element.dispatchEvent(new Event("swipe-up"));
+    }
+  }
+
+  #isTimeoutValid(pointerData: PointerData) {
+    const { timestamp } = pointerData;
+    const timeout = Date.now() - timestamp;
+
+    return timeout <= this.#maxTimeout;
+  }
+
+  #getDistance(pointerData: PointerData) {
+    const { pointerHistory } = pointerData;
+    const [firstPoint] = pointerHistory;
+    const [lastPoint] = pointerHistory.slice(-1);
+    const distanceX = lastPoint.x - firstPoint.x;
+    const distanceY = lastPoint.y - firstPoint.y;
+
+    return { distanceX, distanceY };
   }
 }
