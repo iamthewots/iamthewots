@@ -72,14 +72,12 @@ onMounted(() => {
 
 // gesture
 const gestureElement = ref<HTMLElement | null>(null);
-const swipeOutputElement = ref<HTMLElement | null>(null);
+const ballElement = ref<HTMLElement | null>(null);
 
 function handlePanEvent(e: CustomEvent) {
   if (gestureElement.value === null) {
     return;
   }
-
-  gestureElement.value.innerText = `x: ${e.detail.distanceX} \n y: ${e.detail.distanceY}`;
 }
 
 function handlePanStartEvent() {
@@ -91,11 +89,38 @@ function handlePanEndEvent() {
 }
 
 function handleSwipeEvent(e: Event) {
-  if (swipeOutputElement.value === null) {
+  if (ballElement.value === null) {
     return;
   }
 
-  swipeOutputElement.value.innerText += `${e.type} | `;
+  console.log(e.type);
+
+  let className = "";
+
+  ballElement.value.classList.remove(
+    "ball-is-left",
+    "ball-is-right",
+    "ball-is-up",
+    "ball-is-down"
+  );
+
+  switch (e.type) {
+    case "swipe-left":
+      className = "ball-is-left";
+      break;
+    case "swipe-right":
+      className = "ball-is-right";
+      break;
+    case "swipe-up":
+      className = "ball-is-up";
+      break;
+    case "swipe-down":
+      className = "ball-is-down";
+      break;
+  }
+
+  console.log(className);
+  ballElement.value.classList.add(className);
 }
 
 onMounted(() => {
@@ -104,7 +129,7 @@ onMounted(() => {
   }
 
   const panGesture = new PanGesture(gestureElement.value);
-  const swipeGesture = new SwipeGesture(gestureElement.value, 1, 100);
+  const swipeGesture = new SwipeGesture(gestureElement.value, 1, 50);
 });
 </script>
 
@@ -136,8 +161,9 @@ onMounted(() => {
       @swipe-up="handleSwipeEvent"
       @swipe-down="handleSwipeEvent"
       ref="gestureElement"
-    ></div>
-    <p ref="swipeOutputElement"></p>
+    >
+      <div class="ball" ref="ballElement"></div>
+    </div>
   </main>
 </template>
 
@@ -156,6 +182,34 @@ onMounted(() => {
 }
 
 .gesture-element {
+  position: relative;
+  place-items: center;
+  display: grid;
   touch-action: none;
+}
+
+.ball {
+  position: absolute;
+  transition: translate 200ms ease;
+  aspect-ratio: 1;
+  border-radius: 100rem;
+  width: 4rem;
+  background-color: red;
+
+  &-is-left {
+    translate: -100% 0;
+  }
+
+  &-is-right {
+    translate: 100% 0;
+  }
+
+  &-is-up {
+    translate: 0 -100%;
+  }
+
+  &-is-down {
+    translate: 0 100%;
+  }
 }
 </style>

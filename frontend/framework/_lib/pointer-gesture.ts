@@ -31,11 +31,41 @@ export abstract class PointerGesture {
   }
 
   connect() {
-    this.#manageEventListeners(1);
+    this._element.addEventListener(
+      "pointerdown",
+      this.#handlePointerDownEvent.bind(this)
+    );
+    this._element.addEventListener(
+      "pointermove",
+      this.#handlePointerMoveEvent.bind(this)
+    );
+    this._element.addEventListener(
+      "pointerleave",
+      this.#handlePointerLeaveEvent.bind(this)
+    );
+    this._element.addEventListener(
+      "pointerup",
+      this.#handlePointerUpEvent.bind(this)
+    );
   }
 
   disconnect() {
-    this.#manageEventListeners(0);
+    this._element.removeEventListener(
+      "pointerdown",
+      this.#handlePointerDownEvent.bind(this)
+    );
+    this._element.removeEventListener(
+      "pointermove",
+      this.#handlePointerMoveEvent.bind(this)
+    );
+    this._element.removeEventListener(
+      "pointerleave",
+      this.#handlePointerLeaveEvent.bind(this)
+    );
+    this._element.removeEventListener(
+      "pointerup",
+      this.#handlePointerUpEvent.bind(this)
+    );
   }
 
   _handleGestureStart(_e: PointerEvent) {}
@@ -43,17 +73,6 @@ export abstract class PointerGesture {
   _handleGesture(_e: PointerEvent) {}
 
   _handleGestureEnd(_e: PointerEvent) {}
-
-  #manageEventListeners(action: 1 | 0) {
-    const fn =
-      action === 1
-        ? this._element.addEventListener
-        : this._element.removeEventListener;
-    fn("pointerdown", this.#handlePointerDownEvent.bind(this));
-    fn("pointermove", this.#handlePointerMoveEvent.bind(this));
-    fn("pointerleave", this.#handlePointerLeaveEvent.bind(this));
-    fn("pointerup", this.#handlePointerUpEvent.bind(this));
-  }
 
   #handlePointerDownEvent(e: PointerEvent) {
     if (
@@ -92,7 +111,6 @@ export abstract class PointerGesture {
   }
 
   #handlePointerLeaveEvent(e: PointerEvent) {
-    console.log("calzone");
     const pointerData = this._pointersMap.get(e.pointerId);
 
     if (pointerData === undefined) {
