@@ -1,6 +1,6 @@
 interface PointerData {
   index: number;
-  pointerHistory: { x: number; y: number }[];
+  coordinatesHistory: { x: number; y: number; timestamp: number }[];
   timestamp: number;
 }
 
@@ -12,17 +12,17 @@ interface PointerGestureSettings {
 
 type PointerType = "mouse" | "pen" | "touch";
 
-export abstract class PointerGesture {
+export class PointerGesture<T> {
   _element: HTMLElement;
   _pointersMap: Map<number, PointerData> = new Map();
   #pointersRequired: number;
   #eventTypesAllowed: PointerType[] | "all";
   #mouseDownButton: number;
+  handleGestureStart?: (e: PointerEvent) => void;
+  handleGestureActive?: (e: PointerEvent) => void;
+  handleGestureEnd?: (e: PointerEvent) => void;
 
-  constructor(
-    element: HTMLElement,
-    settings: Partial<PointerGestureSettings> = {}
-  ) {
+  constructor(element: HTMLElement, settings: PointerGestureSettings) {
     this._element = element;
     this.#pointersRequired = Math.max(settings.pointersRequired ?? 1, 0);
     this.#eventTypesAllowed = settings.eventTypesAllowed ?? "all";
@@ -31,54 +31,29 @@ export abstract class PointerGesture {
   }
 
   connect() {
-    this._element.addEventListener(
-      "pointerdown",
-      this.#handlePointerDownEvent.bind(this)
-    );
-    this._element.addEventListener(
-      "pointermove",
-      this.#handlePointerMoveEvent.bind(this)
-    );
-    this._element.addEventListener(
-      "pointerleave",
-      this.#handlePointerLeaveEvent.bind(this)
-    );
-    this._element.addEventListener(
-      "pointerup",
-      this.#handlePointerUpEvent.bind(this)
-    );
+    this.#manageEventListeners("add");
   }
 
   disconnect() {
-    this._element.removeEventListener(
-      "pointerdown",
-      this.#handlePointerDownEvent.bind(this)
-    );
-    this._element.removeEventListener(
-      "pointermove",
-      this.#handlePointerMoveEvent.bind(this)
-    );
-    this._element.removeEventListener(
-      "pointerleave",
-      this.#handlePointerLeaveEvent.bind(this)
-    );
-    this._element.removeEventListener(
-      "pointerup",
-      this.#handlePointerUpEvent.bind(this)
-    );
+    this.#manageEventListeners("remove");
   }
 
-  _handleGestureStart(_e: PointerEvent) {}
-
-  _handleGesture(_e: PointerEvent) {}
-
-  _handleGestureEnd(_e: PointerEvent) {}
+  #manageEventListeners(action: "add" | "remove") {
+    const fn =
+      action === "add"
+        ? this._element.addEventListener.bind(this._element)
+        : this._element.removeEventListener.bind(this._element);
+    fn("pointerdown", this.#handlePointerDownEvent.bind(this));
+    fn("pointermove", this.#handlePointerMoveEvent.bind(this));
+    fn("pointerleave", this.#handlePointerLeaveEvent.bind(this));
+    fn("pointerup", this.#handlePointerUpEvent.bind(this));
+  }
 
   #handlePointerDownEvent(e: PointerEvent) {
     if (
       this._pointersMap.size >= this.#pointersRequired ||
       this._pointersMap.has(e.pointerId) ||
-      this.#isPointerTypeAllowed(e) === false ||
+      this.#isPointerTypeValid(e) === false ||
       (e.type === "mouse" && e.button !== this.#mouseDownButton)
     ) {
       return;
@@ -86,13 +61,15 @@ export abstract class PointerGesture {
 
     const pointerData: PointerData = {
       index: this._pointersMap.size,
-      pointerHistory: [{ x: e.clientX, y: e.clientY }],
+      coordinatesHistory: [
+        { x: e.clientX, y: e.clientY, timestamp: Date.now() },
+      ],
       timestamp: Date.now(),
     };
     this._pointersMap.set(e.pointerId, pointerData);
 
     if (this._pointersMap.size === this.#pointersRequired) {
-      this._handleGestureStart(e);
+      this.handleGestureStart?.(e);
     }
   }
 
@@ -106,8 +83,12 @@ export abstract class PointerGesture {
       return;
     }
 
-    pointerData.pointerHistory.push({ x: e.clientX, y: e.clientY });
-    this._handleGesture(e);
+    pointerData.coordinatesHistory.push({
+      x: e.clientX,
+      y: e.clientY,
+      timestamp: Date.now(),
+    });
+    this.handleGestureActive?.(e);
   }
 
   #handlePointerLeaveEvent(e: PointerEvent) {
@@ -117,7 +98,7 @@ export abstract class PointerGesture {
       return;
     }
 
-    this._handleGestureEnd(e);
+    this.handleGestureEnd?.(e);
     this._pointersMap.clear();
   }
 
@@ -128,11 +109,11 @@ export abstract class PointerGesture {
       return;
     }
 
-    this._handleGestureEnd(e);
+    this.handleGestureEnd?.(e);
     this._pointersMap.clear();
   }
 
-  #isPointerTypeAllowed(e: PointerEvent) {
+  #isPointerTypeValid(e: PointerEvent) {
     if (this.#eventTypesAllowed === "all") {
       return true;
     } else {
@@ -141,98 +122,11 @@ export abstract class PointerGesture {
   }
 }
 
-export class PanGesture extends PointerGesture {
-  constructor(element: HTMLElement) {
-    super(element, {
-      pointersRequired: 1,
-    });
-  }
+function addPointerSwipeGesture(element: HTMLElement) {
+  const pointerGesture = new PointerGesture(element, { pointersRequired: 1 });
 
-  _handleGestureStart(_e: PointerEvent) {
-    this._element.dispatchEvent(new Event("pan-start"));
-  }
-
-  _handleGesture(e: PointerEvent) {
-    const pointerData = this._pointersMap.get(e.pointerId);
-
-    if (pointerData === undefined) {
-      return;
-    }
-
-    const { distanceX, distanceY } = this.#getDistance(pointerData);
-    const event = new CustomEvent("pan", {
-      detail: { distanceX, distanceY },
-    });
-    this._element.dispatchEvent(event);
-  }
-
-  _handleGestureEnd(e: PointerEvent) {
-    this._element.dispatchEvent(new Event("pan-end"));
-  }
-
-  #getDistance(pointerData: PointerData) {
-    const { pointerHistory } = pointerData;
-    const [firstPoint] = pointerHistory;
-    const [lastPoint] = pointerHistory.slice(-1);
-    const distanceX = lastPoint.x - firstPoint.x;
-    const distanceY = lastPoint.y - firstPoint.y;
-
-    return { distanceX, distanceY };
-  }
-}
-
-export class SwipeGesture extends PointerGesture {
-  #threshold: number;
-  #maxTimeout = 1000;
-
-  constructor(
-    element: HTMLElement,
-    pointersRequired: number,
-    threshold: number
-  ) {
-    super(element, { pointersRequired });
-    this.#threshold = Math.abs(threshold);
-  }
-
-  _handleGestureEnd(e: PointerEvent): void {
-    const pointerData = this._pointersMap.get(e.pointerId);
-
-    if (
-      pointerData === undefined ||
-      this.#isTimeoutValid(pointerData) === false
-    ) {
-      return;
-    }
-
-    const { distanceX, distanceY } = this.#getDistance(pointerData);
-
-    if (distanceX > 0 && distanceX >= this.#threshold) {
-      this._element.dispatchEvent(new Event("swipe-right"));
-    } else if (distanceX < 0 && distanceX <= this.#threshold * -1) {
-      this._element.dispatchEvent(new Event("swipe-left"));
-    }
-
-    if (distanceY > 0 && distanceY >= this.#threshold) {
-      this._element.dispatchEvent(new Event("swipe-down"));
-    } else if (distanceY < 0 && distanceY <= this.#threshold * -1) {
-      this._element.dispatchEvent(new Event("swipe-up"));
-    }
-  }
-
-  #isTimeoutValid(pointerData: PointerData) {
-    const { timestamp } = pointerData;
-    const timeout = Date.now() - timestamp;
-
-    return timeout <= this.#maxTimeout;
-  }
-
-  #getDistance(pointerData: PointerData) {
-    const { pointerHistory } = pointerData;
-    const [firstPoint] = pointerHistory;
-    const [lastPoint] = pointerHistory.slice(-1);
-    const distanceX = lastPoint.x - firstPoint.x;
-    const distanceY = lastPoint.y - firstPoint.y;
-
-    return { distanceX, distanceY };
-  }
+  pointerGesture.handleGestureEnd = function (
+    this: PointerGesture<any>,
+    e: PointerEvent
+  ) {};
 }
