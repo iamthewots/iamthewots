@@ -12,15 +12,15 @@ interface PointerGestureSettings {
 
 type PointerType = "mouse" | "pen" | "touch";
 
-export class PointerGesture<T> {
+export class PointerGesture {
   _element: HTMLElement;
   _pointersMap: Map<number, PointerData> = new Map();
+  _handleGestureStart?: (e: PointerEvent) => void;
+  _handleGestureActive?: (e: PointerEvent) => void;
+  _handleGestureEnd?: (e: PointerEvent) => void;
   #pointersRequired: number;
   #eventTypesAllowed: PointerType[] | "all";
   #mouseDownButton: number;
-  handleGestureStart?: (e: PointerEvent) => void;
-  handleGestureActive?: (e: PointerEvent) => void;
-  handleGestureEnd?: (e: PointerEvent) => void;
 
   constructor(element: HTMLElement, settings: PointerGestureSettings) {
     this._element = element;
@@ -69,7 +69,7 @@ export class PointerGesture<T> {
     this._pointersMap.set(e.pointerId, pointerData);
 
     if (this._pointersMap.size === this.#pointersRequired) {
-      this.handleGestureStart?.(e);
+      this._handleGestureStart?.(e);
     }
   }
 
@@ -88,7 +88,7 @@ export class PointerGesture<T> {
       y: e.clientY,
       timestamp: Date.now(),
     });
-    this.handleGestureActive?.(e);
+    this._handleGestureActive?.(e);
   }
 
   #handlePointerLeaveEvent(e: PointerEvent) {
@@ -98,7 +98,7 @@ export class PointerGesture<T> {
       return;
     }
 
-    this.handleGestureEnd?.(e);
+    this._handleGestureEnd?.(e);
     this._pointersMap.clear();
   }
 
@@ -109,7 +109,7 @@ export class PointerGesture<T> {
       return;
     }
 
-    this.handleGestureEnd?.(e);
+    this._handleGestureEnd?.(e);
     this._pointersMap.clear();
   }
 
@@ -122,11 +122,64 @@ export class PointerGesture<T> {
   }
 }
 
-function addPointerSwipeGesture(element: HTMLElement) {
-  const pointerGesture = new PointerGesture(element, { pointersRequired: 1 });
+interface PointerSwipeGestureSettings extends PointerGestureSettings {
+  threshold: number;
+  timeout: number;
+}
 
-  pointerGesture.handleGestureEnd = function (
-    this: PointerGesture<any>,
-    e: PointerEvent
-  ) {};
+export class PointerSwipeGesture extends PointerGesture {
+  #threshold: number;
+  #timeout: number;
+
+  constructor(
+    element: HTMLElement,
+    settings: Partial<PointerSwipeGestureSettings>
+  ) {
+    super(element, settings);
+    this.#threshold = Math.max(settings.threshold ?? 100, 0);
+    this.#timeout = Math.max(settings.timeout ?? 1000, 0);
+    this._handleGestureEnd = this.#handleGestureEnd;
+  }
+
+  #handleGestureEnd(e: PointerEvent) {
+    const pointerData = this._pointersMap.get(e.pointerId);
+
+    if (
+      pointerData === undefined ||
+      this.#isSwipeTimingValid(pointerData) === false
+    ) {
+      return;
+    }
+
+    const { coordinatesHistory } = pointerData;
+    const [firstPoint] = coordinatesHistory;
+    const [lastPoint] = coordinatesHistory.slice(-1);
+    const distanceX = lastPoint.x - firstPoint.x;
+    const distanceY = lastPoint.y - firstPoint.y;
+    const swipeValues: { [key: string]: boolean } = {
+      left: distanceX < 0 && distanceX <= this.#threshold * -1,
+      right: distanceX > 0 && distanceX >= this.#threshold,
+      up: distanceY < 0 && distanceY <= this.#threshold * -1,
+      down: distanceY > 0 && distanceY >= this.#threshold,
+    };
+
+    for (let swipeDirection in swipeValues) {
+      const swipeIsValid = swipeValues[swipeDirection];
+
+      if (swipeIsValid) {
+        this._element.dispatchEvent(new Event(`swipe-${swipeDirection}`));
+      }
+    }
+
+    const event = new CustomEvent("swipe", {
+      detail: { distanceX, distanceY },
+    });
+    this._element.dispatchEvent(event);
+  }
+
+  #isSwipeTimingValid(pointerData: PointerData) {
+    const { timestamp } = pointerData;
+
+    return Date.now() - timestamp <= this.#timeout;
+  }
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PanGesture, SwipeGesture } from "@_lib/pointer-gesture";
+import { PointerSwipeGesture } from "@_lib/pointer-gesture";
 import { StopWatch } from "@_lib/stop-watch";
 import { TextTyper } from "@_lib/text-typer";
 import { onMounted, ref } from "vue";
@@ -74,20 +74,6 @@ onMounted(() => {
 const gestureElement = ref<HTMLElement | null>(null);
 const ballElement = ref<HTMLElement | null>(null);
 
-function handlePanEvent(e: CustomEvent) {
-  if (gestureElement.value === null) {
-    return;
-  }
-}
-
-function handlePanStartEvent() {
-  console.log("Pan start");
-}
-
-function handlePanEndEvent() {
-  console.log("Pan end");
-}
-
 function handleSwipeEvent(e: Event) {
   if (ballElement.value === null) {
     return;
@@ -128,8 +114,11 @@ onMounted(() => {
     return;
   }
 
-  const panGesture = new PanGesture(gestureElement.value);
-  const swipeGesture = new SwipeGesture(gestureElement.value, 1, 50);
+  const swipeGesture = new PointerSwipeGesture(gestureElement.value, {
+    pointersRequired: 1,
+    threshold: 200,
+    timeout: 1000,
+  });
 });
 </script>
 
@@ -153,9 +142,6 @@ onMounted(() => {
     </div>
     <div
       class="box aspect-ratio-square max-width-md | gesture-element"
-      @pan-start="handlePanStartEvent"
-      @pan="handlePanEvent"
-      @pan-end="handlePanEndEvent"
       @swipe-left="handleSwipeEvent"
       @swipe-right="handleSwipeEvent"
       @swipe-up="handleSwipeEvent"
