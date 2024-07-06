@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { PointerSwipeGesture } from "@_lib/pointer-gesture";
+import {
+  PointerPanGesture,
+  PointerSwipeGesture,
+  type PointerPanGestureEvent,
+} from "@_lib/pointer-gesture";
 import { StopWatch } from "@_lib/stop-watch";
 import { TextTyper } from "@_lib/text-typer";
 import { onMounted, ref } from "vue";
@@ -60,10 +64,10 @@ onMounted(() => {
 
     textTyper
       .addLineBreak()
-      .writeText("nigga...")
+      .writeText("But wait...")
       .addLineBreak()
-      .setCallback(() => console.log("Stole my bike?"))
-      .writeText("WHAT CONSOLE SAID! He fucking stole my bike!")
+      .setCallback(() => console.log("Secret!"))
+      .writeText("There is more!")
       .setCheckpoint("myBike")
       .start();
     refill--;
@@ -73,6 +77,22 @@ onMounted(() => {
 // gesture
 const gestureElement = ref<HTMLElement | null>(null);
 const ballElement = ref<HTMLElement | null>(null);
+
+function handlePanStartOrPanEndEvent() {
+  if (ballElement.value === null) {
+    return;
+  }
+
+  ballElement.value.style.translate = "initial";
+}
+
+function handlePanEvent(e: CustomEvent<PointerPanGestureEvent>) {
+  if (ballElement.value === null) {
+    return;
+  }
+
+  ballElement.value.style.translate = `${e.detail.distanceX}px ${e.detail.distanceY}px`;
+}
 
 function handleSwipeEvent(e: Event) {
   if (ballElement.value === null) {
@@ -114,8 +134,11 @@ onMounted(() => {
     return;
   }
 
+  const panGesture = new PointerPanGesture(gestureElement.value, {
+    minPointers: 2,
+  });
   const swipeGesture = new PointerSwipeGesture(gestureElement.value, {
-    pointersRequired: 1,
+    minPointers: 3,
     threshold: 200,
     timeout: 1000,
   });
@@ -142,6 +165,9 @@ onMounted(() => {
     </div>
     <div
       class="box aspect-ratio-square max-width-md | gesture-element"
+      @pan-start="handlePanStartOrPanEndEvent"
+      @pan="handlePanEvent"
+      @pan-end="handlePanStartOrPanEndEvent"
       @swipe-left="handleSwipeEvent"
       @swipe-right="handleSwipeEvent"
       @swipe-up="handleSwipeEvent"
@@ -176,7 +202,6 @@ onMounted(() => {
 
 .ball {
   position: absolute;
-  transition: translate 200ms ease;
   aspect-ratio: 1;
   border-radius: 100rem;
   width: 4rem;

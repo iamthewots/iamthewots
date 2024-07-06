@@ -1,32 +1,54 @@
+// reformat with a addCallback with a object with start, active, end keys
+
+export interface PointerGestureSettings {
+  minPointers?: number;
+  maxPointers?: number;
+  mainPointerIndex?: number;
+  pointerTypesAllowed: PointerType[] | "all";
+  gestureIsActiveOnlyWhenMainPointerMove?: boolean;
+  mouseDownButton?: MouseButton;
+  penDownButton?: number;
+}
+
 interface PointerData {
   index: number;
+  type: PointerType;
   coordinatesHistory: { x: number; y: number; timestamp: number }[];
   timestamp: number;
 }
 
-interface PointerGestureSettings {
-  pointersRequired?: number;
-  eventTypesAllowed?: PointerType[] | "all";
-  mouseDownButton?: number;
-}
-
 type PointerType = "mouse" | "pen" | "touch";
+
+export enum MouseButton {
+  "Main" = 0,
+  "Auxiliary" = 1,
+  "Secondary" = 2,
+  "BrowserBack" = 3,
+  "BrowserForward" = 4,
+}
 
 export class PointerGesture {
   _element: HTMLElement;
-  _pointersMap: Map<number, PointerData> = new Map();
-  _handleGestureStart?: (e: PointerEvent) => void;
-  _handleGestureActive?: (e: PointerEvent) => void;
-  _handleGestureEnd?: (e: PointerEvent) => void;
-  #pointersRequired: number;
-  #eventTypesAllowed: PointerType[] | "all";
-  #mouseDownButton: number;
+  #minPointers: number;
+  #maxPointers: number;
+  _pointersDataMap: Map<number, PointerData> = new Map();
+  _mainPointerData?: PointerData;
+  #mainPointerIndex: number;
+  #pointerTypesAllowed: PointerType[] | "all";
+  #gestureIsActiveOnlyWhenMainPointerMove: boolean;
+  #mouseDownButton: MouseButton;
+  #penDownButton: number;
 
   constructor(element: HTMLElement, settings: PointerGestureSettings) {
     this._element = element;
-    this.#pointersRequired = Math.max(settings.pointersRequired ?? 1, 0);
-    this.#eventTypesAllowed = settings.eventTypesAllowed ?? "all";
-    this.#mouseDownButton = settings.mouseDownButton ?? 0;
+    this.#minPointers = settings.minPointers ?? 1;
+    this.#maxPointers = settings.maxPointers ?? this.#minPointers;
+    this.#mainPointerIndex = settings.mainPointerIndex ?? 0;
+    this.#pointerTypesAllowed = settings.pointerTypesAllowed ?? "all";
+    this.#gestureIsActiveOnlyWhenMainPointerMove =
+      !!settings.gestureIsActiveOnlyWhenMainPointerMove;
+    this.#mouseDownButton = settings.mouseDownButton ?? MouseButton.Main;
+    this.#penDownButton = settings.penDownButton ?? 0;
     this.connect();
   }
 
@@ -38,9 +60,81 @@ export class PointerGesture {
     this.#manageEventListeners("remove");
   }
 
-  #manageEventListeners(action: "add" | "remove") {
+  handleGestureStart(_e: PointerEvent) {}
+
+  handleGestureActive(_e: PointerEvent) {}
+
+  handleGestureEnd(_e: PointerEvent) {}
+
+  findPointerDataByIndex(index: number) {}
+
+  getPointerAngle(pointerData: PointerData, historyIndex?: number) {
+    const pointerDistanceData = this.getPointerDistance(
+      pointerData,
+      historyIndex
+    );
+
+    if (pointerDistanceData === undefined) {
+      return;
+    }
+
+    const { distanceX, distanceY } = pointerDistanceData;
+    const angle = Math.atan2(distanceY, distanceX) * (180 / Math.PI);
+
+    return angle;
+  }
+
+  getPointerDistance(pointerData: PointerData, historyIndex?: number) {
+    const { coordinatesHistory } = pointerData;
+    historyIndex ??= coordinatesHistory.length - 1;
+
+    if (
+      historyIndex < 0 ||
+      historyIndex > pointerData.coordinatesHistory.length - 1
+    ) {
+      return;
+    }
+
+    const [pointA] = coordinatesHistory;
+    const pointB = coordinatesHistory[historyIndex];
+    const distanceX = pointB.x - pointA.x;
+    const distanceY = pointB.y - pointA.y;
+    const distance = Math.sqrt(Math.pow(distanceX, 2) + Math.pow(distanceY, 2));
+
+    return { distanceX, distanceY, distance };
+  }
+
+  getPointersMidPoint(historyIndex: number) {
+    if (this._mainPointerData === undefined) {
+      return;
+    }
+
+    historyIndex ??= this._mainPointerData.coordinatesHistory.length - 1;
+
+    if (
+      historyIndex < 0 ||
+      historyIndex > this._mainPointerData.coordinatesHistory.length - 1
+    ) {
+      return;
+    }
+
+    let x = 0;
+    let y = 0;
+    Array.from(this._pointersDataMap.values()).forEach((pointerData) => {
+      const { coordinatesHistory } = pointerData;
+      const point = coordinatesHistory[historyIndex];
+      x += point.x;
+      y += point.y;
+    });
+    x /= this._pointersDataMap.size;
+    y /= this._pointersDataMap.size;
+
+    return { x, y };
+  }
+
+  #manageEventListeners(method: "add" | "remove") {
     const fn =
-      action === "add"
+      method === "add"
         ? this._element.addEventListener.bind(this._element)
         : this._element.removeEventListener.bind(this._element);
     fn("pointerdown", this.#handlePointerDownEvent.bind(this));
@@ -51,35 +145,36 @@ export class PointerGesture {
 
   #handlePointerDownEvent(e: PointerEvent) {
     if (
-      this._pointersMap.size >= this.#pointersRequired ||
-      this._pointersMap.has(e.pointerId) ||
-      this.#isPointerTypeValid(e) === false ||
-      (e.type === "mouse" && e.button !== this.#mouseDownButton)
+      this._pointersDataMap.size > this.#maxPointers ||
+      this._pointersDataMap.has(e.pointerId) ||
+      this.#isPointerEventValid(e) === false
     ) {
       return;
     }
 
     const pointerData: PointerData = {
-      index: this._pointersMap.size,
+      index: this._pointersDataMap.size,
+      type: e.type as PointerType,
       coordinatesHistory: [
         { x: e.clientX, y: e.clientY, timestamp: Date.now() },
       ],
       timestamp: Date.now(),
     };
-    this._pointersMap.set(e.pointerId, pointerData);
+    this._pointersDataMap.set(e.pointerId, pointerData);
 
-    if (this._pointersMap.size === this.#pointersRequired) {
-      this._handleGestureStart?.(e);
+    if (pointerData.index === this.#mainPointerIndex) {
+      this._mainPointerData = pointerData;
+    }
+
+    if (this._pointersDataMap.size === this.#minPointers) {
+      this.handleGestureStart(e);
     }
   }
 
   #handlePointerMoveEvent(e: PointerEvent) {
-    const pointerData = this._pointersMap.get(e.pointerId);
+    const pointerData = this._pointersDataMap.get(e.pointerId);
 
-    if (
-      pointerData === undefined ||
-      this._pointersMap.size < this.#pointersRequired
-    ) {
+    if (pointerData === undefined) {
       return;
     }
 
@@ -88,98 +183,64 @@ export class PointerGesture {
       y: e.clientY,
       timestamp: Date.now(),
     });
-    this._handleGestureActive?.(e);
-  }
-
-  #handlePointerLeaveEvent(e: PointerEvent) {
-    const pointerData = this._pointersMap.get(e.pointerId);
-
-    if (pointerData === undefined) {
-      return;
-    }
-
-    this._handleGestureEnd?.(e);
-    this._pointersMap.clear();
-  }
-
-  #handlePointerUpEvent(e: PointerEvent) {
-    const pointerData = this._pointersMap.get(e.pointerId);
-
-    if (pointerData === undefined) {
-      return;
-    }
-
-    this._handleGestureEnd?.(e);
-    this._pointersMap.clear();
-  }
-
-  #isPointerTypeValid(e: PointerEvent) {
-    if (this.#eventTypesAllowed === "all") {
-      return true;
-    } else {
-      return this.#eventTypesAllowed.includes(e.type as PointerType);
-    }
-  }
-}
-
-interface PointerSwipeGestureSettings extends PointerGestureSettings {
-  threshold: number;
-  timeout: number;
-}
-
-export class PointerSwipeGesture extends PointerGesture {
-  #threshold: number;
-  #timeout: number;
-
-  constructor(
-    element: HTMLElement,
-    settings: Partial<PointerSwipeGestureSettings>
-  ) {
-    super(element, settings);
-    this.#threshold = Math.max(settings.threshold ?? 100, 0);
-    this.#timeout = Math.max(settings.timeout ?? 1000, 0);
-    this._handleGestureEnd = this.#handleGestureEnd;
-  }
-
-  #handleGestureEnd(e: PointerEvent) {
-    const pointerData = this._pointersMap.get(e.pointerId);
 
     if (
-      pointerData === undefined ||
-      this.#isSwipeTimingValid(pointerData) === false
+      this.#gestureIsActiveOnlyWhenMainPointerMove &&
+      pointerData.index !== this.#mainPointerIndex
     ) {
       return;
     }
 
-    const { coordinatesHistory } = pointerData;
-    const [firstPoint] = coordinatesHistory;
-    const [lastPoint] = coordinatesHistory.slice(-1);
-    const distanceX = lastPoint.x - firstPoint.x;
-    const distanceY = lastPoint.y - firstPoint.y;
-    const swipeValues: { [key: string]: boolean } = {
-      left: distanceX < 0 && distanceX <= this.#threshold * -1,
-      right: distanceX > 0 && distanceX >= this.#threshold,
-      up: distanceY < 0 && distanceY <= this.#threshold * -1,
-      down: distanceY > 0 && distanceY >= this.#threshold,
-    };
-
-    for (let swipeDirection in swipeValues) {
-      const swipeIsValid = swipeValues[swipeDirection];
-
-      if (swipeIsValid) {
-        this._element.dispatchEvent(new Event(`swipe-${swipeDirection}`));
-      }
-    }
-
-    const event = new CustomEvent("swipe", {
-      detail: { distanceX, distanceY },
-    });
-    this._element.dispatchEvent(event);
+    this.handleGestureActive(e);
   }
 
-  #isSwipeTimingValid(pointerData: PointerData) {
-    const { timestamp } = pointerData;
+  #handlePointerLeaveEvent(e: PointerEvent) {
+    this.#handlePointerInteractionEnd(e);
+  }
 
-    return Date.now() - timestamp <= this.#timeout;
+  #handlePointerUpEvent(e: PointerEvent) {
+    if (this.#isPointerEventValid(e) === false) {
+      return;
+    }
+
+    this.#handlePointerInteractionEnd(e);
+  }
+
+  #handlePointerInteractionEnd(e: PointerEvent) {
+    const pointerData = this._pointersDataMap.get(e.pointerId);
+
+    if (pointerData === undefined) {
+      return;
+    }
+
+    const { index } = pointerData;
+    this._pointersDataMap.delete(e.pointerId);
+
+    if (
+      index === this.#mainPointerIndex ||
+      this._pointersDataMap.size < this.#minPointers
+    ) {
+      this.handleGestureEnd(e);
+      this._mainPointerData = undefined;
+      this._pointersDataMap.clear();
+    }
+  }
+
+  #isPointerEventValid(e: PointerEvent) {
+    if (
+      this.#pointerTypesAllowed !== "all" &&
+      this.#pointerTypesAllowed.includes(e.type as PointerType) === false
+    ) {
+      return false;
+    }
+
+    if (
+      (e.type === "mouse" && e.button !== this.#mouseDownButton) ||
+      (e.type === "pen" && e.button !== this.#penDownButton)
+    ) {
+      return false;
+    }
+
+    return true;
   }
 }
