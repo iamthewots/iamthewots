@@ -1,6 +1,5 @@
 export interface PointerGestureSettings {
-  minPointers?: number;
-  maxPointers?: number;
+  pointersRequired?: number;
   pointerTypesAllowed?: PointerType[] | "all";
   defaultMouseButton?: MouseButton;
 }
@@ -19,7 +18,7 @@ export interface PointerData {
   pointerId: number;
   type: PointerType;
   buttonsDown: Set<number>;
-  coordinatesHistory: {
+  points: {
     x: number;
     y: number;
     deltaX: number;
@@ -32,18 +31,25 @@ export interface PointerData {
 
 export class PointerGesture {
   _element: HTMLElement;
-  _pointersDataArray: PointerData[] = [];
-  #minPointers: number;
-  #maxPointers: number;
+  _pointersDataMap: Map<number, PointerData> = new Map();
+  #pointersRequired: number;
   #pointerTypesAllowed: PointerType[] | "all";
   #defaultMouseButton: MouseButton;
+  #gestureIsActive = false;
 
   constructor(element: HTMLElement, settings: PointerGestureSettings = {}) {
     this._element = element;
-    this.#minPointers = settings.minPointers ?? 1;
-    this.#maxPointers = settings.maxPointers ?? this.#minPointers;
+    this.#pointersRequired = settings.pointersRequired ?? 1;
     this.#pointerTypesAllowed = settings.pointerTypesAllowed ?? "all";
     this.#defaultMouseButton = settings.defaultMouseButton ?? MouseButton.Main;
+  }
+
+  findPointerDataByIndex(index: number) {
+    if (index < 0 || index > this._pointersDataMap.size) {
+      return;
+    }
+
+    return Array.from(this._pointersDataMap.values())[index];
   }
 
   connect() {
@@ -66,21 +72,117 @@ export class PointerGesture {
     fn("pointerup", this.#handlePointerUpEvent.bind(this));
   }
 
-  #handlePointerDownEvent(e: PointerEvent) {}
+  #handlePointerDownEvent(e: PointerEvent) {
+    if (this.#isPointerTypeValid(e) === false) {
+      return;
+    }
 
-  #handlePointerMoveEvent(e: PointerEvent) {}
+    const pointerData = this._pointersDataMap.get(e.pointerId);
 
-  #handlePointerLeaveEvent(e: PointerEvent) {}
+    if (pointerData !== undefined) {
+      pointerData.buttonsDown.add(e.button);
 
-  #handlePointerUpEvent(e: PointerEvent) {}
+      return;
+    }
 
-  _deletePointerData(e: PointerEvent) {}
+    if (this.#canAddPointer(e) === false) {
+      return;
+    }
 
-  _findPointerDataIndex(e: PointerEvent) {
-    return this._pointersDataArray.findIndex((pointerData) => {
-      return pointerData.pointerId === e.pointerId;
+    this._pointersDataMap.set(e.pointerId, {
+      pointerId: e.pointerId,
+      type: (e.type as PointerType) ?? "unknown",
+      buttonsDown: new Set<number>([e.button]),
+      points: [
+        {
+          x: e.clientX,
+          y: e.clientY,
+          deltaX: 0,
+          deltaY: 0,
+          distance: 0,
+          angle: 0,
+          timestamp: Date.now(),
+        },
+      ],
     });
+
+    if (this._pointersDataMap.size === this.#pointersRequired) {
+      this.#gestureIsActive = true;
+      this._handleGestureStart(e);
+    }
   }
+
+  #handlePointerMoveEvent(e: PointerEvent) {
+    const pointerData = this._pointersDataMap.get(e.pointerId);
+
+    if (pointerData === undefined) {
+      return;
+    }
+
+    const [firstPoint] = pointerData.points;
+    const x = e.clientX;
+    const y = e.clientY;
+    const deltaX = x - firstPoint.x;
+    const deltaY = y - firstPoint.y;
+    const distance = Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2));
+    const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+
+    pointerData.points.push({
+      x,
+      y,
+      deltaX,
+      deltaY,
+      distance,
+      angle,
+      timestamp: Date.now(),
+    });
+
+    this._handleGestureMove(e);
+  }
+
+  #handlePointerLeaveEvent(e: PointerEvent) {
+    if (this.#gestureIsActive === false) {
+      this._pointersDataMap.delete(e.pointerId);
+
+      return;
+    }
+
+    const pointerData = this._pointersDataMap.get(e.pointerId);
+
+    if (pointerData === undefined) {
+      return;
+    }
+
+    this.#gestureIsActive = false;
+    this._handleGestureEnd(e);
+    this._pointersDataMap.clear();
+  }
+
+  #handlePointerUpEvent(e: PointerEvent) {
+    const pointerData = this._pointersDataMap.get(e.pointerId);
+
+    if (pointerData === undefined) {
+      return;
+    }
+
+    pointerData.buttonsDown.delete(e.button);
+
+    if (
+      pointerData.buttonsDown.size === 0 ||
+      (e.type === "mouse" &&
+        pointerData.buttonsDown.has(this.#defaultMouseButton) === false)
+    ) {
+      this.#gestureIsActive = false;
+      this._handleGestureEnd(e);
+      this._pointersDataMap.clear();
+    }
+  }
+
+  _handleGestureStart(e: PointerEvent) {}
+
+  _handleGestureMove(e: PointerEvent) {}
+
+  _handleGestureEnd(e: PointerEvent) {}
 
   #isPointerTypeValid(e: PointerEvent) {
     if (
@@ -89,7 +191,17 @@ export class PointerGesture {
     ) {
       return false;
     } else {
-      return true
+      return true;
     }
+  }
+
+  #canAddPointer(e: PointerEvent) {
+    if (this._pointersDataMap.size >= this.#pointersRequired) {
+      return false;
+    } else if (e.type === "mouse" && e.button !== this.#defaultMouseButton) {
+      return false;
+    }
+
+    return true;
   }
 }
