@@ -1,85 +1,122 @@
-// import {
-//   PointerGesture,
-//   type PointerData,
-//   type PointerGestureSettings,
-// } from "./pointer-gesture";
+import {
+  PointerGesture,
+  type PointerData,
+  type PointerGestureSettings,
+} from "./pointer-gesture";
 
-// export interface PointerSwipeGestureSettings extends PointerGestureSettings {
-//   threshold?: number;
-//   maxTimeout?: number;
-// }
+export interface PointerSwipeGestureSettings extends PointerGestureSettings {
+  minDistance?: number;
+  maxTimeout?: number;
+}
 
-// interface SwipeData {
-//   left: number;
-//   right: number;
-//   up: number;
-//   down: number;
-// }
+type SwipeDirection = (typeof swipeDirections)[number];
 
-// interface PointerGestureSwipeEvent {
-//   swipeData: SwipeData;
-//   mainPointerData: PointerData;
-// }
+const swipeDirections = ["left", "right", "up", "down"] as const;
 
-// export class PointerSwipeGesture extends PointerGesture {
-//   #threshold: number;
-//   #maxTimeout: number;
+export class PointerSwipeGesture extends PointerGesture {
+  #minDistance: number;
+  #maxTimeout: number;
 
-//   constructor(
-//     element: HTMLElement,
-//     settings: PointerSwipeGestureSettings = {}
-//   ) {
-//     super(element, settings);
-//     this.#threshold = settings.threshold ?? 100;
-//     this.#maxTimeout = settings.maxTimeout ?? 1000;
-//   }
+  constructor(
+    element: HTMLElement,
+    settings: PointerSwipeGestureSettings = {}
+  ) {
+    super(element, settings);
+    this.#minDistance = settings.minDistance ?? 100;
+    this.#maxTimeout = settings.maxTimeout ?? 1000;
+  }
 
-//   _handleGestureEnd(e: PointerEvent): void {
-//     const threshold = this.#threshold;
-//     const swipeData: SwipeData = {
-//       left: 1,
-//       right: 1,
-//       up: 1,
-//       down: 1,
-//     };
+  _handleGestureEnd(e: PointerEvent): void {
+    if (this.#isSwipeTimingValid() === false) {
+      const event = new CustomEvent("swipe-fail", {
+        detail: {
+          message: "timing_not_valid",
+        },
+      });
+      this._element.dispatchEvent(event);
 
-//     Array.from(this._pointersDataMap.values()).forEach((pointerData) => {
-//       const [lastPoint] = pointerData.points.slice(-1);
-//       swipeData.left *= lastPoint.deltaX < threshold * -1 ? 1 : 0;
-//       swipeData.right *= lastPoint.deltaX > threshold ? 1 : 0;
-//       swipeData.up *= lastPoint.deltaX < threshold * -1 ? 1 : 0;
-//       swipeData.down *= lastPoint.deltaY > threshold ? 1 : 0;
-//     });
+      return;
+    }
 
-//     let key: keyof SwipeData;
-//     for (key in swipeData) {
-//       const value = swipeData[key];
+    const minDistanceData = this.#parseMinDistance();
+    const detectedSwipes: Set<SwipeDirection> = new Set();
 
-//       if (value) {
-//         this._element.dispatchEvent(new Event(`pointer-gesture-swipe-${key}`));
-//       }
-//     }
+    this._pointersDataMap.forEach((pointerData) => {
+      const swipeDirection = this.#getSwipeDirection(
+        pointerData,
+        minDistanceData
+      );
 
-//     const event = new CustomEvent<PointerGestureSwipeEvent>(
-//       "pointer-gesture-swipe",
-//       {
-//         detail: {
-//           swipeData,
-//           mainPointerData: this._mainPointerData,
-//         },
-//       }
-//     );
-//     this._element.dispatchEvent(event);
-//   }
+      if (swipeDirection !== null) {
+        detectedSwipes.add(swipeDirection);
+      }
+    });
 
-//   #wasSwipeTooSlow() {
-//     if (this._mainPointerData === undefined) {
-//       return true;
-//     }
+    if (detectedSwipes.size > 1) {
+      const event = new CustomEvent("swipe-fail", {
+        detail: {
+          message: "uneven_swipe",
+        },
+      });
+      this._element.dispatchEvent(event);
 
-//     const { coordinatesHistory } = this._mainPointerData;
-//     const startDate = coordinatesHistory[0].timestamp;
+      return;
+    }
 
-//     return Date.now() - startDate > this.#maxTimeout;
-//   }
-// }
+    const event = new Event(`swipe-${Array.from(detectedSwipes)[0]}`);
+    this._element.dispatchEvent(event);
+  }
+
+  #parseMinDistance() {
+    const { width, height } = this._element.getBoundingClientRect();
+
+    return {
+      x: Math.min(width, this.#minDistance),
+      y: Math.min(height, this.#minDistance),
+    };
+  }
+
+  #isSwipeTimingValid() {
+    let swipeTimingIsValid = true;
+
+    this._pointersDataMap.forEach((pointerData) => {
+      if (swipeTimingIsValid === false) {
+        return;
+      }
+
+      const [firstPoint] = pointerData.points;
+      const [lastPoint] = pointerData.points.slice(-1);
+
+      if (lastPoint.timestamp - firstPoint.timestamp > this.#maxTimeout) {
+        swipeTimingIsValid = false;
+      }
+    });
+
+    return swipeTimingIsValid;
+  }
+
+  #getSwipeDirection(
+    pointerData: PointerData,
+    minDistanceData: { x: number; y: number }
+  ): SwipeDirection | null {
+    const [lastPoint] = pointerData.points.slice(-1);
+    const swipeAxis =
+      Math.abs(lastPoint.deltaX) > Math.abs(lastPoint.deltaY) ? "x" : "y";
+
+    if (swipeAxis === "x") {
+      if (lastPoint.deltaX <= minDistanceData.x * -1) {
+        return "left";
+      } else if (lastPoint.deltaX >= minDistanceData.x) {
+        return "right";
+      }
+    } else {
+      if (lastPoint.deltaY <= minDistanceData.y * -1) {
+        return "up";
+      } else if (lastPoint.deltaY >= minDistanceData.y) {
+        return "down";
+      }
+    }
+
+    return null;
+  }
+}

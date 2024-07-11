@@ -6,7 +6,7 @@ export interface PointerGestureSettings {
 
 type PointerType = "mouse" | "pen" | "touch" | "unknown";
 
-enum MouseButton {
+export enum MouseButton {
   "Main" = 0,
   "Auxiliary" = 1,
   "Secondary" = 2,
@@ -35,7 +35,7 @@ export class PointerGesture {
   #pointersRequired: number;
   #pointerTypesAllowed: PointerType[] | "all";
   #defaultMouseButton: MouseButton;
-  #gestureIsActive = false;
+  #isActive = false;
 
   constructor(element: HTMLElement, settings: PointerGestureSettings = {}) {
     this._element = element;
@@ -49,7 +49,9 @@ export class PointerGesture {
       return;
     }
 
-    return Array.from(this._pointersDataMap.values())[index];
+    const key = Array.from(this._pointersDataMap.keys())[index];
+
+    return this._pointersDataMap.get(key);
   }
 
   connect() {
@@ -85,7 +87,7 @@ export class PointerGesture {
       return;
     }
 
-    if (this.#canAddPointer(e) === false) {
+    if (this.#mustAddPointerToMap(e) === false) {
       return;
     }
 
@@ -93,55 +95,61 @@ export class PointerGesture {
       pointerId: e.pointerId,
       type: (e.type as PointerType) ?? "unknown",
       buttonsDown: new Set<number>([e.button]),
-      points: [
-        {
-          x: e.clientX,
-          y: e.clientY,
-          deltaX: 0,
-          deltaY: 0,
-          distance: 0,
-          angle: 0,
-          timestamp: Date.now(),
-        },
-      ],
+      points: [],
     });
 
     if (this._pointersDataMap.size === this.#pointersRequired) {
-      this.#gestureIsActive = true;
+      this.#isActive = true;
       this._handleGestureStart(e);
     }
   }
 
   #handlePointerMoveEvent(e: PointerEvent) {
+    if (this.#isActive === false) {
+      return;
+    }
+
     const pointerData = this._pointersDataMap.get(e.pointerId);
 
     if (pointerData === undefined) {
       return;
     }
 
-    const [firstPoint] = pointerData.points;
-    const x = e.clientX;
-    const y = e.clientY;
-    const deltaX = x - firstPoint.x;
-    const deltaY = y - firstPoint.y;
-    const distance = Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2));
-    const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+    if (pointerData.points.length === 0) {
+      pointerData.points.push({
+        x: e.clientX,
+        y: e.clientY,
+        deltaX: 0,
+        deltaY: 0,
+        distance: 0,
+        angle: 0,
+        timestamp: Date.now(),
+      });
+    } else {
+      const [firstPoint] = pointerData.points;
+      const x = e.clientX;
+      const y = e.clientY;
+      const deltaX = x - firstPoint.x;
+      const deltaY = y - firstPoint.y;
+      const distance = Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2));
+      const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
 
-    pointerData.points.push({
-      x,
-      y,
-      deltaX,
-      deltaY,
-      distance,
-      angle,
-      timestamp: Date.now(),
-    });
+      pointerData.points.push({
+        x,
+        y,
+        deltaX,
+        deltaY,
+        distance,
+        angle,
+        timestamp: Date.now(),
+      });
+    }
 
     this._handleGestureMove(e);
   }
 
   #handlePointerLeaveEvent(e: PointerEvent) {
-    if (this.#gestureIsActive === false) {
+    if (this.#isActive === false) {
       this._pointersDataMap.delete(e.pointerId);
 
       return;
@@ -153,7 +161,7 @@ export class PointerGesture {
       return;
     }
 
-    this.#gestureIsActive = false;
+    this.#isActive = false;
     this._handleGestureEnd(e);
     this._pointersDataMap.clear();
   }
@@ -172,7 +180,7 @@ export class PointerGesture {
       (e.type === "mouse" &&
         pointerData.buttonsDown.has(this.#defaultMouseButton) === false)
     ) {
-      this.#gestureIsActive = false;
+      this.#isActive = false;
       this._handleGestureEnd(e);
       this._pointersDataMap.clear();
     }
@@ -195,10 +203,12 @@ export class PointerGesture {
     }
   }
 
-  #canAddPointer(e: PointerEvent) {
+  #mustAddPointerToMap(e: PointerEvent) {
     if (this._pointersDataMap.size >= this.#pointersRequired) {
       return false;
     } else if (e.type === "mouse" && e.button !== this.#defaultMouseButton) {
+      return false;
+    } else if (this._pointersDataMap.has(e.pointerId)) {
       return false;
     }
 
