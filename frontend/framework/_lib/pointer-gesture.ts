@@ -95,7 +95,17 @@ export class PointerGesture {
       pointerId: e.pointerId,
       type: (e.type as PointerType) ?? "unknown",
       buttonsDown: new Set<number>([e.button]),
-      points: [],
+      points: [
+        {
+          x: e.clientX,
+          y: e.clientY,
+          deltaX: 0,
+          deltaY: 0,
+          distance: 0,
+          angle: 0,
+          timestamp: Date.now(),
+        },
+      ],
     });
 
     if (this._pointersDataMap.size === this.#pointersRequired) {

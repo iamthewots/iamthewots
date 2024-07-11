@@ -1,9 +1,5 @@
 <script setup lang="ts">
-import {
-  PointerPanGesture,
-  PointerSwipeGesture,
-  type PointerPanGestureEvent,
-} from "@_lib/pointer-gesture";
+import { PointerSwipeGesture } from "@_lib/pointer-swipe-gesture";
 import { StopWatch } from "@_lib/stop-watch";
 import { TextTyper } from "@_lib/text-typer";
 import { onMounted, ref } from "vue";
@@ -78,20 +74,8 @@ onMounted(() => {
 const gestureElement = ref<HTMLElement | null>(null);
 const ballElement = ref<HTMLElement | null>(null);
 
-function handlePanStartOrPanEndEvent() {
-  if (ballElement.value === null) {
-    return;
-  }
-
-  ballElement.value.style.translate = "initial";
-}
-
-function handlePanEvent(e: CustomEvent<PointerPanGestureEvent>) {
-  if (ballElement.value === null) {
-    return;
-  }
-
-  ballElement.value.style.translate = `${e.detail.distanceX}px ${e.detail.distanceY}px`;
+function handleSwipeFailEvent(e: CustomEvent) {
+  alert(e.detail.message);
 }
 
 function handleSwipeEvent(e: Event) {
@@ -111,16 +95,16 @@ function handleSwipeEvent(e: Event) {
   );
 
   switch (e.type) {
-    case "swipe-left":
+    case "pointer-swipe-left":
       className = "ball-is-left";
       break;
-    case "swipe-right":
+    case "pointer-swipe-right":
       className = "ball-is-right";
       break;
-    case "swipe-up":
+    case "pointer-swipe-up":
       className = "ball-is-up";
       break;
-    case "swipe-down":
+    case "pointer-swipe-down":
       className = "ball-is-down";
       break;
   }
@@ -134,14 +118,13 @@ onMounted(() => {
     return;
   }
 
-  const panGesture = new PointerPanGesture(gestureElement.value, {
-    minPointers: 2,
-  });
   const swipeGesture = new PointerSwipeGesture(gestureElement.value, {
-    minPointers: 3,
-    threshold: 200,
-    timeout: 1000,
+    pointersRequired: 1,
+    minLength: 100,
+    maxTimeout: 1200,
+    swipeDetection: "flex"
   });
+  swipeGesture.connect();
 });
 </script>
 
@@ -165,13 +148,11 @@ onMounted(() => {
     </div>
     <div
       class="box aspect-ratio-square max-width-md | gesture-element"
-      @pan-start="handlePanStartOrPanEndEvent"
-      @pan="handlePanEvent"
-      @pan-end="handlePanStartOrPanEndEvent"
-      @swipe-left="handleSwipeEvent"
-      @swipe-right="handleSwipeEvent"
-      @swipe-up="handleSwipeEvent"
-      @swipe-down="handleSwipeEvent"
+      @pointer-swipe-left="handleSwipeEvent"
+      @pointer-swipe-right="handleSwipeEvent"
+      @pointer-swipe-up="handleSwipeEvent"
+      @pointer-swipe-down="handleSwipeEvent"
+      @pointer-swipe-fail="handleSwipeFailEvent"
       ref="gestureElement"
     >
       <div class="ball" ref="ballElement"></div>
