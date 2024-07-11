@@ -39,7 +39,7 @@ export class PointerSwipeGesture extends PointerGesture {
     }
 
     const minDistanceData = this.#parseMinDistance();
-    const detectedSwipes: Set<SwipeDirection> = new Set();
+    const detectedSwipeDirections: Set<SwipeDirection> = new Set();
 
     this._pointersDataMap.forEach((pointerData) => {
       const swipeDirection = this.#getSwipeDirection(
@@ -48,11 +48,11 @@ export class PointerSwipeGesture extends PointerGesture {
       );
 
       if (swipeDirection !== null) {
-        detectedSwipes.add(swipeDirection);
+        detectedSwipeDirections.add(swipeDirection);
       }
     });
 
-    if (detectedSwipes.size > 1) {
+    if (detectedSwipeDirections.size > 1) {
       const event = new CustomEvent("swipe-fail", {
         detail: {
           message: "uneven_swipe",
@@ -63,7 +63,7 @@ export class PointerSwipeGesture extends PointerGesture {
       return;
     }
 
-    const event = new Event(`swipe-${Array.from(detectedSwipes)[0]}`);
+    const event = new Event(`swipe-${Array.from(detectedSwipeDirections)[0]}`);
     this._element.dispatchEvent(event);
   }
 
