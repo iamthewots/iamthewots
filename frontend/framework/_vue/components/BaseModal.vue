@@ -65,32 +65,34 @@ defineExpose({ wrapperElement, contentElement, open, close });
 <template>
   <slot name="activator" v-bind="slotProps"></slot>
   <Teleport to="body">
-    <Transition
-      :name="wrapperElementTransitionName"
-      @after-enter="handleAfterEnterEventFromWrapperElement"
-      @after-leave="handleAfterLeaveEventFromWrapperElement"
-    >
-      <div
-        class="base-modal"
-        v-bind="$attrs"
-        v-if="showWrapperElement"
-        ref="wrapperElement"
+    <div class="base-modal__wrapper">
+      <Transition
+        :name="wrapperElementTransitionName"
+        @after-enter="handleAfterEnterEventFromWrapperElement"
+        @after-leave="handleAfterLeaveEventFromWrapperElement"
       >
-        <Transition
-          :name="contentElementTransitionName"
-          @after-enter="handleAfterEnterEventFromContentElement"
-          @after-leave="handleAfterLeaveEventFromContentElement"
+        <div
+          class="base-modal"
+          v-bind="$attrs"
+          v-if="showWrapperElement"
+          ref="wrapperElement"
         >
-          <div
-            class="base-modal__content"
-            v-if="showContentElement"
-            ref="contentElement"
+          <Transition
+            :name="contentElementTransitionName"
+            @after-enter="handleAfterEnterEventFromContentElement"
+            @after-leave="handleAfterLeaveEventFromContentElement"
           >
-            <slot v-bind="slotProps"></slot>
-          </div>
-        </Transition>
-      </div>
-    </Transition>
+            <div
+              class="base-modal__content"
+              v-if="showContentElement"
+              ref="contentElement"
+            >
+              <slot v-bind="slotProps"></slot>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
+    </div>
   </Teleport>
 </template>
 
@@ -102,7 +104,6 @@ defineExpose({ wrapperElement, contentElement, open, close });
   position: fixed;
   inset: 0;
   z-index: wtk.get("z-index", "xl");
-  overscroll-behavior: contain;
   padding: wtk.get("spacing", "click-gap");
   backdrop-filter: blur(4px);
   background-color: theme.get-color("overlay", $color-alpha: "overlay");

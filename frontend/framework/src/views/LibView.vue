@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { PointerSwipeGesture } from "@_lib/pointer-swipe-gesture";
 import { StopWatch } from "@_lib/stop-watch";
 import { TextTyper } from "@_lib/text-typer";
 import { onMounted, ref } from "vue";
@@ -69,63 +68,6 @@ onMounted(() => {
     refill--;
   };
 });
-
-// gesture
-const gestureElement = ref<HTMLElement | null>(null);
-const ballElement = ref<HTMLElement | null>(null);
-
-function handleSwipeFailEvent(e: CustomEvent) {
-  alert(e.detail.message);
-}
-
-function handleSwipeEvent(e: Event) {
-  if (ballElement.value === null) {
-    return;
-  }
-
-  console.log(e.type);
-
-  let className = "";
-
-  ballElement.value.classList.remove(
-    "ball-is-left",
-    "ball-is-right",
-    "ball-is-up",
-    "ball-is-down"
-  );
-
-  switch (e.type) {
-    case "pointer-swipe-left":
-      className = "ball-is-left";
-      break;
-    case "pointer-swipe-right":
-      className = "ball-is-right";
-      break;
-    case "pointer-swipe-up":
-      className = "ball-is-up";
-      break;
-    case "pointer-swipe-down":
-      className = "ball-is-down";
-      break;
-  }
-
-  console.log(className);
-  ballElement.value.classList.add(className);
-}
-
-onMounted(() => {
-  if (gestureElement.value === null) {
-    return;
-  }
-
-  const swipeGesture = new PointerSwipeGesture(gestureElement.value, {
-    pointersRequired: 1,
-    minLength: 100,
-    maxTimeout: 1200,
-    swipeDetection: "flex"
-  });
-  swipeGesture.connect();
-});
 </script>
 
 <template>
@@ -145,17 +87,6 @@ onMounted(() => {
       <BaseButton @click="textTyper.restore('myBike')"
         >Restore TextTyper</BaseButton
       >
-    </div>
-    <div
-      class="box aspect-ratio-square max-width-md | gesture-element"
-      @pointer-swipe-left="handleSwipeEvent"
-      @pointer-swipe-right="handleSwipeEvent"
-      @pointer-swipe-up="handleSwipeEvent"
-      @pointer-swipe-down="handleSwipeEvent"
-      @pointer-swipe-fail="handleSwipeFailEvent"
-      ref="gestureElement"
-    >
-      <div class="ball" ref="ballElement"></div>
     </div>
   </main>
 </template>
