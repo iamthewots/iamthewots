@@ -82,6 +82,7 @@ defineExpose({ wrapperElement, contentElement, open, close });
     >
       <div
         :class="wrapperElementClassList"
+        :data-is-fullscreen="isFullscreen"
         v-bind="$attrs"
         v-if="showWrapperElement"
         ref="wrapperElement"
@@ -134,6 +135,10 @@ defineExpose({ wrapperElement, contentElement, open, close });
     max-width: 100%;
     max-height: 100%;
   }
+}
+
+body:has(.base-drawer[data-is-fullscreen="true"]) {
+  overflow: hidden;
 }
 
 $draw-from-settings: (
